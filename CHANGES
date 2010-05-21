@@ -1,0 +1,4 @@
+2020-05-21 jcw
+
+* Public release, with an "etherNode.pde" example sketch to use with RF12.
+* This code includes a ENC28J60 driver by Guido Socher and Pascal Stang (GPL2).
