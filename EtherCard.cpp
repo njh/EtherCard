@@ -18,7 +18,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         c = pgm_read_byte(fmt++);
         switch (c) {
             case 'D':
-                sprintf((char*) ptr, "%d", va_arg(ap, int));
+                itoa(va_arg(ap, int), (char*) ptr, 10);
                 break;
             case 'S':
                 strcpy((char*) ptr, va_arg(ap, const char*));
