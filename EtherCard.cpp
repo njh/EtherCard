@@ -11,7 +11,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         char c = pgm_read_byte(fmt++);
         if (c == 0)
             break;
-        if (c != '@') {
+        if (c != '$') {
             *ptr++ = c;
             continue;
         }

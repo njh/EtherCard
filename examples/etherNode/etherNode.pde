@@ -51,25 +51,28 @@ void setup(){
     eth.initIp(mymac, myip, HTTP_PORT);
 }
 
+char okHeader[] PROGMEM = 
+    "HTTP/1.0 200 OK\r\n"
+    "Content-Type: text/html\r\n"
+    "Pragma: no-cache\r\n"
+;
+
 static void homePage(BufferFiller& buf) {
     word mhz = freq == 1 ? 433 : freq == 2 ? 868 : 915;
     buf.emit_p(PSTR(
-        "HTTP/1.0 200 OK\r\n"
-        "Content-Type: text/html\r\n"
-        "Pragma: no-cache\r\n"
-        "\r\n"
-        "<meta http-equiv='refresh' content='@D'/>"
-        "<title>RF12 etherNode - @D MHz, group @D</title>" 
-        "RF12 etherNode - @D MHz, group @D - (<a href='c'>configure</a>)"
-        "<h3>Last @D messages:</h3>"
-        "<pre>"), refresh, mhz, group, mhz, group, NUM_MESSAGES);
+        "$F\r\n"
+        "<meta http-equiv='refresh' content='$D'/>"
+        "<title>RF12 etherNode - $D MHz, group $D</title>" 
+        "RF12 etherNode - $D MHz, group $D - (<a href='c'>configure</a>)"
+        "<h3>Last $D messages:</h3>"
+        "<pre>"), okHeader, refresh, mhz, group, mhz, group, NUM_MESSAGES);
     for (byte i = 0; i < NUM_MESSAGES; ++i) {
         byte j = (next_msg + i) % NUM_MESSAGES;
         if (history_len[j] > 0) {
             word num = msgs_rcvd - NUM_MESSAGES + i + 1000;
-            buf.emit_p(PSTR("\n@D: OK"), num);
+            buf.emit_p(PSTR("\n$D: OK"), num);
             for (byte k = 0; k < history_len[j]; ++k)
-                buf.emit_p(PSTR(" @D"), history_rcvd[j][k]);
+                buf.emit_p(PSTR(" $D"), history_rcvd[j][k]);
         }
     }
     buf.emit_p(PSTR("</pre>"));
@@ -105,20 +108,18 @@ static void configPage(const char* data, BufferFiller& buf) {
         }
     }
     // else show a configuration form
+    byte band = freq == 1 ? 4 : freq == 2 ? 8 : 9;
     buf.emit_p(PSTR(
-        "HTTP/1.0 200 OK\r\n"
-        "Content-Type: text/html\r\n"
-        "Pragma: no-cache\r\n"
-        "\r\n"
+        "$F\r\n"
         "<h3>Server node configuration</h3>"
         "<form>"
           "<p>"
-    "Freq band <input type=text name=b value='@D' size=1> (4, 8, or 9)<br>"
-    "Net group <input type=text name=g value='@D' size=3> (1..250)<br>"
-    "Refresh rate <input type=text name=r value='@D' size=4> (1..3600 seconds)"
+    "Freq band <input type=text name=b value='$D' size=1> (4, 8, or 9)<br>"
+    "Net group <input type=text name=g value='$D' size=3> (1..250)<br>"
+    "Refresh rate <input type=text name=r value='$D' size=4> (1..3600 seconds)"
           "</p>"
           "<input type=submit value=Set>"
-        "</form>"), freq == 1 ? 4 : freq == 2 ? 8 : 9, group, refresh);
+        "</form>"), okHeader, band, group, refresh);
 }
 
 void loop(){
