@@ -24,6 +24,7 @@ extern uint8_t enc28j60linkup();
 
 class ENC28J60 {
 public:
+    void spiInit();
     
     uint8_t initialize(uint8_t* macaddr)
         { return enc28j60Init(macaddr); }

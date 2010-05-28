@@ -18,6 +18,26 @@ static int16_t gNextPacketPtr;
 //AT: Use pin 10 for nuelectronics.com compatible ethershield.
 #define ENC28J60_CONTROL_CS     8
 
+void ENC28J60::spiInit() {
+    const byte SPI_SS   = 10;
+    const byte SPI_MOSI	= 11;
+    const byte SPI_MISO	= 12;
+    const byte SPI_SCK	= 13;
+    
+    pinMode(SPI_SS, OUTPUT);
+    pinMode(SPI_MOSI, OUTPUT);
+	pinMode(SPI_SCK, OUTPUT);	
+	pinMode(SPI_MISO, INPUT);
+	
+	digitalWrite(SPI_MOSI, HIGH);
+	digitalWrite(SPI_MOSI, LOW);
+	digitalWrite(SPI_SCK, LOW);
+
+    SPCR = (1<<SPE)|(1<<MSTR);
+    // SPCR = (1<<SPE)|(1<<MSTR) | (1<<SPR0);
+	SPSR |= (1<<SPI2X);
+}
+
 static void enableChip() {
     cli();
     digitalWrite(ENC28J60_CONTROL_CS, LOW);

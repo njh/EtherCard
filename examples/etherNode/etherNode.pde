@@ -59,8 +59,7 @@ char okHeader[] PROGMEM =
 
 static void homePage(BufferFiller& buf) {
     word mhz = freq == 1 ? 433 : freq == 2 ? 868 : 915;
-    buf.emit_p(PSTR(
-        "$F\r\n"
+    buf.emit_p(PSTR("$F\r\n"
         "<meta http-equiv='refresh' content='$D'/>"
         "<title>RF12 etherNode - $D MHz, group $D</title>" 
         "RF12 etherNode - $D MHz, group $D - (<a href='c'>configure</a>)"
@@ -75,7 +74,13 @@ static void homePage(BufferFiller& buf) {
                 buf.emit_p(PSTR(" $D"), history_rcvd[j][k]);
         }
     }
-    buf.emit_p(PSTR("</pre>"));
+    long t = millis() / 1000;
+    word h = t / 3600;
+    byte m = (t / 60) % 60;
+    byte s = t % 60;
+    buf.emit_p(PSTR(
+        "</pre>"
+        "Uptime is $D$D:$D$D:$D$D"), h/10, h%10, m/10, m%10, s/10, s%10);
 }
 
 static int getIntArg(const char* data, const char* key, int value =-1) {
@@ -109,8 +114,7 @@ static void configPage(const char* data, BufferFiller& buf) {
     }
     // else show a configuration form
     byte band = freq == 1 ? 4 : freq == 2 ? 8 : 9;
-    buf.emit_p(PSTR(
-        "$F\r\n"
+    buf.emit_p(PSTR("$F\r\n"
         "<h3>Server node configuration</h3>"
         "<form>"
           "<p>"
@@ -153,6 +157,6 @@ void loop(){
         history_len[next_msg] = rf12_len < MESSAGE_TRUNC ? rf12_len+1
                                                          : MESSAGE_TRUNC+1;
         next_msg = (next_msg + 1) % NUM_MESSAGES;
-        msgs_rcvd = (msgs_rcvd + 1) % 1000;
+        msgs_rcvd = (msgs_rcvd + 1) % 9000;
     }
 }
