@@ -13,7 +13,7 @@ static byte myip[4] = { 192,168,178,203 };
 // listen port for tcp/www:
 #define HTTP_PORT 80
 
-static byte buf[1000];
+static byte buf[500];
 static BufferFiller bfill;
 
 EtherCard eth;
@@ -24,12 +24,12 @@ void setup () {
     eth.initIp(mymac, myip, HTTP_PORT);
 }
 
-static void homePage(const char* data, BufferFiller& buf) {
+static void homePage() {
     long t = millis() / 1000;
     word h = t / 3600;
     byte m = (t / 60) % 60;
     byte s = t % 60;
-    buf.emit_p(PSTR(
+    bfill.emit_p(PSTR(
         "HTTP/1.0 200 OK\r\n"
         "Content-Type: text/html\r\n"
         "Pragma: no-cache\r\n"
@@ -46,8 +46,7 @@ void loop () {
     // check if valid tcp data is received
     if (pos) {
         bfill = eth.tcpOffset(buf);
-        char* data = (char *) buf + pos;
-        homePage(data, bfill);
+        homePage();
         eth.httpServerReply(buf,bfill.position()); // send web page data
     }
 }

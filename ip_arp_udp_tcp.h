@@ -10,12 +10,12 @@
 #include <avr/pgmspace.h>
 
 extern void init_ip_arp_udp_tcp(uint8_t*,uint8_t*,uint16_t);
-extern uint8_t eth_type_is_ip_and_my_ip(uint8_t*,uint16_t);
+// extern uint8_t eth_type_is_ip_and_my_ip(uint8_t*,uint16_t);
 extern void make_udp_reply_from_request(uint8_t*,char*,uint8_t,uint16_t);
 extern uint16_t packetloop_icmp_tcp(uint8_t*,uint16_t);
 extern void www_server_reply(uint8_t*,uint16_t);
 extern void client_set_gwip(uint8_t*);
-extern void client_gw_arp_refresh();
+// extern void client_gw_arp_refresh();
 extern void client_arp_whohas(uint8_t*,uint8_t*);
 extern uint8_t client_waiting_gw(); // 1 no GW mac yet, 0 have a gw mac
 #define client_set_wwwip client_tcp_set_serverip
@@ -43,9 +43,9 @@ public:
     	init_ip_arp_udp_tcp(mymac,myip,wwwp);
     }
 
-	uint8_t checkMyIp(uint8_t *buf,uint16_t len){
-    	return eth_type_is_ip_and_my_ip(buf, len);
-    }
+    // uint8_t checkMyIp(uint8_t *buf,uint16_t len){
+    //      return eth_type_is_ip_and_my_ip(buf, len);
+    //     }
 
 	void makeUdpReply(uint8_t *buf,char *data,uint8_t len,uint16_t port){
     	make_udp_reply_from_request(buf, data, len, port);
