@@ -16,7 +16,7 @@ static byte Enc28j60Bank;
 static int16_t gNextPacketPtr;
 
 //AT: Use pin 10 for nuelectronics.com compatible ethershield.
-#define ENC28J60_CONTROL_CS     8
+#define ENC28J60_CONTROL_CS 8
 
 void ENC28J60::spiInit() {
     const byte SPI_SS   = 10;
@@ -40,11 +40,19 @@ void ENC28J60::spiInit() {
 
 static void enableChip() {
     cli();
+#if ENC28J60_CONTROL_CS == 8
+    bitClear(PORTB, 0); // much faster
+#else
     digitalWrite(ENC28J60_CONTROL_CS, LOW);
+#endif
 }
 
 static void disableChip() {
+#if ENC28J60_CONTROL_CS == 8
+    bitSet(PORTB, 0); // much faster
+#else
     digitalWrite(ENC28J60_CONTROL_CS, HIGH);
+#endif
     sei();
 }
 

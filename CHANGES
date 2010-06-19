@@ -1,3 +1,7 @@
+2010-06-20 jcw
+
+* Avoid digitalWrite() for chip select, use direct pin I/O for speed.
+
 2010-05-28 jcw
 
 * Added spiInit() to initialize the SPI interface if the RF12 isn't used.
