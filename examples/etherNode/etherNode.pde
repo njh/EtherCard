@@ -179,7 +179,7 @@ static void sendPage(const char* data, BufferFiller& buf) {
     byte d = getIntArg(data, "d");
     if (data[6] == '?' && p != 0 && 0 <= d && d <= 31) {
         // prepare to send data as soon as possible in loop()
-        outDest = d;
+        outDest = d & RF12_HDR_MASK ? RF12_HDR_DST | d : 0;
         outCount = 0;
         // convert the input string to a number of decimal data bytes in outBuf
         ++p;
