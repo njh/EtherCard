@@ -12,40 +12,77 @@
 #include <EtherCard.h>
 #include <Ports.h>
 #include <RF12.h>
+#include <avr/eeprom.h>
 
-// ethernet interface mac address
+#define DEBUG 1 // set to 1 to show incoming requests on serial port
+
+#define CONFIG_EEPROM_ADDR ((byte*) 0x10)
+
+// configuration, as stored in EEPROM
+struct Config {
+    byte band;
+    byte group;
+    byte collect;
+    word refresh;
+    byte valid; // keep this as last byte
+} config;
+
+// ethernet interface mac address - must be unique on your network
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
-// ethernet interface ip address
+// ethernet interface static IP address - CHANGE THIS to match your network!
 static byte myip[4] = { 192,168,178,203 };
+
+// buffer for an outgoing data packet
+static byte outBuf[RF12_MAXDATA], outDest;
+static char outCount = -1;
 
 // listen port for tcp/www:
 #define HTTP_PORT 80
 
-static word refresh = 5; // homepage refresh rate
-
-// RF12 settings
-static byte freq = RF12_868MHZ;
-static byte group = 5;
+// fixed RF12 settings
 #define MYNODE 31
 
 #define NUM_MESSAGES  10    // Number of messages saved in history
-#define MESSAGE_TRUNC 15    // Truncate message payload here to spare memory
+#define MESSAGE_TRUNC 15    // Truncate message payload to reduce memory use
 
-static byte buf[1000];
-static BufferFiller bfill;
+static byte buf[1000];      // tcp/ip send and receive buffer
+static BufferFiller bfill;  // uased as cursor while filling the buffer
 
 static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; //history record
 static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
-static byte next_msg;            //Pointer to next rf12rcvd line
-static word msgs_rcvd;       //Total number of received lines
+static byte next_msg;       // pointer to next rf12rcvd line
+static word msgs_rcvd;      // total number of lines received modulo 10,000
 
 EtherCard eth;
 
+static void loadConfig() {
+    for (byte i = 0; i < sizeof config; ++i)
+        ((byte*) &config)[i] = eeprom_read_byte(CONFIG_EEPROM_ADDR + i);
+    if (config.valid != 253) {
+        config.valid = 253;
+        config.band = 8;
+        config.group = 1;
+        config.collect = 1;
+        config.refresh = 5;
+    }
+    byte freq = config.band == 4 ? RF12_433MHZ :
+                config.band == 8 ? RF12_868MHZ :
+                                   RF12_915MHZ;
+    rf12_initialize(MYNODE, freq, config.group);
+}
+
+static void saveConfig() {
+    for (byte i = 0; i < sizeof config; ++i)
+        eeprom_write_byte(CONFIG_EEPROM_ADDR + i, ((byte*) &config)[i]);
+}
+
 void setup(){
-    // Serial.begin(57600);
-    // Serial.println("\n[etherNode]");
-    rf12_initialize(MYNODE, freq, group);
+#if DEBUG
+    Serial.begin(57600);
+    Serial.println("\n[etherNode]");
+#endif
+    loadConfig();
     /* init ENC28J60, must be done after SPI has been properly set up! */
     eth.initialize(mymac);
     eth.initIp(mymac, myip, HTTP_PORT);
@@ -58,18 +95,21 @@ char okHeader[] PROGMEM =
 ;
 
 static void homePage(BufferFiller& buf) {
-    word mhz = freq == 1 ? 433 : freq == 2 ? 868 : 915;
+    word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
     buf.emit_p(PSTR("$F\r\n"
         "<meta http-equiv='refresh' content='$D'/>"
         "<title>RF12 etherNode - $D MHz, group $D</title>" 
-        "RF12 etherNode - $D MHz, group $D - (<a href='c'>configure</a>)"
+        "RF12 etherNode - $D MHz, group $D "
+            "- <a href='c'>configure</a> - <a href='s'>send packet</a>"
         "<h3>Last $D messages:</h3>"
-        "<pre>"), okHeader, refresh, mhz, group, mhz, group, NUM_MESSAGES);
+        "<pre>"), okHeader, config.refresh, mhz, config.group,
+                                            mhz, config.group, NUM_MESSAGES);
     for (byte i = 0; i < NUM_MESSAGES; ++i) {
         byte j = (next_msg + i) % NUM_MESSAGES;
         if (history_len[j] > 0) {
-            word num = msgs_rcvd - NUM_MESSAGES + i + 1000;
-            buf.emit_p(PSTR("\n$D: OK"), num);
+            word n = msgs_rcvd - NUM_MESSAGES + i;
+            buf.emit_p(PSTR("\n$D$D$D$D: OK"), // hack, to show leading zero's
+                                n/1000, (n/100) % 10, (n/10) % 10, n % 10);
             for (byte k = 0; k < history_len[j]; ++k)
                 buf.emit_p(PSTR(" $D"), history_rcvd[j][k]);
         }
@@ -95,13 +135,17 @@ static void configPage(const char* data, BufferFiller& buf) {
     if (data[6] == '?') {
         byte b = getIntArg(data, "b");
         byte g = getIntArg(data, "g");
+        byte c = getIntArg(data, "c", 0);
         word r = getIntArg(data, "r");
         if (1 <= g && g <= 250 && 1 <= r && r <= 3600) {
-            // use values as new settings
-            freq = b == 8 ? RF12_868MHZ : b == 9 ? RF12_915MHZ : RF12_433MHZ;
-            group = g;
-            refresh = r;
-            rf12_initialize(MYNODE, freq, group);
+            // store values as new settings
+            config.band = b;
+            config.group = g;
+            config.collect = c;
+            config.refresh = r;
+            saveConfig();
+            // re-init RF12 driver
+            loadConfig();
             // clear history
             memset(history_len, 0, sizeof history_len);
             // redirect to the home page
@@ -113,17 +157,66 @@ static void configPage(const char* data, BufferFiller& buf) {
         }
     }
     // else show a configuration form
-    byte band = freq == 1 ? 4 : freq == 2 ? 8 : 9;
     buf.emit_p(PSTR("$F\r\n"
         "<h3>Server node configuration</h3>"
         "<form>"
           "<p>"
     "Freq band <input type=text name=b value='$D' size=1> (4, 8, or 9)<br>"
     "Net group <input type=text name=g value='$D' size=3> (1..250)<br>"
+    "Collect mode: <input type=checkbox name=c value='1' $S> "
+        "Don't send ACKs<br><br>"
     "Refresh rate <input type=text name=r value='$D' size=4> (1..3600 seconds)"
           "</p>"
           "<input type=submit value=Set>"
-        "</form>"), okHeader, band, group, refresh);
+        "</form>"), okHeader, config.band, config.group,
+                    config.collect ? "CHECKED" : "",
+                    config.refresh);
+}
+
+static void sendPage(const char* data, BufferFiller& buf) {
+    // pick up submitted data, if present
+    const char* p = strstr(data, "b=");
+    byte d = getIntArg(data, "d");
+    if (data[6] == '?' && p != 0 && 0 <= d && d <= 31) {
+        // prepare to send data as soon as possible in loop()
+        outDest = d;
+        outCount = 0;
+        // convert the input string to a number of decimal data bytes in outBuf
+        ++p;
+        while (*p != 0 && *p != '&') {
+            outBuf[outCount] = 0;
+            while ('0' <= *++p && *p <= '9')
+                outBuf[outCount] = 10 * outBuf[outCount] + (*p - '0');
+            ++outCount;
+        }
+#if DEBUG
+        Serial.print("Send to ");
+        Serial.print(outDest, DEC);
+        Serial.print(':');
+        for (byte i = 0; i < outCount; ++i) {
+            Serial.print(' ');
+            Serial.print(outBuf[i], DEC);
+        }
+        Serial.println();
+#endif
+        // redirect to home page
+        buf.emit_p(PSTR(
+            "HTTP/1.0 302 found\r\n"
+            "Location: /\r\n"
+            "\r\n"));
+        return;
+    }
+    // else show a send form
+    buf.emit_p(PSTR("$F\r\n"
+        "<h3>Send a wireless data packet</h3>"
+        "<form>"
+          "<p>"
+    "Data bytes <input type=text name=b size=50> (decimal)<br>"
+    "Destination node <input type=text name=d size=3> "
+        "(1..31, or 0 to broadcast)<br>"
+          "</p>"
+          "<input type=submit value=Send>"
+        "</form>"), okHeader);
 }
 
 void loop(){
@@ -134,11 +227,16 @@ void loop(){
     if (pos) {
         bfill = eth.tcpOffset(buf);
         char* data = (char *) buf + pos;
+#if DEBUG
+        Serial.println(data);
+#endif
         // receive buf hasn't been clobbered by reply yet
         if (strncmp("GET / ", data, 6) == 0)
             homePage(bfill);
         else if (strncmp("GET /c", data, 6) == 0)
             configPage(data, bfill);
+        else if (strncmp("GET /s", data, 6) == 0)
+            sendPage(data, bfill);
         else
             bfill.emit_p(PSTR(
                 "HTTP/1.0 401 Unauthorized\r\n"
@@ -157,6 +255,20 @@ void loop(){
         history_len[next_msg] = rf12_len < MESSAGE_TRUNC ? rf12_len+1
                                                          : MESSAGE_TRUNC+1;
         next_msg = (next_msg + 1) % NUM_MESSAGES;
-        msgs_rcvd = (msgs_rcvd + 1) % 9000;
+        msgs_rcvd = (msgs_rcvd + 1) % 10000;
+
+        if ((rf12_hdr & ~RF12_HDR_MASK) == RF12_HDR_ACK && !config.collect) {
+            Serial.println(" -> ack");
+            byte addr = rf12_hdr & RF12_HDR_MASK;
+            // if request was sent only to us, send ack back as broadcast
+            rf12_sendStart(rf12_hdr & RF12_HDR_DST ? RF12_HDR_CTL :
+                                RF12_HDR_CTL | RF12_HDR_DST | addr, 0, 0);
+        }
+    }
+    
+    // send a data packet out if requested
+    if (outCount >= 0 && rf12_canSend()) {
+        rf12_sendStart(outDest, outBuf, outCount, 1);
+        outCount = -1;
     }
 }

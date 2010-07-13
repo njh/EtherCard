@@ -1,3 +1,7 @@
+2010-07-14 jcw
+
+* Added collect mode, eeprom config, and packet send to EtherNode.pde sketch.
+
 2010-06-20 jcw
 
 * Avoid digitalWrite() for chip select, use direct pin I/O for speed.
