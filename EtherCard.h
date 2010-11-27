@@ -37,6 +37,30 @@ public:
     virtual void write(uint8_t v) { *ptr++ = v; }
 };
 
-struct EtherCard : ENC28J60, TCPIP, DNS, WebUtil {};
+struct EtherCard : ENC28J60, TCPIP, DNS, WebUtil {
+
+    // lookup a host name via DNS, returns 1 if ok or 0 if this timed out
+    // use during setup, as this discards all incoming requests until it returns
+    byte dnsLookup (prog_char* name, byte *buffer, word length) {
+        while (clientWaitingGw())
+            packetLoop(buffer, packetReceive(buffer, length));
+    
+        dnsRequest(buffer, name);
+
+        uint32_t start = millis();
+        while (!dnsHaveAnswer()) {
+            if (millis() - start >= 30000)
+                return 0;
+            word len = packetReceive(buffer, length);
+            word pos = packetLoop(buffer, len);
+            if (len != 0 && pos == 0)
+                checkForDnsAnswer(buffer, length);
+        }
+
+        clientSetServerIp(dnsGetIp());
+        return 1;
+    }
+    
+};
 
 #endif

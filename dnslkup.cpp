@@ -53,12 +53,13 @@ void dnslkup_request(byte *buf,const prog_char *progmem_hostname) {
             buf[UDP_DATA_P+lenpos]=lencnt;
             lencnt=0;
             lenpos=i;
+        } else {
+            buf[UDP_DATA_P+i]=c;
+            lencnt++;
         }
-        buf[UDP_DATA_P+i]=c;
-        lencnt++;
         i++;
     }
-    buf[UDP_DATA_P+lenpos]=lencnt-1;
+    buf[UDP_DATA_P+lenpos]=lencnt;
     buf[UDP_DATA_P+i++]=0; // terminate with zero, means root domain.
     buf[UDP_DATA_P+i++]=0;
     buf[UDP_DATA_P+i++]=1; // type A
@@ -86,6 +87,7 @@ byte udp_client_check_for_dns_answer(byte *buf,uint16_t plen){
         return(0);
     }
     i=12+buf[UDP_DATA_P]; // we encoded the query len into tid
+ChecNextResp:
     if (buf[UDP_DATA_P+i] & 0xc0){
         i+=2;
     }else{
@@ -96,6 +98,11 @@ byte udp_client_check_for_dns_answer(byte *buf,uint16_t plen){
                 break;
             }
         }
+    }
+    if (buf[UDP_DATA_P+i+1] != 1){    // check type == 1 for "A"
+        i += 2 + 2 + 4;    // skip type & class & TTL
+        i += buf[UDP_DATA_P+i+1] + 2;    // skip datalength bytes
+        goto ChecNextResp;
     }
     if (buf[UDP_DATA_P+i+9] !=4 ){
         dns_ansError=2; // not IPv4

@@ -47,7 +47,7 @@ static char outCount = -1;
 #define MESSAGE_TRUNC 15    // Truncate message payload to reduce memory use
 
 static byte buf[1000];      // tcp/ip send and receive buffer
-static BufferFiller bfill;  // uased as cursor while filling the buffer
+static BufferFiller bfill;  // used as cursor while filling the buffer
 
 static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; //history record
 static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
