@@ -1,3 +1,17 @@
+This change log is no longer maintained as a separate file. You can now browse
+all the source code and see all the changes and comments ever made on the web.
+
+The home page for this library, including its automatic change log, is:
+	http://jeelabs.net/projects/cafe/repository/show/EtherCard
+
+To check out the latest version, use subversion:
+	svn co svn://svn.jeelabs.org/jeelabs/trunk/libraries/EtherCard
+	
+For more information about subversion and source code from JeeLabs, see:
+	http://jeelabs.org/2010/12/14/source-code/
+	
+--------------------------------------------------------------------------------
+
 2010-11 jcw
 
 * Added getStaticIP.pde and getViaDNS.pde demo sketches.
