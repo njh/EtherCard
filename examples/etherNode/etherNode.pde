@@ -257,12 +257,9 @@ void loop(){
         next_msg = (next_msg + 1) % NUM_MESSAGES;
         msgs_rcvd = (msgs_rcvd + 1) % 10000;
 
-        if ((rf12_hdr & ~RF12_HDR_MASK) == RF12_HDR_ACK && !config.collect) {
+        if (RF12_WANTS_ACK && !config.collect) {
             Serial.println(" -> ack");
-            byte addr = rf12_hdr & RF12_HDR_MASK;
-            // if request was sent only to us, send ack back as broadcast
-            rf12_sendStart(rf12_hdr & RF12_HDR_DST ? RF12_HDR_CTL :
-                                RF12_HDR_CTL | RF12_HDR_DST | addr, 0, 0);
+            rf12_sendStart(RF12_ACK_REPLY, 0, 0);
         }
     }
     
