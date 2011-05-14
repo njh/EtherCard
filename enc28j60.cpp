@@ -92,9 +92,9 @@ static void ReadBuffer(word len, byte* data) {
 }
 
 static word ReadBufferWord() {
-    word result;
-    ReadBuffer(2, (byte*) &result);
-    return result;
+    word result[2];
+    ReadBuffer(2, (byte*) result);
+    return result[0];
 }
 
 static void WriteBuffer(word len, byte* data) {
