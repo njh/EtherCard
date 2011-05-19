@@ -58,6 +58,7 @@ static byte seqnum=0xa; // my initial tcp sequence number
 const char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 };
 const char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
 const char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
+const byte anyMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 static uint16_t checksum(byte *buf, uint16_t len,byte type){
 	uint32_t sum = type==1 ? IP_PROTO_UDP_V+len-8 :
@@ -74,19 +75,27 @@ static uint16_t checksum(byte *buf, uint16_t len,byte type){
 	return (uint16_t) sum ^ 0xFFFF;
 }
 
+static void copy4 (byte *dst, const byte *src) {
+    memcpy(dst, src, 4);
+}
+static void copy6 (byte *dst, const byte *src) {
+    memcpy(dst, src, 6);
+}
+static void setMACs (byte *buf, const byte *mac) {
+    copy6(buf + ETH_DST_MAC, mac);
+    copy6(buf + ETH_SRC_MAC, macaddr);
+}
+static void setMACandIPs (byte *buf, const byte *mac, const byte *dst) {
+    setMACs(buf, mac);
+    copy4(buf + IP_DST_P, dst);
+    copy4(buf + IP_SRC_P, ipaddr);
+}
+
 void init_ip_arp_udp_tcp(byte *mymac,byte *myip,uint16_t port){
 	wwwport_h=(port>>8);
 	wwwport_l=(port);
-	byte i=0;
-	while(i<4){
-		ipaddr[i]=myip[i];
-		i++;
-	}
-	i=0;
-	while(i<6){
-		macaddr[i]=mymac[i];
-		i++;
-	}
+    copy4(ipaddr, myip);
+    copy6(macaddr, mymac);
 }
 
 static byte check_ip_message_is_from(byte *buf,byte *ip) {
@@ -130,32 +139,22 @@ static byte eth_type_is_ip_and_my_ip(byte *buf,uint16_t len){
 	}
 	return 1;
 }
-static void make_eth(byte *buf) {
-	byte i=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=buf[ETH_SRC_MAC +i];
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
-}
+
 static void fill_ip_hdr_checksum(byte *buf) {
 	buf[IP_CHECKSUM_P]=0;
 	buf[IP_CHECKSUM_P+1]=0;
 	buf[IP_FLAGS_P]=0x40; // don't fragment
 	buf[IP_FLAGS_P+1]=0;  // fragement offset
 	buf[IP_TTL_P]=64; // ttl
-	uint16_t ck=checksum(&buf[IP_P], IP_HEADER_LEN,0);
+	uint16_t ck=checksum(buf + IP_P, IP_HEADER_LEN,0);
 	buf[IP_CHECKSUM_P]=ck>>8;
 	buf[IP_CHECKSUM_P+1]=ck;
 }
 
-static void make_ip(byte *buf) {
-	byte i=0;
-	while(i<4){
-		buf[IP_DST_P+i]=buf[IP_SRC_P+i];
-		buf[IP_SRC_P+i]=ipaddr[i];
-		i++;
-	}
+static void make_eth_ip(byte *buf) {
+    setMACs(buf, buf + ETH_SRC_MAC);
+    copy4(buf + IP_DST_P, buf + IP_SRC_P);
+    copy4(buf + IP_SRC_P, ipaddr);
 	fill_ip_hdr_checksum(buf);
 }
 
@@ -191,42 +190,31 @@ static void make_tcphead(byte *buf,uint16_t rel_ack_num,byte cp_seq) {
 }
 
 void make_arp_answer_from_request(byte *buf) {
-	make_eth(buf);
+    setMACs(buf, buf + ETH_SRC_MAC);
 	buf[ETH_ARP_OPCODE_H_P]=ETH_ARP_OPCODE_REPLY_H_V;
 	buf[ETH_ARP_OPCODE_L_P]=ETH_ARP_OPCODE_REPLY_L_V;
-	byte i=0;
-	while(i<6){
-		buf[ETH_ARP_DST_MAC_P+i]=buf[ETH_ARP_SRC_MAC_P+i];
-		buf[ETH_ARP_SRC_MAC_P+i]=macaddr[i];
-		i++;
-	}
-	i=0;
-	while(i<4){
-		buf[ETH_ARP_DST_IP_P+i]=buf[ETH_ARP_SRC_IP_P+i];
-		buf[ETH_ARP_SRC_IP_P+i]=ipaddr[i];
-		i++;
-	}
+    copy6(buf + ETH_ARP_DST_MAC_P, buf + ETH_ARP_SRC_MAC_P);
+    copy6(buf + ETH_ARP_SRC_MAC_P, macaddr);
+    copy4(buf + ETH_ARP_DST_IP_P, buf + ETH_ARP_SRC_IP_P);
+    copy4(buf + ETH_ARP_SRC_IP_P, ipaddr);
 	enc28j60PacketSend(42,buf); 
 }
 
 void make_echo_reply_from_request(byte *buf,uint16_t len) {
-	make_eth(buf);
-	make_ip(buf);
+	make_eth_ip(buf);
 	buf[ICMP_TYPE_P]=ICMP_TYPE_ECHOREPLY_V;
 	if (buf[ICMP_CHECKSUM_P] > (0xff-0x08))
 		buf[ICMP_CHECKSUM_P+1]++;
 	buf[ICMP_CHECKSUM_P]+=0x08;
-	//
 	enc28j60PacketSend(len,buf);
 }
 
 void make_udp_reply_from_request(byte *buf,char *data,byte datalen,uint16_t port) {
-	make_eth(buf);
 	if (datalen>220)
 		datalen=220;
 	buf[IP_TOTLEN_H_P]=0;
 	buf[IP_TOTLEN_L_P]=IP_HEADER_LEN+UDP_HEADER_LEN+datalen;
-	make_ip(buf);
+	make_eth_ip(buf);
 	buf[UDP_DST_PORT_H_P]=buf[UDP_SRC_PORT_H_P];
 	buf[UDP_DST_PORT_L_P]= buf[UDP_SRC_PORT_L_P];
 	buf[UDP_SRC_PORT_H_P]=port>>8;
@@ -235,22 +223,17 @@ void make_udp_reply_from_request(byte *buf,char *data,byte datalen,uint16_t port
 	buf[UDP_LEN_L_P]=UDP_HEADER_LEN+datalen;
 	buf[UDP_CHECKSUM_H_P]=0;
 	buf[UDP_CHECKSUM_L_P]=0;
-	byte i=0;
-	while(i<datalen){
-		buf[UDP_DATA_P+i]=data[i];
-		i++;
-	}
-	uint16_t ck=checksum(&buf[IP_SRC_P], 16 + datalen,1);
+    memcpy(buf + UDP_DATA_P, data, datalen);
+	uint16_t ck=checksum(buf + IP_SRC_P, 16 + datalen,1);
 	buf[UDP_CHECKSUM_H_P]=ck>>8;
 	buf[UDP_CHECKSUM_L_P]=ck;
 	enc28j60PacketSend(UDP_HEADER_LEN+IP_HEADER_LEN+ETH_HEADER_LEN+datalen,buf);
 }
 
 static void make_tcp_synack_from_syn(byte *buf) {
-	make_eth(buf);
 	buf[IP_TOTLEN_H_P]=0;
 	buf[IP_TOTLEN_L_P]=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4;
-	make_ip(buf);
+	make_eth_ip(buf);
 	buf[TCP_FLAGS_P]=TCP_FLAGS_SYNACK_V;
 	make_tcphead(buf,1,0);
 	buf[TCP_SEQ_H_P+0]= 0;
@@ -265,7 +248,7 @@ static void make_tcp_synack_from_syn(byte *buf) {
 	buf[TCP_HEADER_LEN_P]=0x60;
 	buf[TCP_WIN_SIZE]=0x5; // 1400=0x578
 	buf[TCP_WIN_SIZE+1]=0x78;
-	uint16_t ck=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN+4,2);
+	uint16_t ck=checksum(buf + IP_SRC_P, 8+TCP_HEADER_LEN_PLAIN+4,2);
 	buf[TCP_CHECKSUM_H_P]=ck>>8;
 	buf[TCP_CHECKSUM_L_P]=ck;
 	enc28j60PacketSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4+ETH_HEADER_LEN,buf);
@@ -281,16 +264,13 @@ static uint16_t get_tcp_data_len(byte *buf) {
 }
 
 uint16_t fill_tcp_data_p(byte *buf,uint16_t pos, const prog_char *progmem_s) {
-	char c;
-	while ((c = pgm_read_byte(progmem_s++)))
-		buf[TCP_CHECKSUM_L_P+3+pos++]=c;
-	return pos;
+    strcpy_P((char*) buf + TCP_CHECKSUM_L_P + 3 + pos, progmem_s);
+	return pos + strlen_P(progmem_s);
 }
 
 uint16_t fill_tcp_data_len(byte *buf,uint16_t pos, const byte *s, byte len) {
-	while (len--)
-		buf[TCP_CHECKSUM_L_P+3+pos++]=*s++;
-	return pos;
+    memcpy(buf + TCP_CHECKSUM_L_P + 3 + pos, s, len);
+	return pos + len;
 }
 
 uint16_t fill_tcp_data(byte *buf,uint16_t pos, const char *s) {
@@ -298,19 +278,17 @@ uint16_t fill_tcp_data(byte *buf,uint16_t pos, const char *s) {
 }
 
 static void make_tcp_ack_from_any(byte *buf,int16_t datlentoack,byte addflags) {
-	uint16_t j;
-	make_eth(buf);
 	buf[TCP_FLAGS_P]=TCP_FLAGS_ACK_V|addflags;
 	if (addflags!=TCP_FLAGS_RST_V && datlentoack==0)
 		datlentoack=1;
 	make_tcphead(buf,datlentoack,1); // no options
-	j=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN;
+	uint16_t j=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN;
 	buf[IP_TOTLEN_H_P]=j>>8;
 	buf[IP_TOTLEN_L_P]=j;
-	make_ip(buf);
+	make_eth_ip(buf);
 	buf[TCP_WIN_SIZE]=0x4; // 1024=0x400, 1280=0x500 2048=0x800 768=0x300
 	buf[TCP_WIN_SIZE+1]=0;
-	j=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN,2);
+	j=checksum(buf + IP_SRC_P, 8+TCP_HEADER_LEN_PLAIN,2);
 	buf[TCP_CHECKSUM_H_P]=j>>8;
 	buf[TCP_CHECKSUM_L_P]=j;
 	enc28j60PacketSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+ETH_HEADER_LEN,buf);
@@ -323,7 +301,7 @@ static void make_tcp_ack_with_data_noflags(byte *buf,uint16_t dlen) {
 	fill_ip_hdr_checksum(buf);
 	buf[TCP_CHECKSUM_H_P]=0;
 	buf[TCP_CHECKSUM_L_P]=0;
-	j=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN+dlen,2);
+	j=checksum(buf + IP_SRC_P, 8+TCP_HEADER_LEN_PLAIN+dlen,2);
 	buf[TCP_CHECKSUM_H_P]=j>>8;
 	buf[TCP_CHECKSUM_L_P]=j;
 	enc28j60PacketSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+dlen+ETH_HEADER_LEN,buf);
@@ -335,29 +313,13 @@ void www_server_reply(byte *buf,uint16_t dlen) {
 	make_tcp_ack_with_data_noflags(buf,dlen); // send data
 }
 
-static void fill_buf_p(byte *buf,uint16_t len, const prog_char *progmem_s) {
-	while (len--)
-		*buf++ = pgm_read_byte(progmem_s++);
-}
-
 void client_icmp_request(byte *buf,byte *destip) {
-	byte i=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=gwmacaddr[i]; // gw mac in local lan or host mac
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
+    setMACandIPs(buf, gwmacaddr, destip);
 	buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
 	buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-	fill_buf_p(&buf[IP_P],9,iphdr);
+	memcpy_P(buf + IP_P,iphdr,9);
 	buf[IP_TOTLEN_L_P]=0x54;
 	buf[IP_PROTO_P]=IP_PROTO_ICMP_V;
-	i=0;
-	while(i<4){
-		buf[IP_DST_P+i]=destip[i];
-		buf[IP_SRC_P+i]=ipaddr[i];
-		i++;
-	}
 	fill_ip_hdr_checksum(buf);
 	buf[ICMP_TYPE_P]=ICMP_TYPE_ECHOREQUEST_V;
 	buf[ICMP_TYPE_P+1]=0; // code
@@ -367,35 +329,20 @@ void client_icmp_request(byte *buf,byte *destip) {
 	buf[ICMP_IDENT_L_P]=ipaddr[3]; // last byte of my IP
 	buf[ICMP_IDENT_L_P+1]=0; // seq number, high byte
 	buf[ICMP_IDENT_L_P+2]=1; // seq number, low byte, we send only 1 ping at a time
-	i=0;
-	while(i<56){ 
-		buf[ICMP_DATA_P+i]=PINGPATTERN;
-		i++;
-	}
-	uint16_t ck=checksum(&buf[ICMP_TYPE_P], 56+8,0);
+    memset(buf + ICMP_DATA_P, PINGPATTERN, 56);
+	uint16_t ck=checksum(buf + ICMP_TYPE_P, 56+8,0);
 	buf[ICMP_CHECKSUM_H_P]=ck>>8;
 	buf[ICMP_CHECKSUM_L_P]=ck;
 	enc28j60PacketSend(98,buf);
 }
 
 void client_ntp_request(byte *buf,byte *ntpip,byte srcport) {
-	byte i=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=gwmacaddr[i]; // gw mac in local lan or host mac
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
+    setMACandIPs(buf, gwmacaddr, ntpip);
 	buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
 	buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-	fill_buf_p(&buf[IP_P],9,iphdr);
+	memcpy_P(buf + IP_P,iphdr,9);
 	buf[IP_TOTLEN_L_P]=0x4c;
 	buf[IP_PROTO_P]=IP_PROTO_UDP_V;
-	i=0;
-	while(i<4){
-		buf[IP_DST_P+i]=ntpip[i];
-		buf[IP_SRC_P+i]=ipaddr[i];
-		i++;
-	}
 	fill_ip_hdr_checksum(buf);
 	buf[UDP_DST_PORT_H_P]=0;
 	buf[UDP_DST_PORT_L_P]=0x7b; // ntp=123
@@ -405,13 +352,9 @@ void client_ntp_request(byte *buf,byte *ntpip,byte srcport) {
 	buf[UDP_LEN_L_P]=56; // fixed len
 	buf[UDP_CHECKSUM_H_P]=0;
 	buf[UDP_CHECKSUM_L_P]=0;
-	i=0;
-	while(i<48){ 
-		buf[UDP_DATA_P+i]=0;
-		i++;
-	}
-	fill_buf_p(&buf[UDP_DATA_P],10,ntpreqhdr);
-	uint16_t ck=checksum(&buf[IP_SRC_P], 16 + 48,1);
+    memset(buf + UDP_DATA_P, 0, 48);
+	memcpy_P(buf + UDP_DATA_P,ntpreqhdr,10);
+	uint16_t ck=checksum(buf + IP_SRC_P, 16 + 48,1);
 	buf[UDP_CHECKSUM_H_P]=ck>>8;
 	buf[UDP_CHECKSUM_L_P]=ck;
 	enc28j60PacketSend(90,buf);
@@ -427,23 +370,12 @@ byte client_ntp_process_answer(byte *buf,uint32_t *time,byte dstport_l){
 }
 
 void send_udp_prepare(byte *buf,uint16_t sport, byte *dip, uint16_t dport) {
-	byte i=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=gwmacaddr[i]; // gw mac in local lan or host mac
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
+    setMACandIPs(buf, gwmacaddr, dip);
 	buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
 	buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-	fill_buf_p(&buf[IP_P],9,iphdr);
+	memcpy_P(buf + IP_P,iphdr,9);
 	buf[IP_TOTLEN_H_P]=0;
 	buf[IP_PROTO_P]=IP_PROTO_UDP_V;
-	i=0;
-	while(i<4){
-		buf[IP_DST_P+i]=dip[i];
-		buf[IP_SRC_P+i]=ipaddr[i];
-		i++;
-	}
 	buf[UDP_DST_PORT_H_P]=(dport>>8);
 	buf[UDP_DST_PORT_L_P]=0xff&dport; 
 	buf[UDP_SRC_PORT_H_P]=(sport>>8);
@@ -457,7 +389,7 @@ void send_udp_transmit(byte *buf,byte datalen) {
 	buf[IP_TOTLEN_L_P]=IP_HEADER_LEN+UDP_HEADER_LEN+datalen;
 	fill_ip_hdr_checksum(buf);
 	buf[UDP_LEN_L_P]=UDP_HEADER_LEN+datalen;
-	uint16_t ck=checksum(&buf[IP_SRC_P], 16 + datalen,1);
+	uint16_t ck=checksum(buf + IP_SRC_P, 16 + datalen,1);
 	buf[UDP_CHECKSUM_H_P]=ck>>8;
 	buf[UDP_CHECKSUM_L_P]=ck;
 	enc28j60PacketSend(UDP_HEADER_LEN+IP_HEADER_LEN+ETH_HEADER_LEN+datalen,buf);
@@ -465,37 +397,19 @@ void send_udp_transmit(byte *buf,byte datalen) {
 
 void send_udp(byte *buf,char *data,byte datalen,uint16_t sport, byte *dip, uint16_t dport) {
 	send_udp_prepare(buf,sport, dip, dport);
-	byte i=0;
 	if (datalen>220)
 		datalen=220;
-	i=0;
-	while(i<datalen){
-		buf[UDP_DATA_P+i]=data[i];
-		i++;
-	}
+    memcpy(buf + UDP_DATA_P, data, datalen);
 	send_udp_transmit(buf,datalen);
 }
 
 void send_wol(byte *buf,byte *wolmac) {
-	byte i=0;
-	byte m=0;
-	byte pos=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=0xff;
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
+    setMACandIPs(buf, anyMac, ipaddr);
 	buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
 	buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-	fill_buf_p(&buf[IP_P],9,iphdr);
+	memcpy_P(buf + IP_P,iphdr,9);
 	buf[IP_TOTLEN_L_P]=0x54;
 	buf[IP_PROTO_P]=IP_PROTO_ICMP_V;
-	i=0;
-	while(i<4){
-		buf[IP_SRC_P+i]=ipaddr[i];
-		buf[IP_DST_P+i]=0xff;
-		i++;
-	}
 	fill_ip_hdr_checksum(buf);
 	buf[UDP_DST_PORT_H_P]=0;
 	buf[UDP_DST_PORT_L_P]=0x9; // wol=normally 9
@@ -505,23 +419,15 @@ void send_wol(byte *buf,byte *wolmac) {
 	buf[UDP_LEN_L_P]=110; // fixed len
 	buf[UDP_CHECKSUM_H_P]=0;
 	buf[UDP_CHECKSUM_L_P]=0;
-	i=0;
-	while(i<6){ 
-		buf[UDP_DATA_P+i]=0xff;
-		i++;
-	}
-	m=0;
-	pos=UDP_DATA_P+i;
+    copy6(buf + UDP_DATA_P, anyMac);
+	byte pos=UDP_DATA_P+6;
+	byte m=0;
 	while (m<16){
-		i=0;
-		while(i<6){ 
-			buf[pos]=wolmac[i];
-			i++;
-			pos++;
-		}
+        copy6(buf + pos, wolmac);
+        pos += 6;
 		m++;
 	}
-	uint16_t ck=checksum(&buf[IP_SRC_P], 16+ 102,1);
+	uint16_t ck=checksum(buf + IP_SRC_P, 16+ 102,1);
 	buf[UDP_CHECKSUM_H_P]=ck>>8;
 	buf[UDP_CHECKSUM_L_P]=ck;
 	enc28j60PacketSend(pos,buf);
@@ -529,27 +435,14 @@ void send_wol(byte *buf,byte *wolmac) {
 
 // make a arp request
 void client_arp_whohas(byte *buf,byte *ip_we_search) {
-	byte i=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=0xff;
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
+    setMACs(buf, anyMac);
 	buf[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
 	buf[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
-	fill_buf_p(&buf[ETH_ARP_P],8,arpreqhdr);
-	i=0;
-	while(i<6){
-		buf[ETH_ARP_SRC_MAC_P +i]=macaddr[i];
-		buf[ETH_ARP_DST_MAC_P+i]=0;
-		i++;
-	}
-	i=0;
-	while(i<4){
-		buf[ETH_ARP_DST_IP_P+i]=*(ip_we_search +i);
-		buf[ETH_ARP_SRC_IP_P+i]=ipaddr[i];
-		i++;
-	}
+	memcpy_P(buf + ETH_ARP_P,arpreqhdr,8);
+    memset(buf + ETH_ARP_DST_MAC_P, 0, 6);
+    copy6(buf + ETH_ARP_SRC_MAC_P, macaddr);
+    copy4(buf + ETH_ARP_DST_IP_P, ip_we_search);
+    copy4(buf + ETH_ARP_SRC_IP_P, ipaddr);
 	waitgwmac|=WGW_ACCEPT_ARP_REPLY;
 	enc28j60PacketSend(0x2a,buf);
 }
@@ -567,11 +460,7 @@ static byte client_store_gw_mac(byte *buf) {
 			return 0;
 		i++;
 	}
-	i=0;
-	while(i<6){
-		gwmacaddr[i]=buf[ETH_ARP_SRC_MAC_P +i];
-		i++;
-	}
+    copy6(gwmacaddr, buf + ETH_ARP_SRC_MAC_P);
 	return 1;
 }
 
@@ -581,50 +470,27 @@ static void client_gw_arp_refresh(void) {
 }
 
 void client_set_gwip(byte *gwipaddr) {
-	byte i=0;
 	waitgwmac=WGW_INITIAL_ARP; // causes an arp request in the packet loop
-	while(i<4){
-		gwip[i]=gwipaddr[i];
-		i++;
-	}
+    copy4(gwip, gwipaddr);
 }
 
 void client_tcp_set_serverip(byte *ipaddr) {
-	byte i=0;
-	while(i<4){
-		tcpsrvip[i]=ipaddr[i];
-		i++;
-	}
+    copy4(tcpsrvip, ipaddr);
 }
 
 static void client_syn(byte *buf,byte srcport,byte dstport_h,byte dstport_l) {
-	byte i=0;
-	while(i<6){
-		buf[ETH_DST_MAC +i]=gwmacaddr[i]; // gw mac in local lan or host mac
-		buf[ETH_SRC_MAC +i]=macaddr[i];
-		i++;
-	}
+    setMACandIPs(buf, gwmacaddr, tcpsrvip);
 	buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
 	buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-	fill_buf_p(&buf[IP_P],9,iphdr);
+	memcpy_P(buf + IP_P,iphdr,9);
 	buf[IP_TOTLEN_L_P]=44; // good for syn
 	buf[IP_PROTO_P]=IP_PROTO_TCP_V;
-	i=0;
-	while(i<4){
-		buf[IP_DST_P+i]=tcpsrvip[i];
-		buf[IP_SRC_P+i]=ipaddr[i];
-		i++;
-	}
 	fill_ip_hdr_checksum(buf);
 	buf[TCP_DST_PORT_H_P]=dstport_h;
 	buf[TCP_DST_PORT_L_P]=dstport_l;
 	buf[TCP_SRC_PORT_H_P]=TCPCLIENT_SRC_PORT_H;
 	buf[TCP_SRC_PORT_L_P]=srcport; // lower 8 bit of src port
-	i=0;
-	while(i<8){
-		buf[TCP_SEQ_H_P+i]=0;
-		i++;
-	}
+    memset(buf + TCP_SEQ_H_P, 0, 8);
 	buf[TCP_SEQ_H_P+2]= seqnum; 
 	seqnum+=3;
 	buf[TCP_HEADER_LEN_P]=0x60; // 0x60=24 len: (0x60>>4) * 4
@@ -639,7 +505,7 @@ static void client_syn(byte *buf,byte srcport,byte dstport_h,byte dstport_l) {
 	buf[TCP_OPTIONS_P+1]=4;
 	buf[TCP_OPTIONS_P+2]=(CLIENTMSS>>8);
 	buf[TCP_OPTIONS_P+3]=CLIENTMSS;
-	uint16_t ck=checksum(&buf[IP_SRC_P], 8 +TCP_HEADER_LEN_PLAIN+4,2);
+	uint16_t ck=checksum(buf + IP_SRC_P, 8 +TCP_HEADER_LEN_PLAIN+4,2);
 	buf[TCP_CHECKSUM_H_P]=ck>>8;
 	buf[TCP_CHECKSUM_L_P]=ck;
 	// 4 is the tcp mss option:
