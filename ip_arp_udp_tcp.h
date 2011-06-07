@@ -9,6 +9,8 @@
 #include "ip_config.h"
 #include <avr/pgmspace.h>
 
+extern void copy4 (uint8_t *dst, const uint8_t *src);
+extern void copy6 (uint8_t *dst, const uint8_t *src);
 extern void init_ip_arp_udp_tcp(uint8_t*,uint8_t*,uint16_t);
 // extern uint8_t eth_type_is_ip_and_my_ip(uint8_t*,uint16_t);
 extern void make_udp_reply_from_request(uint8_t*,char*,uint8_t,uint16_t);
@@ -26,7 +28,7 @@ extern void client_http_post(prog_char*, prog_char*, prog_char*,char*,void (*)(u
 extern void client_ntp_request(uint8_t*,uint8_t*,uint8_t );
 extern uint8_t client_ntp_process_answer(uint8_t*,uint32_t*,uint8_t);
 extern void send_udp_prepare(uint8_t*,uint16_t, uint8_t*, uint16_t);
-extern void send_udp_transmit(uint8_t*,uint8_t);
+extern void send_udp_transmit(uint8_t*,uint16_t);
 extern void send_udp(uint8_t*,char*,uint8_t,uint16_t, uint8_t*, uint16_t);
 extern void register_ping_rec_callback(void (*)(uint8_t*));
 extern void client_icmp_request(uint8_t*,uint8_t*);
@@ -96,7 +98,7 @@ public:
     	send_udp_prepare(buf, sport, dip, dport);
     }
 
-	void udpTransmit(uint8_t *buf,uint8_t len){
+	void udpTransmit(uint8_t *buf,uint16_t len){
     	send_udp_transmit(buf, len);
     }
 

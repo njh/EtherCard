@@ -75,10 +75,10 @@ static uint16_t checksum(byte *buf, uint16_t len,byte type){
 	return (uint16_t) sum ^ 0xFFFF;
 }
 
-static void copy4 (byte *dst, const byte *src) {
+void copy4 (byte *dst, const byte *src) {
     memcpy(dst, src, 4);
 }
-static void copy6 (byte *dst, const byte *src) {
+void copy6 (byte *dst, const byte *src) {
     memcpy(dst, src, 6);
 }
 static void setMACs (byte *buf, const byte *mac) {
@@ -212,14 +212,14 @@ void make_echo_reply_from_request(byte *buf,uint16_t len) {
 void make_udp_reply_from_request(byte *buf,char *data,byte datalen,uint16_t port) {
 	if (datalen>220)
 		datalen=220;
-	buf[IP_TOTLEN_H_P]=0;
+    buf[IP_TOTLEN_H_P]=(IP_HEADER_LEN+UDP_HEADER_LEN+datalen) >>8;
 	buf[IP_TOTLEN_L_P]=IP_HEADER_LEN+UDP_HEADER_LEN+datalen;
 	make_eth_ip(buf);
 	buf[UDP_DST_PORT_H_P]=buf[UDP_SRC_PORT_H_P];
 	buf[UDP_DST_PORT_L_P]= buf[UDP_SRC_PORT_L_P];
 	buf[UDP_SRC_PORT_H_P]=port>>8;
 	buf[UDP_SRC_PORT_L_P]=port;
-	buf[UDP_LEN_H_P]=0;
+    buf[UDP_LEN_H_P]=(UDP_HEADER_LEN+datalen) >> 8;
 	buf[UDP_LEN_L_P]=UDP_HEADER_LEN+datalen;
 	buf[UDP_CHECKSUM_H_P]=0;
 	buf[UDP_CHECKSUM_L_P]=0;
@@ -385,9 +385,11 @@ void send_udp_prepare(byte *buf,uint16_t sport, byte *dip, uint16_t dport) {
 	buf[UDP_CHECKSUM_L_P]=0;
 }
 
-void send_udp_transmit(byte *buf,byte datalen) {
+void send_udp_transmit(byte *buf,word datalen) {
+    buf[IP_TOTLEN_H_P]=(IP_HEADER_LEN+UDP_HEADER_LEN+datalen) >> 8;
 	buf[IP_TOTLEN_L_P]=IP_HEADER_LEN+UDP_HEADER_LEN+datalen;
 	fill_ip_hdr_checksum(buf);
+    buf[UDP_LEN_H_P]=(UDP_HEADER_LEN+datalen) >>8;
 	buf[UDP_LEN_L_P]=UDP_HEADER_LEN+datalen;
 	uint16_t ck=checksum(buf + IP_SRC_P, 16 + datalen,1);
 	buf[UDP_CHECKSUM_H_P]=ck>>8;
