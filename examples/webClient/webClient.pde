@@ -4,7 +4,7 @@
 
 #include <EtherCard.h>
 
-// ethernet interface mac address
+// ethernet interface mac address, must be unique on the LAN
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 static byte buf[700];

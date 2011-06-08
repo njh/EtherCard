@@ -2,13 +2,14 @@
 //
 // Original author: Andrew Lindsay
 // Major rewrite and API overhaul by jcw, 2011-06-07
+//
+// Copyright: GPL V2
+// See http://www.gnu.org/licenses/gpl.html
 
 #include <EtherCard.h>
 
 #define DHCP_LED 9
 
-// Please modify the following lines. mac and ip have to be unique on your
-// local area network. You can not have the same numbers in two devices:
 static byte mymac[6] = { 0x54,0x55,0x58,0x12,0x34,0x56 };
 
 static byte buf[700];
