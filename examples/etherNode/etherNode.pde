@@ -31,7 +31,7 @@ struct Config {
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 // ethernet interface static IP address - CHANGE THIS to match your network!
-static byte myip[4] = { 192,168,178,203 };
+static byte myip[4] = { 192,168,1,203 };
 
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;

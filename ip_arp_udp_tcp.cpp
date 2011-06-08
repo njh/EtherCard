@@ -165,7 +165,7 @@ static void step_seq(byte *buf,uint16_t rel_ack_num,byte cp_seq) {
 	while(i>0){
 		rel_ack_num=buf[TCP_SEQ_H_P+i-1]+rel_ack_num;
 		tseq=buf[TCP_SEQACK_H_P+i-1];
-		buf[TCP_SEQACK_H_P+i-1]=0xff&rel_ack_num;
+		buf[TCP_SEQACK_H_P+i-1]=rel_ack_num;
 		if (cp_seq)
 			buf[TCP_SEQ_H_P+i-1]=tseq;
 		else
@@ -377,7 +377,7 @@ void send_udp_prepare(byte *buf,uint16_t sport, byte *dip, uint16_t dport) {
 	buf[IP_TOTLEN_H_P]=0;
 	buf[IP_PROTO_P]=IP_PROTO_UDP_V;
 	buf[UDP_DST_PORT_H_P]=(dport>>8);
-	buf[UDP_DST_PORT_L_P]=0xff&dport; 
+	buf[UDP_DST_PORT_L_P]=dport; 
 	buf[UDP_SRC_PORT_H_P]=(sport>>8);
 	buf[UDP_SRC_PORT_L_P]=sport; 
 	buf[UDP_LEN_H_P]=0;

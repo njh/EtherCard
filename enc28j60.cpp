@@ -8,9 +8,9 @@
 //
 // Mods bij jcw, 2010-05-20
 
+#include <WProgram.h>
 #include "enc28j60.h"
 #include "enc28j60_defs.h"
-#include <WProgram.h>
 
 static byte Enc28j60Bank;
 static int16_t gNextPacketPtr;
@@ -20,22 +20,22 @@ static int16_t gNextPacketPtr;
 
 void ENC28J60::spiInit() {
     const byte SPI_SS   = 10;
-    const byte SPI_MOSI	= 11;
-    const byte SPI_MISO	= 12;
-    const byte SPI_SCK	= 13;
+    const byte SPI_MOSI = 11;
+    const byte SPI_MISO = 12;
+    const byte SPI_SCK  = 13;
     
     pinMode(SPI_SS, OUTPUT);
     pinMode(SPI_MOSI, OUTPUT);
-	pinMode(SPI_SCK, OUTPUT);	
-	pinMode(SPI_MISO, INPUT);
-	
-	digitalWrite(SPI_MOSI, HIGH);
-	digitalWrite(SPI_MOSI, LOW);
-	digitalWrite(SPI_SCK, LOW);
+    pinMode(SPI_SCK, OUTPUT);   
+    pinMode(SPI_MISO, INPUT);
+    
+    digitalWrite(SPI_MOSI, HIGH);
+    digitalWrite(SPI_MOSI, LOW);
+    digitalWrite(SPI_SCK, LOW);
 
-    SPCR = (1<<SPE)|(1<<MSTR);
-    // SPCR = (1<<SPE)|(1<<MSTR) | (1<<SPR0);
-	SPSR |= (1<<SPI2X);
+    SPCR = bit(SPE) | bit(MSTR);
+    // SPCR = bit(SPE)| bit(MSTR) | bit(SPR0);
+    bitSet(SPSR, SPI2X);
 }
 
 static void enableChip() {

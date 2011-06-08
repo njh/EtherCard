@@ -24,15 +24,15 @@ extern uint8_t enc28j60linkup();
 
 class ENC28J60 {
 public:
-    void spiInit();
+    static void spiInit();
     
-    uint8_t initialize(uint8_t* macaddr)
+    static uint8_t initialize(uint8_t* macaddr)
         { return enc28j60Init(macaddr); }
     
-    void packetSend(uint8_t* packet, uint16_t len)
+    static void packetSend(uint8_t* packet, uint16_t len)
         { enc28j60PacketSend(len, packet); }
     
-    uint16_t packetReceive(uint8_t* packet, uint16_t maxlen)
+    static uint16_t packetReceive(uint8_t* packet, uint16_t maxlen)
         { return enc28j60PacketReceive(maxlen, packet); }
 };
 

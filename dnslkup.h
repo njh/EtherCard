@@ -16,7 +16,6 @@ extern uint8_t *dnslkup_getip();
 
 class DNS {
 public:
-    
 	void dnsRequest(uint8_t *buf,const prog_char *progmem_hostname){
     	dnslkup_request(buf, progmem_hostname);
     }

@@ -12,15 +12,14 @@
 #ifndef EtherCard_h
 #define EtherCard_h
 
-#include <inttypes.h>
-#include <avr/pgmspace.h>
+#include <WProgram.h>
 #include "enc28j60.h"
 #include "ip_config.h"
 #include "ip_arp_udp_tcp.h"
 #include "net.h"
+#include "dhcp.h"
 #include "dnslkup.h"
 #include "websrv_help_functions.h"
-#include <WProgram.h>
 
 class BufferFiller : public Print {
     uint8_t *start, *ptr;
@@ -37,7 +36,7 @@ public:
     virtual void write(uint8_t v) { *ptr++ = v; }
 };
 
-struct EtherCard : ENC28J60, TCPIP, DNS, WebUtil {
+struct EtherCard : ENC28J60, TCPIP, DNS, DHCP, WebUtil {
 
     // lookup a host name via DNS, returns 1 if ok or 0 if this timed out
     // use during setup, as this discards all incoming requests until it returns

@@ -2,7 +2,6 @@
 #include <stdarg.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
-#include <WProgram.h>
 
 void BufferFiller::emit_p(PGM_P fmt, ...) {
     va_list ap;

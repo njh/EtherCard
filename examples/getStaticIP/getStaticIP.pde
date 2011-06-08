@@ -9,9 +9,9 @@
 // ethernet interface mac address
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 // ethernet interface ip address
-static byte myip[4] = { 192,168,178,203 };
+static byte myip[4] = { 192,168,1,203 };
 // gateway ip address
-static byte gwip[4] = { 192,168,178,1 };
+static byte gwip[4] = { 192,168,1,1 };
 // remote website ip address and port
 static byte hisip[4] = { 80,190,241,133 };
 static word hisport = 80;
