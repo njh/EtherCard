@@ -30,9 +30,6 @@ struct Config {
 // ethernet interface mac address - must be unique on your network
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
-// ethernet interface static IP address - CHANGE THIS to match your network!
-static byte myip[4] = { 192,168,1,203 };
-
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;
 static char outCount = -1;
@@ -55,6 +52,7 @@ static byte next_msg;       // pointer to next rf12rcvd line
 static word msgs_rcvd;      // total number of lines received modulo 10,000
 
 EtherCard eth;
+DHCPinfo dhcp;
 
 static void loadConfig() {
     for (byte i = 0; i < sizeof config; ++i)
@@ -83,9 +81,14 @@ void setup(){
     Serial.println("\n[etherNode]");
 #endif
     loadConfig();
-    /* init ENC28J60, must be done after SPI has been properly set up! */
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, HTTP_PORT);
+    
+    // ENC28J60 inits must be done after SPI has been properly set up!
+    eth.dhcpInit(mymac, dhcp);
+    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf - 1)))
+        ;
+    eth.printIP("IP: ", dhcp.myip);
+    
+    eth.initIp(mymac, dhcp.myip, HTTP_PORT);
 }
 
 char okHeader[] PROGMEM = 

@@ -33,7 +33,8 @@ void setup () {
     eth.dhcpInit(mymac, dhcp);
     while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf - 1)))
         ;
-    Serial.println("DHCP ok.");
+    eth.printIP("IP: ", dhcp.myip);
+    eth.printIP("GW: ", dhcp.gwip);
     
     eth.initIp(mymac, dhcp.myip, 0);
     eth.clientSetGwIp(dhcp.gwip);

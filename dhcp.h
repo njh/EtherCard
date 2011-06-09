@@ -19,8 +19,9 @@ typedef struct {
     
 class DHCP {
 public:
-    static void dhcpInit (uint8_t* macaddr, DHCPinfo& dip);
+    static uint8_t dhcpInit (uint8_t* macaddr, DHCPinfo& dip);
     static uint8_t dhcpCheck (uint8_t* buf, uint16_t len);
+    static void printIP (const char* msg, uint8_t *buf);
 };
     
 #endif /* DHCP_H */

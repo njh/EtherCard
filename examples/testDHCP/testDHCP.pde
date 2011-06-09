@@ -10,21 +10,11 @@
 
 #define DHCP_LED 9
 
-static byte mymac[6] = { 0x54,0x55,0x58,0x12,0x34,0x56 };
+static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 static byte buf[700];
 static DHCPinfo dhcp;
 static EtherCard es;
-
-static void printIP (const char* msg, byte *buf) {
-    Serial.print(msg);
-    for (byte i = 0; i < 4; ++i) {
-        Serial.print( buf[i], DEC );
-        if (i < 3)
-            Serial.print('.');
-    }
-    Serial.println();
-}
 
 void setup(){
     Serial.begin(57600);
@@ -42,21 +32,20 @@ void setup(){
     Serial.println();
     
     es.spiInit();
-    if (es.initialize(mymac) == 0) 
-        Serial.println( "Failed to access ENC28J60");
-            
+
     Serial.println("Setting up DHCP");
-    es.dhcpInit(mymac, dhcp);
+    if (es.dhcpInit(mymac, dhcp) == 0) 
+        Serial.println( "Failed to access ENC28J60");
 }
 
 void loop(){
     word len = es.packetReceive(buf, sizeof buf - 1);
     
     if (es.dhcpCheck(buf, len)) {
-        printIP("My IP: ", dhcp.myip);
-        printIP("Netmask: ", dhcp.mymask);
-        printIP("DNS IP: ", dhcp.dnsip);
-        printIP("GW IP: ", dhcp.gwip);
+        es.printIP("My IP: ", dhcp.myip);
+        es.printIP("Netmask: ", dhcp.mymask);
+        es.printIP("DNS IP: ", dhcp.dnsip);
+        es.printIP("GW IP: ", dhcp.gwip);
 
         while (1)
             digitalWrite(DHCP_LED, HIGH);

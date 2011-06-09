@@ -180,14 +180,18 @@ static void check_for_dhcp_answer (byte *buf, word len) {
     }
 }
 
-void DHCP::dhcpInit (byte* macaddrin, DHCPinfo& di) {
-    macaddr = macaddrin;
-    infoPtr = &di;
-    currentXid = millis();
-    memset(infoPtr, 0, sizeof *infoPtr);
-    // Set a unique hostname, use Arduino-?? with last octet of mac address
-    hostname[8] = 'A' + (macaddr[6] >> 4);
-    hostname[9] = 'A' + (macaddr[6] & 0x0F);
+byte DHCP::dhcpInit (byte* macaddrin, DHCPinfo& di) {
+    byte rev = enc28j60Init(macaddrin);
+    if (rev != 0) {
+        macaddr = macaddrin;
+        infoPtr = &di;
+        currentXid = millis();
+        memset(infoPtr, 0, sizeof *infoPtr);
+        // Set a unique hostname, use Arduino-?? with last octet of mac address
+        hostname[8] = 'A' + (macaddr[6] >> 4);
+        hostname[9] = 'A' + (macaddr[6] & 0x0F);
+    }
+    return rev;
 }
 
 byte DHCP::dhcpCheck (byte *buf, word len) {
@@ -207,4 +211,14 @@ byte DHCP::dhcpCheck (byte *buf, word len) {
             ; //TODO wait for lease expiration
     }
     return infoPtr->myip[0] != 0;
+}
+
+void DHCP::printIP (const char* msg, byte *buf) {
+    Serial.print(msg);
+    for (byte i = 0; i < 4; ++i) {
+        Serial.print( buf[i], DEC );
+        if (i < 3)
+            Serial.print('.');
+    }
+    Serial.println();
 }

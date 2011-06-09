@@ -5,13 +5,12 @@
 
 // ethernet mac address - must be unique on your network
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
-// ethernet interface static IP address
-static byte myip[4] = { 192,168,178,203 };
 
 static byte buf[1000]; // tcp/ip send and receive buffer
+static BufferFiller bfill;
 
 EtherCard eth;
-BufferFiller bfill;
+DHCPinfo dhcp;
 
 char page[] PROGMEM =
 "HTTP/1.0 503 Service Unavailable\r\n"
@@ -35,8 +34,11 @@ char page[] PROGMEM =
 
 void setup(){
     eth.spiInit();
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, 80); // HTTP port
+    eth.dhcpInit(mymac, dhcp);
+    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf - 1)))
+        ;
+    eth.printIP("IP: ", dhcp.myip);
+    eth.initIp(mymac, dhcp.myip, 80); // HTTP port
 }
 
 void loop(){
