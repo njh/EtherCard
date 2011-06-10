@@ -35,7 +35,7 @@ char page[] PROGMEM =
 void setup(){
     eth.spiInit();
     eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf - 1)))
+    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf)))
         ;
     eth.printIP("IP: ", dhcp.myip);
     eth.initIp(mymac, dhcp.myip, 80); // HTTP port

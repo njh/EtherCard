@@ -39,7 +39,7 @@ void setup(){
 }
 
 void loop(){
-    word len = es.packetReceive(buf, sizeof buf - 1);
+    word len = es.packetReceive(buf, sizeof buf);
     
     if (es.dhcpCheck(buf, len)) {
         es.printIP("My IP: ", dhcp.myip);

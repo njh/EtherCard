@@ -15,6 +15,8 @@
 static byte Enc28j60Bank;
 static int16_t gNextPacketPtr;
 
+#define FULL_SPEED 1 // use full-speed SPI for bulk transfers
+
 //AT: Use pin 10 for nuelectronics.com compatible ethershield.
 #define ENC28J60_CONTROL_CS 8
 
@@ -82,26 +84,39 @@ static void WriteOp(byte op, byte address, byte data) {
 
 static void ReadBuffer(word len, byte* data) {
     enableChip();
+#if FULL_SPEED
+    byte spiSave = SPCR;
+    SPCR = bit(SPE) | bit(MSTR); // 8 MHz @ 16
+#endif
     sendSPI(ENC28J60_READ_BUF_MEM);
     while (len--) {
         sendSPI(0x00);
         *data++ = SPDR;
     }
+#if FULL_SPEED
+    SPCR = spiSave;
+#endif
     disableChip();
-    *data='\0';
 }
 
 static word ReadBufferWord() {
-    word result[2];
-    ReadBuffer(2, (byte*) result);
-    return result[0];
+    word result;
+    ReadBuffer(sizeof result, (byte*) &result);
+    return result;
 }
 
-static void WriteBuffer(word len, byte* data) {
+static void WriteBuffer(word len, const byte* data) {
     enableChip();
+#if FULL_SPEED
+    byte spiSave = SPCR;
+    SPCR = bit(SPE) | bit(MSTR); // 8 MHz @ 16
+#endif
     sendSPI(ENC28J60_WRITE_BUF_MEM);
     while (len--)
         sendSPI(*data++);
+#if FULL_SPEED
+    SPCR = spiSave;
+#endif
     disableChip();
 }
 
@@ -214,8 +229,10 @@ word enc28j60PacketReceive(word maxlen, byte* packet) {
         word rxstat  = ReadBufferWord();
         if ((rxstat & 0x80)==0)
             len=0;
-        else
+        else {
             ReadBuffer(len, packet);
+            packet[len] = 0;
+        }
         if (gNextPacketPtr - 1 > RXSTOP_INIT)
             WriteWord(ERXRDPTL, RXSTOP_INIT);
         else
@@ -223,4 +240,20 @@ word enc28j60PacketReceive(word maxlen, byte* packet) {
         WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
     }
     return len;
+}
+
+void enc28j60_copyout (byte page, const byte* data) {
+    word destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT);
+    if (destPos < SCRATCH_START || destPos > SCRATCH_LIMIT - SCRATCH_PAGE_SIZE)
+        return;
+    WriteWord(EWRPTL, destPos);
+    WriteBuffer(SCRATCH_PAGE_SIZE, data);
+}
+
+void enc28j60_copyin (byte page, byte* data) {
+    word destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT);
+    if (destPos < SCRATCH_START || destPos > SCRATCH_LIMIT - SCRATCH_PAGE_SIZE)
+        return;
+    WriteWord(ERDPTL, destPos);
+    ReadBuffer(SCRATCH_PAGE_SIZE, data);
 }

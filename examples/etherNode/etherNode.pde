@@ -84,7 +84,7 @@ void setup(){
     
     // ENC28J60 inits must be done after SPI has been properly set up!
     eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf - 1)))
+    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf)))
         ;
     eth.printIP("IP: ", dhcp.myip);
     

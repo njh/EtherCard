@@ -230,15 +230,17 @@
 // Buffer boundaries applied to internal 8K ram
 // the entire available packet buffer space is allocated
 
-// start with recbuf at 0 (must be zero! assumed in code)
-#define RXSTART_INIT     0x0
-// receive buffer end, must be odd number:
-#define RXSTOP_INIT      (0x1FFF-0x0600)
-// start TX buffer after RXSTOP_INIT with space for one full ethernet frame (~1500 bytes)
-#define TXSTART_INIT     (0x1FFF-0x0600+1)
-// stp TX buffer at end of mem
-#define TXSTOP_INIT      0x1FFF
+#define RXSTART_INIT        0x0000  // start of RX buffer, room for 2 packets
+#define RXSTOP_INIT         0x0BFF  // end of RX buffer
+                            
+#define TXSTART_INIT        0x0C00  // start of TX buffer, room for 1 packet
+#define TXSTOP_INIT         0x11FF  // end of TX buffer
+                            
+#define SCRATCH_START       0x1200  // start of scratch area
+#define SCRATCH_LIMIT       0x2000  // past end of area, i.e. 3.5 Kb 
+#define SCRATCH_PAGE_SHIFT  6       // addressing is in pages of 64 bytes
+#define SCRATCH_PAGE_SIZE   (1 << SCRATCH_PAGE_SHIFT)
 
 // max frame length which the conroller will accept:
 // (note: maximum ethernet frame length would be 1518)
-#define        MAX_FRAMELEN        1500        
+#define MAX_FRAMELEN      1500        

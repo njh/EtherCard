@@ -16,11 +16,13 @@
 #include <inttypes.h>
 
 // legacy
-extern uint8_t enc28j60Init(uint8_t* macaddr);
-extern void enc28j60PacketSend(uint16_t len, uint8_t* packet);
-extern uint8_t enc28j60hasRxPkt();
-extern uint16_t enc28j60PacketReceive(uint16_t maxlen, uint8_t* packet);
-extern uint8_t enc28j60linkup();
+extern uint8_t enc28j60Init (uint8_t* macaddr);
+extern void enc28j60PacketSend (uint16_t len, uint8_t* packet);
+extern uint8_t enc28j60hasRxPkt ();
+extern uint16_t enc28j60PacketReceive (uint16_t maxlen, uint8_t* packet);
+extern uint8_t enc28j60linkup ();
+extern void enc28j60_copyout (uint8_t page, const uint8_t* data);
+extern void enc28j60_copyin (uint8_t page, uint8_t* data);
 
 class ENC28J60 {
 public:
