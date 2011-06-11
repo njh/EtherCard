@@ -4,9 +4,26 @@
 //
 // Mods bij jcw, 2010-05-20
 
+#include "EtherCard.h"
 #include <ctype.h>
-#include "ip_config.h"
-#include <WProgram.h>
+
+void EtherCard::copy4 (byte *dst, const byte *src) {
+    memcpy(dst, src, 4);
+}
+
+void EtherCard::copy6 (byte *dst, const byte *src) {
+    memcpy(dst, src, 6);
+}
+
+void EtherCard::printIP (const char* msg, byte *buf) {
+    Serial.print(msg);
+    for (byte i = 0; i < 4; ++i) {
+        Serial.print( buf[i], DEC );
+        if (i < 3)
+            Serial.print('.');
+    }
+    Serial.println();
+}
 
 #ifdef FROMDECODE_websrv_help
 // search for a string of the form key=value in
@@ -15,7 +32,7 @@
 // The returned value is stored in strbuf. You must allocate
 // enough storage for strbuf, maxlen is the size of strbuf.
 // I.e the value it is declated with: strbuf[5]-> maxlen=5
-byte find_key_val(const char *str,char *strbuf, byte maxlen,const char *key)
+byte EtherCard::findKeyVal (const char *str,char *strbuf, byte maxlen,const char *key)
 {
     byte found=0;
     byte i=0;
@@ -66,21 +83,17 @@ unsigned char h2int(char c)
 }
 
 // decode a url string e.g "hello%20joe" or "hello+joe" becomes "hello joe"
-void urldecode(char *urlbuf)
+void EtherCard::urlDecode (char *urlbuf)
 {
     char c;
-    char *dst;
-    dst=urlbuf;
-    while ((c = *urlbuf)) {
+    char *dst = urlbuf;
+    while ((c = *urlbuf) != 0) {
         if (c == '+') c = ' ';
         if (c == '%') {
-            urlbuf++;
-            c = *urlbuf;
-            urlbuf++;
-            c = (h2int(c) << 4) | h2int(*urlbuf);
+            c = *++urlbuf;
+            c = (h2int(c) << 4) | h2int(*++urlbuf);
         }
-        *dst = c;
-        dst++;
+        *dst++ = c;
         urlbuf++;
     }
     *dst = '\0';
@@ -108,10 +121,10 @@ void int2h(char c, char *hstr)
 
 // there must be enoug space in urlbuf. In the worst case that is
 // 3 times the length of str
-void urlencode(char *str,char *urlbuf)
+void EtherCard::urlEncode (char *str,char *urlbuf)
 {
     char c;
-    while ((c = *str)) {
+    while ((c = *str) != 0) {
         if (c == ' '||isalnum(c)){ 
             if (c == ' '){ 
                 c = '+';
@@ -134,7 +147,7 @@ void urlencode(char *str,char *urlbuf)
 #endif // URLENCODE_websrv_help
 
 // parse a string an extract the IP to bytestr
-byte parse_ip(byte *bytestr,char *str)
+byte EtherCard::parseIp (byte *bytestr,char *str)
 {
     char *sptr;
     byte i=0;
@@ -166,7 +179,7 @@ byte parse_ip(byte *bytestr,char *str)
 }
 
 // take a byte string and convert it to a human readable display string  (base is 10 for ip and 16 for mac addr), len is 4 for IP addr and 6 for mac.
-void mk_net_str(char *resultstr,byte *bytestr,byte len,char separator,byte base)
+void EtherCard::makeNetStr (char *resultstr,byte *bytestr,byte len,char separator,byte base)
 {
     byte i=0;
     byte j=0;
@@ -182,4 +195,4 @@ void mk_net_str(char *resultstr,byte *bytestr,byte len,char separator,byte base)
     resultstr[j]='\0';
 }
 
-// end of websrv_help_functions.c
+// end of webutil.c

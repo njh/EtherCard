@@ -2,17 +2,12 @@
 // http://www.ietf.org/rfc/rfc2131.txt
 //
 // Author: Andrew Lindsay
-// Rewritten and optimized by Jean-Claude Wippler, http://jeelabs.org/
+// Rewritten and optimized by Jean-Claude Wippler, http:// (labs.org/
 //
 // Copyright: GPL V2
 // See http://www.gnu.org/licenses/gpl.html
 
-#include <WProgram.h>
-#include "ip_config.h"
-#include "net.h"
-#include "dhcp.h"
-#include "enc28j60.h"
-#include "ip_arp_udp_tcp.h"
+#include "EtherCard.h"
 
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTRESPONSE 2
@@ -70,12 +65,12 @@ static byte dhcp_ready(void) {
 
 // Main DHCP sending function, either DHCP_STATE_DISCOVER or DHCP_STATE_REQUEST
 static void dhcp_send (byte *buf, byte request) {
-    if (!enc28j60linkup())
+    if (!ENC28J60::isLinkUp())
         return;
     dhcpState = request == 0 ? DHCP_STATE_DISCOVER : DHCP_STATE_REQUEST;
     dhcptid_l++; // increment for next request, finally wrap
     memset(buf, 0, UDP_DATA_P + sizeof( DHCPdata ));
-    send_udp_prepare(buf,(DHCPCLIENT_SRC_PORT_H<<8)|dhcptid_l,infoPtr->myip,
+    EtherCard::udpPrepare(buf,(DHCPCLIENT_SRC_PORT_H<<8)|dhcptid_l,infoPtr->myip,
                                                         DHCP_DEST_PORT);
     memset(buf + ETH_DST_MAC, 0xFF, 6);
     buf[IP_TOTLEN_L_P]=0x82;
@@ -91,7 +86,7 @@ static void dhcp_send (byte *buf, byte request) {
     dhcpPtr->htype = 1;
     dhcpPtr->hlen = 6;
     dhcpPtr->xid = currentXid;
-    copy6(dhcpPtr->chaddr, macaddr);
+    EtherCard::copy6(dhcpPtr->chaddr, macaddr);
     
     // options defined as option, length, value
     bufPtr = buf + UDP_DATA_P + sizeof( DHCPdata );
@@ -129,25 +124,25 @@ static void dhcp_send (byte *buf, byte request) {
     // addToBuf(255);    // end option
 
     // packet size will be under 300 bytes
-    send_udp_transmit(buf, (bufPtr - buf) - UDP_DATA_P);
+    EtherCard::udpTransmit(buf, (bufPtr - buf) - UDP_DATA_P);
 }
 
 static void have_dhcpoffer (byte *buf, word len) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (buf + UDP_DATA_P);
     // Offered IP address is in yiaddr
-    copy4(infoPtr->myip, dhcpPtr->yiaddr);
+    EtherCard::copy4(infoPtr->myip, dhcpPtr->yiaddr);
     // Scan through variable length option list identifying options we want
     byte *ptr = (byte*) (dhcpPtr + 1) + 4;
     do {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:  copy4(infoPtr->mymask, ptr);
+            case 1:  EtherCard::copy4(infoPtr->mymask, ptr);
                      break;
-            case 3:  copy4(infoPtr->gwip, ptr);
+            case 3:  EtherCard::copy4(infoPtr->gwip, ptr);
                      break;
-            case 6:  copy4(infoPtr->dnsip, ptr);
+            case 6:  EtherCard::copy4(infoPtr->dnsip, ptr);
                      break;
             case 51: leaseTime = 0;
                      for (byte i = 0; i<4; i++)
@@ -180,8 +175,8 @@ static void check_for_dhcp_answer (byte *buf, word len) {
     }
 }
 
-byte DHCP::dhcpInit (byte* macaddrin, DHCPinfo& di) {
-    byte rev = enc28j60Init(macaddrin);
+byte EtherCard::dhcpInit (byte* macaddrin, DHCPinfo& di) {
+    byte rev = ENC28J60::initialize(macaddrin);
     if (rev != 0) {
         macaddr = macaddrin;
         infoPtr = &di;
@@ -194,7 +189,7 @@ byte DHCP::dhcpInit (byte* macaddrin, DHCPinfo& di) {
     return rev;
 }
 
-byte DHCP::dhcpCheck (byte *buf, word len) {
+byte EtherCard::dhcpCheck (byte *buf, word len) {
     if (macaddr == 0)
         return 0;
     switch (dhcpState) {
@@ -211,14 +206,4 @@ byte DHCP::dhcpCheck (byte *buf, word len) {
             ; //TODO wait for lease expiration
     }
     return infoPtr->myip[0] != 0;
-}
-
-void DHCP::printIP (const char* msg, byte *buf) {
-    Serial.print(msg);
-    for (byte i = 0; i < 4; ++i) {
-        Serial.print( buf[i], DEC );
-        if (i < 3)
-            Serial.print('.');
-    }
-    Serial.println();
 }

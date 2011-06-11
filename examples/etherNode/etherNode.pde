@@ -128,7 +128,7 @@ static void homePage(BufferFiller& buf) {
 
 static int getIntArg(const char* data, const char* key, int value =-1) {
     char temp[10];
-    if (find_key_val(data + 7, temp, sizeof temp, key) > 0)
+    if (eth.findKeyVal(data + 7, temp, sizeof temp, key) > 0)
         value = atoi(temp);
     return value;
 }

@@ -14,7 +14,7 @@
 #ifndef IP_CONFIG_H
 #define IP_CONFIG_H
 
-//------------- functions in ip_arp_udp_tcp.c --------------
+//------------- functions in tcpip.c --------------
 // an NTP client (ntp clock):
 #define NTP_client
 // a spontanious sending UDP client
@@ -38,7 +38,7 @@
 #define TCP_client
 
 //
-//------------- functions in websrv_help_functions.c --------------
+//------------- functions in webutil.c --------------
 //
 // functions to decode cgi-form data:
 #define FROMDECODE_websrv_help

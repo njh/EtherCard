@@ -15,27 +15,15 @@
 
 #include <inttypes.h>
 
-// legacy
-extern uint8_t enc28j60Init (uint8_t* macaddr);
-extern void enc28j60PacketSend (uint16_t len, uint8_t* packet);
-extern uint8_t enc28j60hasRxPkt ();
-extern uint16_t enc28j60PacketReceive (uint16_t maxlen, uint8_t* packet);
-extern uint8_t enc28j60linkup ();
-extern void enc28j60_copyout (uint8_t page, const uint8_t* data);
-extern void enc28j60_copyin (uint8_t page, uint8_t* data);
-
 class ENC28J60 {
 public:
-    static void spiInit();
-    
-    static uint8_t initialize(uint8_t* macaddr)
-        { return enc28j60Init(macaddr); }
-    
-    static void packetSend(uint8_t* packet, uint16_t len)
-        { enc28j60PacketSend(len, packet); }
-    
-    static uint16_t packetReceive(uint8_t* packet, uint16_t maxlen)
-        { return enc28j60PacketReceive(maxlen, packet); }
+  static void spiInit ();
+  static uint8_t initialize (uint8_t* macaddr);
+  static bool isLinkUp ();
+  static void packetSend (const uint8_t* packet, uint16_t len);
+  static uint16_t packetReceive (uint8_t* packet, uint16_t maxlen);
+  static void copyout (uint8_t page, const uint8_t* data);
+  static void copyin (uint8_t page, uint8_t* data);
 };
 
 #endif
