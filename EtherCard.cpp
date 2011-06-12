@@ -1,6 +1,5 @@
 #include <EtherCard.h>
 #include <stdarg.h>
-#include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 
 void BufferFiller::emit_p(PGM_P fmt, ...) {
@@ -43,9 +42,4 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         ptr += strlen((char*) ptr);
     }
     va_end(ap);
-}
-
-void BufferFiller::emit_raw(const char* s, byte len) {
-    memcpy(ptr, s, len);
-    ptr += len;
 }

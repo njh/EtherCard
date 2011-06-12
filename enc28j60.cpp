@@ -11,6 +11,8 @@
 #include <WProgram.h>
 #include "enc28j60.h"
 
+uint16_t gPacketBufferLength;
+
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
 // bank number, and Ethernet/MAC/PHY indicator bits.
@@ -403,7 +405,7 @@ bool ENC28J60::isLinkUp() {
     return (readPhyByte(PHSTAT2) >> 2) & 1;
 }
 
-void ENC28J60::packetSend(const byte* packet, word len) {
+void ENC28J60::packetSend(word len) {
     while (readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_TXRTS)
         if (readRegByte(EIR) & EIR_TXERIF) {
             writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
@@ -412,11 +414,11 @@ void ENC28J60::packetSend(const byte* packet, word len) {
     writeReg(EWRPT, TXSTART_INIT);
     writeReg(ETXND, TXSTART_INIT+len);
     writeOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
-    writeBuf(len, packet);
+    writeBuf(len, gPacketBuffer);
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 }
 
-word ENC28J60::packetReceive(byte* packet, word maxlen) {
+word ENC28J60::packetReceive() {
     word len = 0;
     if (readRegByte(EPKTCNT) > 0) {
         writeReg(ERDPT, gNextPacketPtr);
@@ -431,13 +433,13 @@ word ENC28J60::packetReceive(byte* packet, word maxlen) {
 
         gNextPacketPtr  = header.nextPacket;
         len = header.byteCount - 4; //remove the CRC count
-        if (len>maxlen-1)
-            len=maxlen-1;
+        if (len>gPacketBufferLength-1)
+            len=gPacketBufferLength-1;
         if ((header.status & 0x80)==0)
             len = 0;
         else
-            readBuf(len, packet);
-        packet[len] = 0;
+            readBuf(len, gPacketBuffer);
+        gPacketBuffer[len] = 0;
         if (gNextPacketPtr - 1 > RXSTOP_INIT)
             writeReg(ERXRDPT, RXSTOP_INIT);
         else

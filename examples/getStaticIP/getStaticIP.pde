@@ -16,14 +16,13 @@ static byte gwip[4] = { 192,168,1,1 };
 static byte hisip[4] = { 80,190,241,133 };
 static word hisport = 80;
 
-EtherCard eth;
+byte gPacketBuffer[300];   // a very small tcp/ip buffer is enough here
+EtherCard eth (sizeof gPacketBuffer);
 MilliTimer requestTimer;
-
-static byte buf[300];   // a very small tcp/ip buffer is enough here
 
 // called to fill in a request to send out to the client
 static word my_datafill_cb (byte fd) {
-    BufferFiller bfill = eth.tcpOffset(buf);
+    BufferFiller bfill = eth.tcpOffset();
     bfill.emit_p(PSTR("GET /blah HTTP/1.1\r\n"
                       "Host: jeefiles.equi4.com\r\n"
                       "\r\n"));
@@ -34,7 +33,7 @@ static word my_datafill_cb (byte fd) {
 static byte my_result_cb (byte fd, byte status, word off, word len) {
     Serial.print("<<< reply ");
     Serial.println((int) status);
-    Serial.print((const char*) buf + off);
+    Serial.print((const char*) gPacketBuffer + off);
     return 0;
 }
 
@@ -52,8 +51,8 @@ void setup () {
 }
 
 void loop () {
-    word len = eth.packetReceive(buf, sizeof buf);
-    word pos = eth.packetLoop(buf, len);
+    word len = eth.packetReceive();
+    word pos = eth.packetLoop(len);
     if (eth.clientWaitingGw())
         return;
     

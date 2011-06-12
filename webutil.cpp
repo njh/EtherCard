@@ -5,7 +5,6 @@
 // Mods bij jcw, 2010-05-20
 
 #include "EtherCard.h"
-#include <ctype.h>
 
 void EtherCard::copy4 (byte *dst, const byte *src) {
     memcpy(dst, src, 4);
@@ -25,7 +24,6 @@ void EtherCard::printIP (const char* msg, byte *buf) {
     Serial.println();
 }
 
-#ifdef FROMDECODE_websrv_help
 // search for a string of the form key=value in
 // a string that looks like q?xyz=abc&uvw=defgh HTTP/1.1\r\n
 //
@@ -99,10 +97,6 @@ void EtherCard::urlDecode (char *urlbuf)
     *dst = '\0';
 }
 
-#endif //  FROMDECODE_websrv_help
-
-#ifdef URLENCODE_websrv_help
-
 // convert a single character to a 2 digit hex str
 // a terminating '\0' is added
 void int2h(char c, char *hstr)
@@ -143,8 +137,6 @@ void EtherCard::urlEncode (char *str,char *urlbuf)
     }
     *urlbuf='\0';
 }
-
-#endif // URLENCODE_websrv_help
 
 // parse a string an extract the IP to bytestr
 byte EtherCard::parseIp (byte *bytestr,char *str)

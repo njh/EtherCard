@@ -8,6 +8,9 @@
 // See http://www.gnu.org/licenses/gpl.html
 
 #include "EtherCard.h"
+#include "net.h"
+
+#define gPB gPacketBuffer
 
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTRESPONSE 2
@@ -64,24 +67,24 @@ static byte dhcp_ready(void) {
 }
 
 // Main DHCP sending function, either DHCP_STATE_DISCOVER or DHCP_STATE_REQUEST
-static void dhcp_send (byte *buf, byte request) {
-    if (!ENC28J60::isLinkUp())
+static void dhcp_send (byte request) {
+    if (!EtherCard::isLinkUp())
         return;
     dhcpState = request == 0 ? DHCP_STATE_DISCOVER : DHCP_STATE_REQUEST;
     dhcptid_l++; // increment for next request, finally wrap
-    memset(buf, 0, UDP_DATA_P + sizeof( DHCPdata ));
-    EtherCard::udpPrepare(buf,(DHCPCLIENT_SRC_PORT_H<<8)|dhcptid_l,infoPtr->myip,
+    memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
+    EtherCard::udpPrepare((DHCPCLIENT_SRC_PORT_H<<8)|dhcptid_l,infoPtr->myip,
                                                         DHCP_DEST_PORT);
-    memset(buf + ETH_DST_MAC, 0xFF, 6);
-    buf[IP_TOTLEN_L_P]=0x82;
-    buf[IP_PROTO_P]=IP_PROTO_UDP_V;
-    memset(buf + IP_DST_P, 0xFF, 4);
-    buf[UDP_DST_PORT_L_P]=DHCP_SRC_PORT; 
-    buf[UDP_SRC_PORT_H_P]=0;
-    buf[UDP_SRC_PORT_L_P]=DHCP_DEST_PORT;
+    memset(gPB + ETH_DST_MAC, 0xFF, 6);
+    gPB[IP_TOTLEN_L_P]=0x82;
+    gPB[IP_PROTO_P]=IP_PROTO_UDP_V;
+    memset(gPB + IP_DST_P, 0xFF, 4);
+    gPB[UDP_DST_PORT_L_P]=DHCP_SRC_PORT; 
+    gPB[UDP_SRC_PORT_H_P]=0;
+    gPB[UDP_SRC_PORT_L_P]=DHCP_DEST_PORT;
     
     // Build DHCP Packet from buf[UDP_DATA_P]
-    DHCPdata *dhcpPtr = (DHCPdata*) (buf + UDP_DATA_P);
+    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     dhcpPtr->op = DHCP_BOOTREQUEST;
     dhcpPtr->htype = 1;
     dhcpPtr->hlen = 6;
@@ -89,7 +92,7 @@ static void dhcp_send (byte *buf, byte request) {
     EtherCard::copy6(dhcpPtr->chaddr, macaddr);
     
     // options defined as option, length, value
-    bufPtr = buf + UDP_DATA_P + sizeof( DHCPdata );
+    bufPtr = gPB + UDP_DATA_P + sizeof( DHCPdata );
     // DHCP magic cookie, followed by message type
     static byte cookie[] = { 99, 130, 83, 99, 53, 1 };
     addBytes(sizeof cookie, cookie);
@@ -124,12 +127,12 @@ static void dhcp_send (byte *buf, byte request) {
     // addToBuf(255);    // end option
 
     // packet size will be under 300 bytes
-    EtherCard::udpTransmit(buf, (bufPtr - buf) - UDP_DATA_P);
+    EtherCard::udpTransmit((bufPtr - gPB) - UDP_DATA_P);
 }
 
-static void have_dhcpoffer (byte *buf, word len) {
+static void have_dhcpoffer (word len) {
     // Map struct onto payload
-    DHCPdata *dhcpPtr = (DHCPdata*) (buf + UDP_DATA_P);
+    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     // Offered IP address is in yiaddr
     EtherCard::copy4(infoPtr->myip, dhcpPtr->yiaddr);
     // Scan through variable length option list identifying options we want
@@ -151,32 +154,32 @@ static void have_dhcpoffer (byte *buf, word len) {
                      break;
         }
         ptr += optionLen;
-    } while (ptr < buf + len);
-    dhcp_send(buf, 1);
+    } while (ptr < gPB + len);
+    dhcp_send(1);
 }
 
-static void have_dhcpack (byte *buf, word len) {
+static void have_dhcpack (word len) {
     dhcpState = DHCP_STATE_OK;
     leaseStart = millis();
 }
 
-static void check_for_dhcp_answer (byte *buf, word len) {
+static void check_for_dhcp_answer (word len) {
     // Map struct onto payload
-    DHCPdata *dhcpPtr = (DHCPdata*) (buf + UDP_DATA_P);
-    if (len >= 70 && buf[UDP_SRC_PORT_L_P] == DHCP_SRC_PORT &&
+    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+    if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SRC_PORT &&
             dhcpPtr->op == DHCP_BOOTRESPONSE && dhcpPtr->xid == currentXid ) {
         int optionIndex = UDP_DATA_P + sizeof( DHCPdata ) + 4;
-        if (buf[optionIndex] == 53) {
-            switch( buf[optionIndex+2] ) {
-                case DHCP_STATE_OFFER: have_dhcpoffer(buf, len); break;
-                case DHCP_STATE_OK:    have_dhcpack(buf, len); break;
+        if (gPB[optionIndex] == 53) {
+            switch( gPB[optionIndex+2] ) {
+                case DHCP_STATE_OFFER: have_dhcpoffer(len); break;
+                case DHCP_STATE_OK:    have_dhcpack(len); break;
             }
         }
     }
 }
 
 byte EtherCard::dhcpInit (byte* macaddrin, DHCPinfo& di) {
-    byte rev = ENC28J60::initialize(macaddrin);
+    byte rev = initialize(macaddrin);
     if (rev != 0) {
         macaddr = macaddrin;
         infoPtr = &di;
@@ -189,17 +192,17 @@ byte EtherCard::dhcpInit (byte* macaddrin, DHCPinfo& di) {
     return rev;
 }
 
-byte EtherCard::dhcpCheck (byte *buf, word len) {
+byte EtherCard::dhcpCheck (word len) {
     if (macaddr == 0)
         return 0;
     switch (dhcpState) {
         case DHCP_STATE_INIT:
         case DHCP_STATE_RENEW:
-            dhcp_send(buf, 0);
+            dhcp_send(0);
             break;
         case DHCP_STATE_DISCOVER:
         case DHCP_STATE_REQUEST:
-            check_for_dhcp_answer(buf, len);
+            check_for_dhcp_answer(len);
             //TODO resend request on timeout
             break;
         case DHCP_STATE_OK:

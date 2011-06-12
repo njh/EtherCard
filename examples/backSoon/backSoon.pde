@@ -6,10 +6,10 @@
 // ethernet mac address - must be unique on your network
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
-static byte buf[1000]; // tcp/ip send and receive buffer
+byte gPacketBuffer[1000]; // tcp/ip send and receive buffer
 static BufferFiller bfill;
 
-EtherCard eth;
+EtherCard eth (sizeof gPacketBuffer);
 DHCPinfo dhcp;
 
 char page[] PROGMEM =
@@ -35,19 +35,19 @@ char page[] PROGMEM =
 void setup(){
     eth.spiInit();
     eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf)))
+    while (!eth.dhcpCheck(eth.packetReceive()))
         ;
     eth.printIP("IP: ", dhcp.myip);
     eth.initIp(mymac, dhcp.myip, 80); // HTTP port
 }
 
 void loop(){
-    word len = eth.packetReceive(buf, sizeof buf);
-    word pos = eth.packetLoop(buf, len);
+    word len = eth.packetReceive();
+    word pos = eth.packetLoop(len);
     
     if (pos) {
-        bfill = eth.tcpOffset(buf);
+        bfill = eth.tcpOffset();
         bfill.emit_p(page);
-        eth.httpServerReply(buf, bfill.position());
+        eth.httpServerReply(bfill.position());
     }
 }

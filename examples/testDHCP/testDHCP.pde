@@ -12,9 +12,9 @@
 
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
-static byte buf[700];
+byte gPacketBuffer[700];
+static EtherCard eth (sizeof gPacketBuffer);
 static DHCPinfo dhcp;
-static EtherCard eth;
 
 void setup(){
     Serial.begin(57600);
@@ -35,13 +35,13 @@ void setup(){
 
     Serial.println("Setting up DHCP");
     if (eth.dhcpInit(mymac, dhcp) == 0) 
-        Serial.println( "Failed to access ENC28J60");
+        Serial.println( "Failed to access Ethernet controller");
 }
 
 void loop(){
-    word len = eth.packetReceive(buf, sizeof buf);
+    word len = eth.packetReceive();
     
-    if (eth.dhcpCheck(buf, len)) {
+    if (eth.dhcpCheck(len)) {
         eth.printIP("My IP: ", dhcp.myip);
         eth.printIP("Netmask: ", dhcp.mymask);
         eth.printIP("DNS IP: ", dhcp.dnsip);

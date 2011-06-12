@@ -17,17 +17,16 @@ static char hisname[] PROGMEM = "jeefiles.equi4.com";
 
 #define REQUEST_RATE 5000 // milliseconds
 
-EtherCard eth;
+byte gPacketBuffer[300];   // a very small tcp/ip buffer is enough here
+EtherCard eth (sizeof gPacketBuffer);
 MilliTimer requestTimer;
-
-static byte buf[300];   // a very small tcp/ip buffer is enough here
 
 // called when the client request is complete
 static void my_result_cb (byte status, word off, word len) {
     Serial.print("<<< ");
     Serial.print(REQUEST_RATE - requestTimer.remaining());
     Serial.println(" ms");
-    Serial.print((const char*) buf + off);
+    Serial.print((const char*) gPacketBuffer + off);
 }
 
 void setup () {
@@ -39,14 +38,14 @@ void setup () {
     eth.initIp(mymac, myip, 0);
     eth.clientSetGwIp(gwip);    // outgoing requests need a gateway
 
-    if (!eth.dnsLookup(hisname, buf, sizeof buf))
+    if (!eth.dnsLookup(hisname))
         Serial.println("DNS lookup failed");
     
     requestTimer.set(1); // send first request as soon as possible
 }
 
 void loop () {
-    eth.packetLoop(buf, eth.packetReceive(buf, sizeof buf));
+    eth.packetLoop(eth.packetReceive());
     
     if (requestTimer.poll(REQUEST_RATE)) {
         Serial.println(">>> REQ");

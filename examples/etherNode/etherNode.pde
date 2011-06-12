@@ -1,4 +1,4 @@
-// Arduino demo sketch for testing RFM12B + ENC28J60 ethernet
+// Arduino demo sketch for testing RFM12B + ethernet
 // Listens for RF12 messages and displays valid messages on a webpage
 // Memory usage exceeds 1K, so use Atmega328 or decrease history/buffers
 //
@@ -34,16 +34,9 @@ static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 static byte outBuf[RF12_MAXDATA], outDest;
 static char outCount = -1;
 
-// listen port for tcp/www:
-#define HTTP_PORT 80
-
-// fixed RF12 settings
-#define MYNODE 31
-
 #define NUM_MESSAGES  10    // Number of messages saved in history
 #define MESSAGE_TRUNC 15    // Truncate message payload to reduce memory use
 
-static byte buf[1000];      // tcp/ip send and receive buffer
 static BufferFiller bfill;  // used as cursor while filling the buffer
 
 static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; //history record
@@ -51,7 +44,8 @@ static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
 static byte next_msg;       // pointer to next rf12rcvd line
 static word msgs_rcvd;      // total number of lines received modulo 10,000
 
-EtherCard eth;
+byte gPacketBuffer[1000];   // tcp/ip send and receive buffer
+EtherCard eth (sizeof gPacketBuffer);
 DHCPinfo dhcp;
 
 static void loadConfig() {
@@ -67,7 +61,7 @@ static void loadConfig() {
     byte freq = config.band == 4 ? RF12_433MHZ :
                 config.band == 8 ? RF12_868MHZ :
                                    RF12_915MHZ;
-    rf12_initialize(MYNODE, freq, config.group);
+    rf12_initialize(31, freq, config.group);
 }
 
 static void saveConfig() {
@@ -76,19 +70,16 @@ static void saveConfig() {
 }
 
 void setup(){
-#if DEBUG
     Serial.begin(57600);
     Serial.println("\n[etherNode]");
-#endif
     loadConfig();
     
-    // ENC28J60 inits must be done after SPI has been properly set up!
     eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf)))
+    while (!eth.dhcpCheck(eth.packetReceive()))
         ;
     eth.printIP("IP: ", dhcp.myip);
     
-    eth.initIp(mymac, dhcp.myip, HTTP_PORT);
+    eth.initIp(mymac, dhcp.myip, 80);
 }
 
 char okHeader[] PROGMEM = 
@@ -223,13 +214,12 @@ static void sendPage(const char* data, BufferFiller& buf) {
 }
 
 void loop(){
-    word len = eth.packetReceive(buf, sizeof buf);
-    // ENC28J60 loop runner: handle ping and wait for a tcp packet
-    word pos = eth.packetLoop(buf,len);
+    word len = eth.packetReceive();
+    word pos = eth.packetLoop(len);
     // check if valid tcp data is received
     if (pos) {
-        bfill = eth.tcpOffset(buf);
-        char* data = (char *) buf + pos;
+        bfill = eth.tcpOffset();
+        char* data = (char *) gPacketBuffer + pos;
 #if DEBUG
         Serial.println(data);
 #endif
@@ -246,7 +236,7 @@ void loop(){
                 "Content-Type: text/html\r\n"
                 "\r\n"
                 "<h1>401 Unauthorized</h1>"));  
-        eth.httpServerReply(buf,bfill.position()); // send web page data
+        eth.httpServerReply(bfill.position()); // send web page data
     }
 
     // RFM12 loop runner, don't report acks

@@ -7,9 +7,9 @@
 // ethernet interface mac address, must be unique on the LAN
 static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
-static byte buf[700];
+byte gPacketBuffer[700];
+static EtherCard eth (sizeof gPacketBuffer);
 static DHCPinfo dhcp;
-static EtherCard eth;
 static uint32_t timer;
 
 static char hisname[] PROGMEM = "www.google.com";
@@ -17,8 +17,8 @@ static char hisname[] PROGMEM = "www.google.com";
 // called when the client request is complete
 static void my_callback (byte status, word off, word len) {
     Serial.println(">>>");
-    buf[off+300] = 0;
-    Serial.print((const char*) buf + off);
+    gPacketBuffer[off+300] = 0;
+    Serial.print((const char*) gPacketBuffer + off);
     Serial.println("...");
 }
 
@@ -27,11 +27,11 @@ void setup () {
     Serial.println("\n[webClient]");
     
     eth.spiInit();
-    Serial.print("ENC28J60 rev ");
+    Serial.print("Ethernet controller rev ");
     Serial.println(eth.initialize(mymac), HEX);
     
     eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(buf, eth.packetReceive(buf, sizeof buf)))
+    while (!eth.dhcpCheck(eth.packetReceive()))
         ;
     eth.printIP("IP: ", dhcp.myip);
     eth.printIP("GW: ", dhcp.gwip);
@@ -39,13 +39,13 @@ void setup () {
     eth.initIp(mymac, dhcp.myip, 0);
     eth.clientSetGwIp(dhcp.gwip);
 
-    if (eth.dnsLookup(hisname, buf, sizeof buf))
+    if (eth.dnsLookup(hisname))
         Serial.println("DNS ok.");
 }
 
 void loop () {
-    word len = eth.packetReceive(buf, sizeof buf);
-    word pos = eth.packetLoop(buf, len);
+    word len = eth.packetReceive();
+    word pos = eth.packetLoop(len);
     
     if (millis() > timer) {
         timer = millis() + 5000;
