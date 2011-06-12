@@ -12,45 +12,43 @@ static EtherCard eth (sizeof gPacketBuffer);
 static DHCPinfo dhcp;
 static uint32_t timer;
 
-static char hisname[] PROGMEM = "www.google.com";
+static char website[] PROGMEM = "www.google.com";
 
 // called when the client request is complete
 static void my_callback (byte status, word off, word len) {
-    Serial.println(">>>");
-    gPacketBuffer[off+300] = 0;
-    Serial.print((const char*) gPacketBuffer + off);
-    Serial.println("...");
+  Serial.println(">>>");
+  gPacketBuffer[off+300] = 0;
+  Serial.print((const char*) gPacketBuffer + off);
+  Serial.println("...");
 }
 
 void setup () {
-    Serial.begin(57600);
-    Serial.println("\n[webClient]");
-    
-    eth.spiInit();
-    Serial.print("Ethernet controller rev ");
-    Serial.println(eth.initialize(mymac), HEX);
-    
-    eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(eth.packetReceive()))
-        ;
-    eth.printIP("IP: ", dhcp.myip);
-    eth.printIP("GW: ", dhcp.gwip);
-    
-    eth.initIp(mymac, dhcp.myip, 0);
-    eth.clientSetGwIp(dhcp.gwip);
+  Serial.begin(57600);
+  Serial.println("\n[webClient]");
+  
+  eth.spiInit();
+  Serial.print("Ethernet controller rev ");
+  Serial.println(eth.dhcpInit(mymac, dhcp), HEX);
+  while (!eth.dhcpCheck(eth.packetReceive()))
+      ;
+  eth.printIP("IP: ", dhcp.myip);
+  eth.printIP("GW: ", dhcp.gwip);
+  
+  eth.initIp(mymac, dhcp.myip, 0);
+  eth.clientSetGwIp(dhcp.gwip);
 
-    if (eth.dnsLookup(hisname))
-        Serial.println("DNS ok.");
+  if (eth.dnsLookup(website))
+    eth.printIP("Website: ", eth.dnsGetIp());
 }
 
 void loop () {
-    word len = eth.packetReceive();
-    word pos = eth.packetLoop(len);
-    
-    if (millis() > timer) {
-        timer = millis() + 5000;
-        Serial.println();
-        Serial.print("<<< REQ ");
-        eth.browseUrl(PSTR("/foo/"), "bar", hisname, my_callback);
-    }
+  word len = eth.packetReceive();
+  word pos = eth.packetLoop(len);
+  
+  if (millis() > timer) {
+    timer = millis() + 5000;
+    Serial.println();
+    Serial.print("<<< REQ ");
+    eth.browseUrl(PSTR("/foo/"), "bar", website, my_callback);
+  }
 }

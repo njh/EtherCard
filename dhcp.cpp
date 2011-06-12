@@ -44,12 +44,13 @@ static byte *macaddr;
 static DHCPinfo *infoPtr;
 
 static byte dhcpState;
-static byte dhcptid_l; // a counter for transaction ID
 static char hostname[] = "Arduino-00";
 static uint32_t currentXid;
 static uint32_t leaseStart;
 static uint32_t leaseTime;
 static byte* bufPtr;
+
+static const byte allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 static void addToBuf (byte b) {
     *bufPtr++ = b;
@@ -70,18 +71,13 @@ static byte dhcp_ready(void) {
 static void dhcp_send (byte request) {
     if (!EtherCard::isLinkUp())
         return;
-    dhcpState = request == 0 ? DHCP_STATE_DISCOVER : DHCP_STATE_REQUEST;
-    dhcptid_l++; // increment for next request, finally wrap
+    dhcpState = request;
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
-    EtherCard::udpPrepare((DHCPCLIENT_SRC_PORT_H<<8)|dhcptid_l,infoPtr->myip,
-                                                        DHCP_DEST_PORT);
-    memset(gPB + ETH_DST_MAC, 0xFF, 6);
+    EtherCard::udpPrepare(DHCP_DEST_PORT, infoPtr->myip, DHCP_SRC_PORT);
+    EtherCard::copy6(gPB + ETH_DST_MAC, allOnes);
     gPB[IP_TOTLEN_L_P]=0x82;
     gPB[IP_PROTO_P]=IP_PROTO_UDP_V;
-    memset(gPB + IP_DST_P, 0xFF, 4);
-    gPB[UDP_DST_PORT_L_P]=DHCP_SRC_PORT; 
-    gPB[UDP_SRC_PORT_H_P]=0;
-    gPB[UDP_SRC_PORT_L_P]=DHCP_DEST_PORT;
+    EtherCard::copy4(gPB + IP_DST_P, allOnes);
     
     // Build DHCP Packet from buf[UDP_DATA_P]
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
@@ -155,7 +151,7 @@ static void have_dhcpoffer (word len) {
         }
         ptr += optionLen;
     } while (ptr < gPB + len);
-    dhcp_send(1);
+    dhcp_send(DHCP_STATE_REQUEST);
 }
 
 static void have_dhcpack (word len) {
@@ -198,7 +194,7 @@ byte EtherCard::dhcpCheck (word len) {
     switch (dhcpState) {
         case DHCP_STATE_INIT:
         case DHCP_STATE_RENEW:
-            dhcp_send(0);
+            dhcp_send(DHCP_STATE_DISCOVER);
             break;
         case DHCP_STATE_DISCOVER:
         case DHCP_STATE_REQUEST:

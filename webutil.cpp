@@ -14,7 +14,7 @@ void EtherCard::copy6 (byte *dst, const byte *src) {
     memcpy(dst, src, 6);
 }
 
-void EtherCard::printIP (const char* msg, byte *buf) {
+void EtherCard::printIP (const char* msg, const byte *buf) {
     Serial.print(msg);
     for (byte i = 0; i < 4; ++i) {
         Serial.print( buf[i], DEC );

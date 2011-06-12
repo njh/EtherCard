@@ -57,22 +57,22 @@ static byte seqnum = 0xa; // my initial tcp sequence number
 const char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 };
 const char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
 const char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
-const byte anyMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+const byte allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 static void fill_checksum(byte dest, byte off, word len,byte type) {
   const byte* ptr = gPB + off;
   uint32_t sum = type==1 ? IP_PROTO_UDP_V+len-8 :
                   type==2 ? IP_PROTO_TCP_V+len-8 : 0;
   while(len >1) {
-    sum += 0xFFFF & (((uint32_t)*ptr<<8)|*(ptr+1));
+    sum += (word) (((uint32_t)*ptr<<8)|*(ptr+1));
     ptr+=2;
     len-=2;
   }
   if (len)
     sum += ((uint32_t)*ptr)<<8;
   while (sum>>16)
-    sum = (sum & 0xFFFF)+(sum >> 16);
-  word ck = (word) sum ^ 0xFFFF;
+    sum = (word) sum + (sum >> 16);
+  word ck = ~ (word) sum;
   gPB[dest] = ck>>8;
   gPB[dest+1] = ck;
 }
@@ -95,29 +95,21 @@ void EtherCard::initIp (byte *mymac,byte *myip,word port) {
   copy6(macaddr, mymac);
 }
 
-static byte check_ip_message_is_from(byte *ip) {
-  byte i=0;
-  while(i<4) {
-    if (gPB[IP_SRC_P+i]!=ip[i])
-      return 0;
-    i++;
-  }
-  return 1;
+static byte check_ip_message_is_from(const byte *ip) {
+  return memcmp(gPB + IP_SRC_P, ip, 4) == 0;
 }
 
 static byte eth_type_is_arp_and_my_ip(word len) {
-  if (len<41 || gPB[ETH_TYPE_H_P] != ETHTYPE_ARP_H_V || 
-                gPB[ETH_TYPE_L_P] != ETHTYPE_ARP_L_V)
-      return 0;
-  return memcmp(gPB + ETH_ARP_DST_IP_P, ipaddr, 4) == 0;
+  return len >= 41 && gPB[ETH_TYPE_H_P] == ETHTYPE_ARP_H_V &&
+                      gPB[ETH_TYPE_L_P] == ETHTYPE_ARP_L_V &&
+                      memcmp(gPB + ETH_ARP_DST_IP_P, ipaddr, 4) == 0;
 }
 
 static byte eth_type_is_ip_and_my_ip(word len) {
-  if (len<42 || gPB[ETH_TYPE_H_P]!=ETHTYPE_IP_H_V || 
-                gPB[ETH_TYPE_L_P]!=ETHTYPE_IP_L_V ||
-                gPB[IP_HEADER_LEN_VER_P]!=0x45)
-      return 0;
-  return memcmp(gPB + IP_DST_P, ipaddr, 4) == 0;
+  return len >= 42 && gPB[ETH_TYPE_H_P] == ETHTYPE_IP_H_V &&
+                      gPB[ETH_TYPE_L_P] == ETHTYPE_IP_L_V &&
+                      gPB[IP_HEADER_LEN_VER_P] == 0x45 &&
+                      memcmp(gPB + IP_DST_P, ipaddr, 4) == 0;
 }
 
 static void fill_ip_hdr_checksum() {
@@ -154,13 +146,12 @@ static void step_seq(word rel_ack_num,byte cp_seq) {
 }
 
 static void make_tcphead(word rel_ack_num,byte cp_seq) {
-  byte i;
-  i = gPB[TCP_DST_PORT_H_P];
+  byte i = gPB[TCP_DST_PORT_H_P];
   gPB[TCP_DST_PORT_H_P] = gPB[TCP_SRC_PORT_H_P];
   gPB[TCP_SRC_PORT_H_P] = i;
-  i = gPB[TCP_DST_PORT_L_P];
+  byte j = gPB[TCP_DST_PORT_L_P];
   gPB[TCP_DST_PORT_L_P] = gPB[TCP_SRC_PORT_L_P];
-  gPB[TCP_SRC_PORT_L_P] = i;
+  gPB[TCP_SRC_PORT_L_P] = j;
   step_seq(rel_ack_num,cp_seq);
   gPB[TCP_CHECKSUM_H_P] = 0;
   gPB[TCP_CHECKSUM_L_P] = 0;
@@ -181,7 +172,7 @@ void make_arp_answer_from_request() {
 void make_echo_reply_from_request(word len) {
   make_eth_ip();
   gPB[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;
-  if (gPB[ICMP_CHECKSUM_P] > (0xff-0x08))
+  if (gPB[ICMP_CHECKSUM_P] > (0xFF-0x08))
       gPB[ICMP_CHECKSUM_P+1]++;
   gPB[ICMP_CHECKSUM_P] += 0x08;
   EtherCard::packetSend(len);
@@ -269,7 +260,7 @@ void EtherCard::httpServerReply (word dlen) {
   make_tcp_ack_with_data_noflags(dlen); // send data
 }
 
-void EtherCard::clientIcmpRequest(byte *destip) {
+void EtherCard::clientIcmpRequest(const byte *destip) {
   setMACandIPs(gwmacaddr, destip);
   gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
@@ -358,7 +349,7 @@ void EtherCard::sendUdp (char *data,byte datalen,word sport, byte *dip, word dpo
 }
 
 void EtherCard::sendWol (byte *wolmac) {
-  setMACandIPs(anyMac, ipaddr);
+  setMACandIPs(allOnes, ipaddr);
   gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
   memcpy_P(gPB + IP_P,iphdr,9);
@@ -373,7 +364,7 @@ void EtherCard::sendWol (byte *wolmac) {
   gPB[UDP_LEN_L_P] = 110; // fixed len
   gPB[UDP_CHECKSUM_H_P] = 0;
   gPB[UDP_CHECKSUM_L_P] = 0;
-  copy6(gPB + UDP_DATA_P, anyMac);
+  copy6(gPB + UDP_DATA_P, allOnes);
   byte pos = UDP_DATA_P;
   for (byte m = 0; m < 16; ++m) {
     pos += 6;
@@ -385,7 +376,7 @@ void EtherCard::sendWol (byte *wolmac) {
 
 // make a arp request
 static void client_arp_whohas(byte *ip_we_search) {
-  setMACs(anyMac);
+  setMACs(allOnes);
   gPB[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
   memcpy_P(gPB + ETH_ARP_P,arpreqhdr,8);
@@ -409,6 +400,7 @@ static byte client_store_gw_mac() {
 }
 
 static void client_gw_arp_refresh() {
+  //FIXME not used?
   if (waitgwmac & WGW_HAVE_GW_MAC)
     waitgwmac |= WGW_REFRESHING;
 }
@@ -530,7 +522,7 @@ void EtherCard::registerPingCallback (void (*callback)(byte *srcip)) {
   icmp_cb = callback;
 }
 
-byte EtherCard::packetLoopIcmpCheckReply (byte *ip_monitoredhost) {
+byte EtherCard::packetLoopIcmpCheckReply (const byte *ip_monitoredhost) {
   return gPB[IP_PROTO_P]==IP_PROTO_ICMP_V &&
           gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREPLY_V &&
            gPB[ICMP_DATA_P]== PINGPATTERN &&

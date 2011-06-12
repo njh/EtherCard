@@ -14,7 +14,8 @@
 #include <RF12.h>
 #include <avr/eeprom.h>
 
-#define DEBUG 1 // set to 1 to show incoming requests on serial port
+#define DEBUG   1   // set to 1 to display free RAM on web page
+#define SERIAL  0   // set to 1 to show incoming requests on serial port
 
 #define CONFIG_EEPROM_ADDR ((byte*) 0x10)
 
@@ -69,15 +70,27 @@ static void saveConfig() {
         eeprom_write_byte(CONFIG_EEPROM_ADDR + i, ((byte*) &config)[i]);
 }
 
+#if DEBUG
+static int freeRam () {
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
+#endif
+
 void setup(){
+#if SERIAL
     Serial.begin(57600);
     Serial.println("\n[etherNode]");
+#endif
     loadConfig();
     
     eth.dhcpInit(mymac, dhcp);
     while (!eth.dhcpCheck(eth.packetReceive()))
         ;
+#if SERIAL
     eth.printIP("IP: ", dhcp.myip);
+#endif
     
     eth.initIp(mymac, dhcp.myip, 80);
 }
@@ -115,6 +128,9 @@ static void homePage(BufferFiller& buf) {
     buf.emit_p(PSTR(
         "</pre>"
         "Uptime is $D$D:$D$D:$D$D"), h/10, h%10, m/10, m%10, s/10, s%10);
+#if DEBUG
+    buf.emit_p(PSTR(" ($D bytes free)"), freeRam());
+#endif
 }
 
 static int getIntArg(const char* data, const char* key, int value =-1) {
@@ -183,7 +199,7 @@ static void sendPage(const char* data, BufferFiller& buf) {
                 outBuf[outCount] = 10 * outBuf[outCount] + (*p - '0');
             ++outCount;
         }
-#if DEBUG
+#if SERIAL
         Serial.print("Send to ");
         Serial.print(outDest, DEC);
         Serial.print(':');
@@ -220,7 +236,7 @@ void loop(){
     if (pos) {
         bfill = eth.tcpOffset();
         char* data = (char *) gPacketBuffer + pos;
-#if DEBUG
+#if SERIAL
         Serial.println(data);
 #endif
         // receive buf hasn't been clobbered by reply yet
@@ -251,7 +267,9 @@ void loop(){
         msgs_rcvd = (msgs_rcvd + 1) % 10000;
 
         if (RF12_WANTS_ACK && !config.collect) {
+#if SERIAL
             Serial.println(" -> ack");
+#endif
             rf12_sendStart(RF12_ACK_REPLY, 0, 0);
         }
     }

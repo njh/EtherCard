@@ -115,9 +115,9 @@ byte EtherCard::dnsLookup (prog_char* name) {
 
     dnsRequest(name);
 
-    uint32_t start = millis();
+    word start = millis();
     while (!haveDNSanswer) {
-        if (millis() - start >= 30000)
+        if ((word) (millis() - start) >= 30000)
             return 0;
         word len = packetReceive();
         word pos = packetLoop(len);

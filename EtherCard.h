@@ -64,8 +64,8 @@ struct EtherCard : Ethernet {
   static void sendUdp (char *data,uint8_t len,uint16_t sport,
                                               uint8_t *dip, uint16_t dport);
   static void registerPingCallback (void (*cb)(uint8_t*));
-  static void clientIcmpRequest (uint8_t *destip);
-  static uint8_t packetLoopIcmpCheckReply (uint8_t *ip_mh);
+  static void clientIcmpRequest (const uint8_t *destip);
+  static uint8_t packetLoopIcmpCheckReply (const uint8_t *ip_mh);
   static void sendWol (uint8_t *wolmac);
   // dhcp.cpp
   static uint8_t dhcpInit (uint8_t* macaddr, DHCPinfo& dip);
@@ -76,7 +76,7 @@ struct EtherCard : Ethernet {
   // webutil.cpp
   static void copy4 (uint8_t *dst, const uint8_t *src);
   static void copy6 (uint8_t *dst, const uint8_t *src);
-  static void printIP (const char* msg, uint8_t *buf);
+  static void printIP (const char* msg, const uint8_t *buf);
   static uint8_t findKeyVal(const char *str,char *strbuf,
                             uint8_t maxlen, const char *key);
   static void urlDecode(char *urlbuf);
