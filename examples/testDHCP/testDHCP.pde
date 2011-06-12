@@ -10,13 +10,13 @@
 
 #define DHCP_LED 9
 
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 byte gPacketBuffer[700];
 static EtherCard eth (sizeof gPacketBuffer);
 static DHCPinfo dhcp;
 
-void setup(){
+void setup () {
     Serial.begin(57600);
     Serial.println("\n[testDHCP]");
 
@@ -38,9 +38,8 @@ void setup(){
         Serial.println( "Failed to access Ethernet controller");
 }
 
-void loop(){
+void loop () {
     word len = eth.packetReceive();
-    
     if (eth.dhcpCheck(len)) {
         eth.printIP("My IP: ", dhcp.myip);
         eth.printIP("Netmask: ", dhcp.mymask);

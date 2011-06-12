@@ -5,7 +5,7 @@
 #include <EtherCard.h>
 
 // ethernet interface mac address, must be unique on the LAN
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 byte gPacketBuffer[700];
 static EtherCard eth (sizeof gPacketBuffer);
@@ -13,6 +13,7 @@ static DHCPinfo dhcp;
 static uint32_t timer;
 
 static char website[] PROGMEM = "www.google.com";
+static byte dest[4];
 
 // called when a ping comes in (replies to it are automatic)
 static void gotPinged (byte* ptr) {
@@ -21,7 +22,7 @@ static void gotPinged (byte* ptr) {
 
 void setup () {
   Serial.begin(57600);
-  Serial.println("\n[webClient]");
+  Serial.println("\n[pings]");
   
   // boilerplate to set things up with a DHCP request
   eth.spiInit();
@@ -34,11 +35,15 @@ void setup () {
   eth.clientSetGwIp(dhcp.gwip);
 
   // use DNS to locate the IP address we want to ping
-  if (eth.dnsLookup(website))
-      eth.printIP("Website: ", eth.dnsGetIp());
+  eth.copy4(dest, eth.dnsLookup(website));
+  // dest[0] = 74; dest[1] = 125; dest[2] = 77; dest[3] = 99;
+  eth.printIP("Server: ", dest);
     
   // call this to report others pinging us
   eth.registerPingCallback(gotPinged);
+  
+  timer = -9999999; // start timing out right away
+  Serial.println();
 }
 
 void loop () {
@@ -46,13 +51,16 @@ void loop () {
   word pos = eth.packetLoop(len); // respond to incoming pings
   
   // report whenever a reply to our outgoing ping comes back
-  if (len > 0 && eth.packetLoopIcmpCheckReply(eth.dnsGetIp()))
-    Serial.println("  alive!");
+  if (len > 0 && eth.packetLoopIcmpCheckReply(dest)) {
+    Serial.print("  ");
+    Serial.print((micros() - timer) * 0.001, 3);
+    Serial.println(" ms");
+  }
   
   // ping a remote server once every few seconds
-  if (millis() > timer) {
-    timer = millis() + 5000;
-    eth.printIP("Pinging: ", eth.dnsGetIp());
-    eth.clientIcmpRequest(eth.dnsGetIp());
+  if (micros() - timer >= 5000000) {
+    eth.printIP("Pinging: ", dest);
+    timer = micros();
+    eth.clientIcmpRequest(dest);
   }
 }

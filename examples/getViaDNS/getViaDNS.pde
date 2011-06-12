@@ -7,13 +7,13 @@
 #include <RF12.h> // needed to avoid a linker error :(
 
 // ethernet interface mac address
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 // ethernet interface ip address
-static byte myip[4] = { 192,168,1,203 };
+static byte myip[] = { 192,168,1,203 };
 // gateway ip address
-static byte gwip[4] = { 192,168,1,1 };
+static byte gwip[] = { 192,168,1,1 };
 // remote website name
-static char hisname[] PROGMEM = "jeefiles.equi4.com";
+static char website[] PROGMEM = "jeefiles.equi4.com";
 
 #define REQUEST_RATE 5000 // milliseconds
 
@@ -36,10 +36,11 @@ void setup () {
     eth.spiInit();
     eth.initialize(mymac);
     eth.initIp(mymac, myip, 0);
-    eth.clientSetGwIp(gwip);    // outgoing requests need a gateway
+    eth.clientSetGwIp(gwip);
 
-    if (!eth.dnsLookup(hisname))
-        Serial.println("DNS lookup failed");
+    const byte* ipaddr = eth.dnsLookup(website);
+    eth.printIP("Server: ", ipaddr);
+    eth.clientSetServerIp(ipaddr);
     
     requestTimer.set(1); // send first request as soon as possible
 }
@@ -49,6 +50,6 @@ void loop () {
     
     if (requestTimer.poll(REQUEST_RATE)) {
         Serial.println(">>> REQ");
-        eth.browseUrl(PSTR("/foo/"), "bar", hisname, my_result_cb);
+        eth.browseUrl(PSTR("/foo/"), "bar", website, my_result_cb);
     }
 }

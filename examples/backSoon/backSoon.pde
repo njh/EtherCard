@@ -4,7 +4,7 @@
 #include <EtherCard.h>
 
 // ethernet mac address - must be unique on your network
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 byte gPacketBuffer[1000]; // tcp/ip send and receive buffer
 static BufferFiller bfill;

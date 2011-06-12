@@ -109,7 +109,7 @@ static void dnsRequest (const prog_char *progmem_hostname) {
 
 // lookup a host name via DNS, returns 1 if ok or 0 if this timed out
 // use during setup, as this discards all incoming requests until it returns
-byte EtherCard::dnsLookup (prog_char* name) {
+const byte* EtherCard::dnsLookup (prog_char* name) {
     while (EtherCard::clientWaitingGw())
         EtherCard::packetLoop(packetReceive());
 
@@ -125,6 +125,5 @@ byte EtherCard::dnsLookup (prog_char* name) {
             checkForDnsAnswer(len);
     }
 
-    clientSetServerIp(dnsGetIp());
-    return 1;
+    return dns_answerip;
 }

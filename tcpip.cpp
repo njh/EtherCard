@@ -158,7 +158,7 @@ static void make_tcphead(word rel_ack_num,byte cp_seq) {
   gPB[TCP_HEADER_LEN_P] = 0x50;
 }
 
-void make_arp_answer_from_request() {
+static void make_arp_answer_from_request() {
   setMACs(gPB + ETH_SRC_MAC);
   gPB[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;
   gPB[ETH_ARP_OPCODE_L_P] = ETH_ARP_OPCODE_REPLY_L_V;
@@ -169,7 +169,7 @@ void make_arp_answer_from_request() {
   EtherCard::packetSend(42); 
 }
 
-void make_echo_reply_from_request(word len) {
+static void make_echo_reply_from_request(word len) {
   make_eth_ip();
   gPB[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;
   if (gPB[ICMP_CHECKSUM_P] > (0xFF-0x08))

@@ -5,7 +5,7 @@
 #include <EtherCard.h>
 
 // ethernet interface mac address, must be unique on the LAN
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
 
 byte gPacketBuffer[700];
 static EtherCard eth (sizeof gPacketBuffer);
@@ -26,19 +26,19 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[webClient]");
   
+  // boilerplate to set things up with a DHCP request
   eth.spiInit();
-  Serial.print("Ethernet controller rev ");
-  Serial.println(eth.dhcpInit(mymac, dhcp), HEX);
+  eth.dhcpInit(mymac, dhcp);
   while (!eth.dhcpCheck(eth.packetReceive()))
       ;
   eth.printIP("IP: ", dhcp.myip);
-  eth.printIP("GW: ", dhcp.gwip);
-  
+  eth.printIP("GW: ", dhcp.gwip);  
   eth.initIp(mymac, dhcp.myip, 0);
   eth.clientSetGwIp(dhcp.gwip);
 
-  if (eth.dnsLookup(website))
-    eth.printIP("Website: ", eth.dnsGetIp());
+  const byte* ipaddr = eth.dnsLookup(website);
+  eth.printIP("Server: ", ipaddr);
+  eth.clientSetServerIp(ipaddr);
 }
 
 void loop () {
