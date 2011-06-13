@@ -24,18 +24,19 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[webClient]");
 
-  ether.begin(sizeof Ethernet::buffer, mymac);
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+    Serial.println( "Failed to access Ethernet controller");
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
 
-  ether.printIP("IP:  ", ether.myip);
-  ether.printIP("GW:  ", ether.gwip);  
-  ether.printIP("DNS: ", ether.dnsip);  
+  ether.printIp("IP:  ", ether.myip);
+  ether.printIp("GW:  ", ether.gwip);  
+  ether.printIp("DNS: ", ether.dnsip);  
 
   if (!ether.dnsLookup(website))
     Serial.println("DNS failed");
     
-  ether.printIP("SRV: ", ether.hisip);
+  ether.printIp("SRV: ", ether.hisip);
 }
 
 void loop () {

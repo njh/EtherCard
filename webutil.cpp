@@ -6,15 +6,15 @@
 
 #include "EtherCard.h"
 
-void EtherCard::copy_IP (byte *dst, const byte *src) {
+void EtherCard::copyIp (byte *dst, const byte *src) {
     memcpy(dst, src, 4);
 }
 
-void EtherCard::copy_MAC (byte *dst, const byte *src) {
+void EtherCard::copyMac (byte *dst, const byte *src) {
     memcpy(dst, src, 6);
 }
 
-void EtherCard::printIP (const char* msg, const byte *buf) {
+void EtherCard::printIp (const char* msg, const byte *buf) {
     Serial.print(msg);
     for (byte i = 0; i < 4; ++i) {
         Serial.print( buf[i], DEC );

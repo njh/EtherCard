@@ -52,4 +52,15 @@ uint8_t EtherCard::mymask[4]; // my net mask
 uint8_t EtherCard::gwip[4];   // gateway
 uint8_t EtherCard::dnsip[4];  // dns server
 uint8_t EtherCard::hisip[4];  // dns result
-uint16_t EtherCard::hisport;  // tcp port to browse to
+uint16_t EtherCard::hisport = 80; // tcp port to browse to
+
+bool EtherCard::staticSetup (const uint8_t* my_ip,
+                              const uint8_t* gw_ip,
+                               const uint8_t* dns_ip) {
+  if (my_ip != 0)
+    copyIp(myip, my_ip);
+  if (gw_ip != 0)
+    setGwIp(gw_ip);
+  if (dns_ip != 0)
+    copyIp(dnsip, dns_ip);
+}

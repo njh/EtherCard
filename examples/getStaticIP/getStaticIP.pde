@@ -39,9 +39,8 @@ void setup () {
   Serial.println("\n[getStaticIP]");
   
   ether.begin(sizeof Ethernet::buffer, mymac);
-  ether.initIp(myip, 80);
-  ether.setGwIp(gwip);    // outgoing requests need a gateway
-  ether.copy_IP(ether.hisip, hisip);
+  ether.staticSetup(myip, gwip);
+  ether.copyIp(ether.hisip, hisip);
   
   timer = -9999999; // start timing out right away
 }

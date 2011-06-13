@@ -42,9 +42,12 @@ public:
   static uint16_t hisport;  // tcp port to browse to
   
   static uint8_t begin (const uint16_t size, const uint8_t* macaddr) {
-    copy_MAC(mymac, macaddr);
+    copyMac(mymac, macaddr);
     return initialize(size, mymac);
   }
+  static bool staticSetup (const uint8_t* my_ip =0,
+                            const uint8_t* gw_ip =0,
+                             const uint8_t* dns_ip =0);
   
   // tcpip.cpp
   static void initIp (uint8_t *myip,uint16_t wwwp);
@@ -76,9 +79,9 @@ public:
   // dns.cpp
   static const bool dnsLookup (prog_char* name);
   // webutil.cpp
-  static void copy_IP (uint8_t *dst, const uint8_t *src);
-  static void copy_MAC (uint8_t *dst, const uint8_t *src);
-  static void printIP (const char* msg, const uint8_t *buf);
+  static void copyIp (uint8_t *dst, const uint8_t *src);
+  static void copyMac (uint8_t *dst, const uint8_t *src);
+  static void printIp (const char* msg, const uint8_t *buf);
   static uint8_t findKeyVal(const char *str,char *strbuf,
                             uint8_t maxlen, const char *key);
   static void urlDecode(char *urlbuf);

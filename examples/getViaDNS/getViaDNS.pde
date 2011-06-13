@@ -33,13 +33,12 @@ void setup () {
     Serial.println("\n[getViaDNS]");
     
     ether.begin(sizeof Ethernet::buffer, mymac);
-    ether.initIp(myip, 80);
-    ether.setGwIp(gwip);
+    ether.staticSetup(myip, gwip);
 
     if (!ether.dnsLookup(website))
       Serial.println("DNS failed");
 
-    ether.printIP("Server: ", ether.hisip);
+    ether.printIp("Server: ", ether.hisip);
     
     requestTimer.set(1); // send first request as soon as possible
 }

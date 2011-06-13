@@ -70,7 +70,7 @@ static void checkForDnsAnswer (uint16_t plen) {
     if (p + 14 > gPB + plen)
       break;
     if (p[1] == 1 && p[9] == 4) { // type "A" and IPv4
-      ether.copy_IP(ether.hisip, p + 10);
+      ether.copyIp(ether.hisip, p + 10);
       break;
     }
     p += p[9] + 10;

@@ -34,12 +34,12 @@ void setup () {
 
   Serial.println("Setting up DHCP");
   if (!ether.dhcpSetup())
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println( "DHCP failed");
   
-  ether.printIP("My IP: ", ether.myip);
-  ether.printIP("Netmask: ", ether.mymask);
-  ether.printIP("GW IP: ", ether.gwip);
-  ether.printIP("DNS IP: ", ether.dnsip);
+  ether.printIp("My IP: ", ether.myip);
+  ether.printIp("Netmask: ", ether.mymask);
+  ether.printIp("GW IP: ", ether.gwip);
+  ether.printIp("DNS IP: ", ether.dnsip);
 }
 
 void loop () {}

@@ -70,10 +70,10 @@ static void dhcp_send (byte request) {
     dhcpState = request;
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
     EtherCard::udpPrepare(DHCP_DEST_PORT, EtherCard::myip, DHCP_SRC_PORT);
-    EtherCard::copy_MAC(gPB + ETH_DST_MAC, allOnes);
+    EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes);
     gPB[IP_TOTLEN_L_P]=0x82;
     gPB[IP_PROTO_P]=IP_PROTO_UDP_V;
-    EtherCard::copy_IP(gPB + IP_DST_P, allOnes);
+    EtherCard::copyIp(gPB + IP_DST_P, allOnes);
     
     // Build DHCP Packet from buf[UDP_DATA_P]
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
@@ -81,7 +81,7 @@ static void dhcp_send (byte request) {
     dhcpPtr->htype = 1;
     dhcpPtr->hlen = 6;
     dhcpPtr->xid = currentXid;
-    EtherCard::copy_MAC(dhcpPtr->chaddr, EtherCard::mymac);
+    EtherCard::copyMac(dhcpPtr->chaddr, EtherCard::mymac);
     
     // options defined as option, length, value
     bufPtr = gPB + UDP_DATA_P + sizeof( DHCPdata );
@@ -126,18 +126,18 @@ static void have_dhcpoffer (word len) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     // Offered IP address is in yiaddr
-    EtherCard::copy_IP(EtherCard::myip, dhcpPtr->yiaddr);
+    EtherCard::copyIp(EtherCard::myip, dhcpPtr->yiaddr);
     // Scan through variable length option list identifying options we want
     byte *ptr = (byte*) (dhcpPtr + 1) + 4;
     do {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:  EtherCard::copy_IP(EtherCard::mymask, ptr);
+            case 1:  EtherCard::copyIp(EtherCard::mymask, ptr);
                      break;
-            case 3:  EtherCard::copy_IP(EtherCard::gwip, ptr);
+            case 3:  EtherCard::copyIp(EtherCard::gwip, ptr);
                      break;
-            case 6:  EtherCard::copy_IP(EtherCard::dnsip, ptr);
+            case 6:  EtherCard::copyIp(EtherCard::dnsip, ptr);
                      break;
             case 51: leaseTime = 0;
                      for (byte i = 0; i<4; i++)
@@ -177,32 +177,33 @@ bool EtherCard::dhcpSetup () {
   hostname[8] = 'A' + (mymac[6] >> 4);
   hostname[9] = 'A' + (mymac[6] & 0x0F);
 
-  word start = millis();
-  while (myip[0] == 0 && (word) (millis() - start) < 30000) {
-    word len = packetReceive();
-    if (len == 0 || packetLoop(len) > 0)
-      continue;
+  for (byte i = 0; i < 3; ++i) {
+    dhcpState = DHCP_STATE_INIT;
+    word start = millis();
+    while (myip[0] == 0 && (word) (millis() - start) < 5000) {
+      word len = packetReceive();
+      if (len == 0 || packetLoop(len) > 0)
+        continue;
       
-    switch (dhcpState) {
-        case DHCP_STATE_INIT:
-        case DHCP_STATE_RENEW:
-            dhcp_send(DHCP_STATE_DISCOVER);
-            break;
-        case DHCP_STATE_DISCOVER:
-        case DHCP_STATE_REQUEST:
-            check_for_dhcp_answer(len);
-            //TODO resend request on timeout
-            break;
-        case DHCP_STATE_OK:
-            ; //TODO wait for lease expiration
-    }
+      switch (dhcpState) {
+          case DHCP_STATE_INIT:
+          case DHCP_STATE_RENEW:
+              dhcp_send(DHCP_STATE_DISCOVER);
+              break;
+          case DHCP_STATE_DISCOVER:
+          case DHCP_STATE_REQUEST:
+              check_for_dhcp_answer(len);
+              break;
+          case DHCP_STATE_OK:
+              ; //TODO wait for lease expiration
+      }
     
-    if (myip[0] != 0) {
-      initIp(myip, 0);
-      setGwIp(gwip);
-      return 1;
+      if (myip[0] != 0) {
+        if (gwip[0] != 0)
+          setGwIp(gwip);
+        return true;
+      }
     }
   }
-
   return false;
 }

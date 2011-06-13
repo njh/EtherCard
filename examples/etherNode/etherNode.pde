@@ -83,13 +83,13 @@ void setup(){
 #endif
     loadConfig();
     
-    ether.begin(sizeof Ethernet::buffer, mymac);
-    ether.dhcpSetup();
+    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+      Serial.println( "Failed to access Ethernet controller");
+    if (!ether.dhcpSetup())
+      Serial.println("DHCP failed");
 #if SERIAL
-    ether.printIP("IP: ", ether.myip);
+    ether.printIp("IP: ", ether.myip);
 #endif
-    
-    ether.initIp(ether.myip, 80);
 }
 
 char okHeader[] PROGMEM = 

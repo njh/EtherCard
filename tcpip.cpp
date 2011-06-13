@@ -19,8 +19,6 @@
 
 #define PINGPATTERN 0x42
 
-static byte wwwport_l=80; // server port
-static byte wwwport_h;   // Note: never use same as TCPCLIENT_SRC_PORT_H
 static byte tcpclient_src_port_l=1; 
 static byte tcp_fd; // a file descriptor, will be encoded into the port
 static byte tcp_client_state;
@@ -44,7 +42,6 @@ static byte waitgwmac; // 0=wait, 1=first req no anser, 2=have gwmac, 4=refeshin
 #define WGW_HAVE_GW_MAC 2
 #define WGW_REFRESHING 4
 #define WGW_ACCEPT_ARP_REPLY 8
-static byte ipaddr[4];
 static word info_data_len;
 static byte seqnum = 0xa; // my initial tcp sequence number
 static BufferFiller bfill;
@@ -76,20 +73,14 @@ static void fill_checksum(byte dest, byte off, word len,byte type) {
 }
 
 static void setMACs (const byte *mac) {
-  EtherCard::copy_MAC(gPB + ETH_DST_MAC, mac);
-  EtherCard::copy_MAC(gPB + ETH_SRC_MAC, EtherCard::mymac);
+  EtherCard::copyMac(gPB + ETH_DST_MAC, mac);
+  EtherCard::copyMac(gPB + ETH_SRC_MAC, EtherCard::mymac);
 }
 
 static void setMACandIPs (const byte *mac, const byte *dst) {
   setMACs(mac);
-  EtherCard::copy_IP(gPB + IP_DST_P, dst);
-  EtherCard::copy_IP(gPB + IP_SRC_P, ipaddr);
-}
-
-void EtherCard::initIp (byte *myip,word port) {
-  wwwport_h=(port>>8);
-  wwwport_l=(port);
-  copy_IP(ipaddr, myip);
+  EtherCard::copyIp(gPB + IP_DST_P, dst);
+  EtherCard::copyIp(gPB + IP_SRC_P, EtherCard::myip);
 }
 
 static byte check_ip_message_is_from(const byte *ip) {
@@ -99,14 +90,14 @@ static byte check_ip_message_is_from(const byte *ip) {
 static byte eth_type_is_arp_and_my_ip(word len) {
   return len >= 41 && gPB[ETH_TYPE_H_P] == ETHTYPE_ARP_H_V &&
                       gPB[ETH_TYPE_L_P] == ETHTYPE_ARP_L_V &&
-                      memcmp(gPB + ETH_ARP_DST_IP_P, ipaddr, 4) == 0;
+                      memcmp(gPB + ETH_ARP_DST_IP_P, EtherCard::myip, 4) == 0;
 }
 
 static byte eth_type_is_ip_and_my_ip(word len) {
   return len >= 42 && gPB[ETH_TYPE_H_P] == ETHTYPE_IP_H_V &&
                       gPB[ETH_TYPE_L_P] == ETHTYPE_IP_L_V &&
                       gPB[IP_HEADER_LEN_VER_P] == 0x45 &&
-                      memcmp(gPB + IP_DST_P, ipaddr, 4) == 0;
+                      memcmp(gPB + IP_DST_P, EtherCard::myip, 4) == 0;
 }
 
 static void fill_ip_hdr_checksum() {
@@ -120,8 +111,8 @@ static void fill_ip_hdr_checksum() {
 
 static void make_eth_ip() {
   setMACs(gPB + ETH_SRC_MAC);
-  EtherCard::copy_IP(gPB + IP_DST_P, gPB + IP_SRC_P);
-  EtherCard::copy_IP(gPB + IP_SRC_P, ipaddr);
+  EtherCard::copyIp(gPB + IP_DST_P, gPB + IP_SRC_P);
+  EtherCard::copyIp(gPB + IP_SRC_P, EtherCard::myip);
   fill_ip_hdr_checksum();
 }
 
@@ -159,10 +150,10 @@ static void make_arp_answer_from_request() {
   setMACs(gPB + ETH_SRC_MAC);
   gPB[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;
   gPB[ETH_ARP_OPCODE_L_P] = ETH_ARP_OPCODE_REPLY_L_V;
-  EtherCard::copy_MAC(gPB + ETH_ARP_DST_MAC_P, gPB + ETH_ARP_SRC_MAC_P);
-  EtherCard::copy_MAC(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
-  EtherCard::copy_IP(gPB + ETH_ARP_DST_IP_P, gPB + ETH_ARP_SRC_IP_P);
-  EtherCard::copy_IP(gPB + ETH_ARP_SRC_IP_P, ipaddr);
+  EtherCard::copyMac(gPB + ETH_ARP_DST_MAC_P, gPB + ETH_ARP_SRC_MAC_P);
+  EtherCard::copyMac(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
+  EtherCard::copyIp(gPB + ETH_ARP_DST_IP_P, gPB + ETH_ARP_SRC_IP_P);
+  EtherCard::copyIp(gPB + ETH_ARP_SRC_IP_P, EtherCard::myip);
   EtherCard::packetSend(42); 
 }
 
@@ -270,7 +261,7 @@ void EtherCard::clientIcmpRequest(const byte *destip) {
   gPB[ICMP_CHECKSUM_H_P] = 0;
   gPB[ICMP_CHECKSUM_L_P] = 0;
   gPB[ICMP_IDENT_H_P] = 5; // some number 
-  gPB[ICMP_IDENT_L_P] = ipaddr[3]; // last byte of my IP
+  gPB[ICMP_IDENT_L_P] = EtherCard::myip[3]; // last byte of my IP
   gPB[ICMP_IDENT_L_P+1] = 0; // seq number, high byte
   gPB[ICMP_IDENT_L_P+2] = 1; // seq number, low byte, we send only 1 ping at a time
   memset(gPB + ICMP_DATA_P, PINGPATTERN, 56);
@@ -346,7 +337,7 @@ void EtherCard::sendUdp (char *data,byte datalen,word sport, byte *dip, word dpo
 }
 
 void EtherCard::sendWol (byte *wolmac) {
-  setMACandIPs(allOnes, ipaddr);
+  setMACandIPs(allOnes, EtherCard::myip);
   gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
   memcpy_P(gPB + IP_P,iphdr,9);
@@ -361,11 +352,11 @@ void EtherCard::sendWol (byte *wolmac) {
   gPB[UDP_LEN_L_P] = 110; // fixed len
   gPB[UDP_CHECKSUM_H_P] = 0;
   gPB[UDP_CHECKSUM_L_P] = 0;
-  copy_MAC(gPB + UDP_DATA_P, allOnes);
+  copyMac(gPB + UDP_DATA_P, allOnes);
   byte pos = UDP_DATA_P;
   for (byte m = 0; m < 16; ++m) {
     pos += 6;
-    copy_MAC(gPB + pos, wolmac);
+    copyMac(gPB + pos, wolmac);
   }
   fill_checksum(UDP_CHECKSUM_H_P, IP_SRC_P, 16 + 102,1);
   packetSend(pos);
@@ -378,9 +369,9 @@ static void client_arp_whohas(byte *ip_we_search) {
   gPB[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
   memcpy_P(gPB + ETH_ARP_P,arpreqhdr,8);
   memset(gPB + ETH_ARP_DST_MAC_P, 0, 6);
-  EtherCard::copy_MAC(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
-  EtherCard::copy_IP(gPB + ETH_ARP_DST_IP_P, ip_we_search);
-  EtherCard::copy_IP(gPB + ETH_ARP_SRC_IP_P, ipaddr);
+  EtherCard::copyMac(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
+  EtherCard::copyIp(gPB + ETH_ARP_DST_IP_P, ip_we_search);
+  EtherCard::copyIp(gPB + ETH_ARP_SRC_IP_P, EtherCard::myip);
   waitgwmac |= WGW_ACCEPT_ARP_REPLY;
   EtherCard::packetSend(42);
 }
@@ -392,7 +383,7 @@ byte EtherCard::clientWaitingGw () {
 static byte client_store_gw_mac() {
   if (memcmp(gPB + ETH_ARP_SRC_IP_P, EtherCard::gwip, 4) != 0)
     return 0;
-  EtherCard::copy_MAC(gwmacaddr, gPB + ETH_ARP_SRC_MAC_P);
+  EtherCard::copyMac(gwmacaddr, gPB + ETH_ARP_SRC_MAC_P);
   return 1;
 }
 
@@ -404,7 +395,7 @@ static void client_gw_arp_refresh() {
 
 void EtherCard::setGwIp (const byte *gwipaddr) {
   waitgwmac = WGW_INITIAL_ARP; // causes an arp request in the packet loop
-  copy_IP(gwip, gwipaddr);
+  copyIp(gwip, gwipaddr);
 }
 
 static void client_syn(byte srcport,byte dstport_h,byte dstport_l) {
@@ -608,7 +599,8 @@ word EtherCard::packetLoop (word plen) {
     }
     return 0;
   }
-  if (gPB[TCP_DST_PORT_H_P]==wwwport_h && gPB[TCP_DST_PORT_L_P]==wwwport_l) {
+  if (gPB[TCP_DST_PORT_H_P] == (hisport >> 8) &&
+      gPB[TCP_DST_PORT_L_P] == ((byte) hisport)) {
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V)
       make_tcp_synack_from_syn();
     else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) {
