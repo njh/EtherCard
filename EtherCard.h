@@ -72,7 +72,6 @@ struct EtherCard : Ethernet {
   static uint8_t dhcpCheck (uint16_t len);
   // dns.cpp
   static const uint8_t* dnsLookup (prog_char* name);
-  static const uint8_t* dnsGetIp ();
   // webutil.cpp
   static void copy4 (uint8_t *dst, const uint8_t *src);
   static void copy6 (uint8_t *dst, const uint8_t *src);
