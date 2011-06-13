@@ -31,10 +31,12 @@ void setup () {
   eth.dhcpInit(mymac, dhcp);
   while (!eth.dhcpCheck(eth.packetReceive()))
       ;
-  eth.printIP("IP: ", dhcp.myip);
-  eth.printIP("GW: ", dhcp.gwip);  
+  eth.printIP("IP:  ", dhcp.myip);
+  eth.printIP("GW:  ", dhcp.gwip);  
+  eth.printIP("DNS: ", dhcp.dnsip);  
   eth.initIp(mymac, dhcp.myip, 0);
   eth.clientSetGwIp(dhcp.gwip);
+  eth.clientSetDnsIp(dhcp.dnsip);
 
   const byte* ipaddr = eth.dnsLookup(website);
   eth.printIP("Server: ", ipaddr);

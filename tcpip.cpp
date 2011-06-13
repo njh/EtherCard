@@ -405,7 +405,7 @@ static void client_gw_arp_refresh() {
     waitgwmac |= WGW_REFRESHING;
 }
 
-void EtherCard::clientSetGwIp (byte *gwipaddr) {
+void EtherCard::clientSetGwIp (const byte *gwipaddr) {
   waitgwmac = WGW_INITIAL_ARP; // causes an arp request in the packet loop
   copy4(gwip, gwipaddr);
 }

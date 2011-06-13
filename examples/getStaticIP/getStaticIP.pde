@@ -14,7 +14,8 @@ static byte myip[] = { 192,168,1,203 };
 static byte gwip[] = { 192,168,1,1 };
 // remote website ip address and port
 static byte hisip[] = { 80,190,241,133 };
-static word hisport = 80;
+
+#define REQUEST_RATE 5000 // milliseconds
 
 byte gPacketBuffer[300];   // a very small tcp/ip buffer is enough here
 EtherCard eth (sizeof gPacketBuffer);
@@ -56,9 +57,9 @@ void loop () {
     if (eth.clientWaitingGw())
         return;
     
-    if (requestTimer.poll(5000)) {
+    if (requestTimer.poll(REQUEST_RATE)) {
         Serial.print(">>> REQ# ");
-        byte id = eth.clientTcpReq(my_result_cb, my_datafill_cb, hisport);
+        byte id = eth.clientTcpReq(my_result_cb, my_datafill_cb, 80);
         Serial.println((int) id);
     }
 }

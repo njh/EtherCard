@@ -54,7 +54,7 @@ static void checkForDnsAnswer (uint16_t plen) {
                    p[1] != dnstid_l ||
                    (p[3] & 0x8F) != 0x80) 
     return;
-    
+
   p += *p; // we encoded the query len into tid
   while (1) {
     if (*p & 0xC0)
@@ -69,11 +69,15 @@ static void checkForDnsAnswer (uint16_t plen) {
     if (p[1] == 1)     // check type == 1 for "A"
       break;
     p += 2 + 2 + 4;    // skip type & class & TTL
-    p += *p + 2;    // skip datalength bytes
+    p += p[1] + 2;    // skip datalength bytes
   }
   
   if (p[9] == 4) // only if IPv4
     EtherCard::copy4(dns_answerip, p + 10);
+}
+
+void EtherCard::clientSetDnsIp (const byte *dnsipaddr) {
+  copy4(dnsip, dnsipaddr);
 }
 
 // lookup a host name via DNS, returns 1 if ok or 0 if this timed out

@@ -46,7 +46,7 @@ struct EtherCard : Ethernet {
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);
   static uint16_t packetLoop (uint16_t plen);
   static void httpServerReply (uint16_t dlen);
-  static void clientSetGwIp (uint8_t *gwipaddr);
+  static void clientSetGwIp (const uint8_t *gwipaddr);
   static uint8_t clientWaitingGw ();
   static void clientSetServerIp (const uint8_t *ipaddr);
   static uint8_t clientTcpReq (uint8_t (*r)(uint8_t,uint8_t,uint16_t,uint16_t),
@@ -71,6 +71,7 @@ struct EtherCard : Ethernet {
   static uint8_t dhcpInit (uint8_t* macaddr, DHCPinfo& dip);
   static uint8_t dhcpCheck (uint16_t len);
   // dns.cpp
+  static void clientSetDnsIp (const uint8_t *dnsipaddr);
   static const uint8_t* dnsLookup (prog_char* name);
   // webutil.cpp
   static void copy4 (uint8_t *dst, const uint8_t *src);
