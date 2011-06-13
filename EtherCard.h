@@ -17,38 +17,42 @@
 #include "enc28j60.h"
 
 class BufferFiller : public Print {
-    uint8_t *start, *ptr;
+  uint8_t *start, *ptr;
 public:
-    BufferFiller () {}
-    BufferFiller (uint8_t* buf) : start (buf), ptr (buf) {}
-        
-    void emit_p (PGM_P fmt, ...);
-    void emit_raw (const char* s, uint8_t n) { memcpy(ptr, s, n); ptr += n; }
-    
-    uint8_t* buffer () const { return start; }
-    uint16_t position () const { return ptr - start; }
-    
-    virtual void write (uint8_t v) { *ptr++ = v; }
+  BufferFiller () {}
+  BufferFiller (uint8_t* buf) : start (buf), ptr (buf) {}
+      
+  void emit_p (PGM_P fmt, ...);
+  void emit_raw (const char* s, uint8_t n) { memcpy(ptr, s, n); ptr += n; }
+  
+  uint8_t* buffer () const { return start; }
+  uint16_t position () const { return ptr - start; }
+  
+  virtual void write (uint8_t v) { *ptr++ = v; }
 };
 
-typedef struct {
-  uint8_t myip[4];    // my ip address
-  uint8_t mymask[4];  // my net mask
-  uint8_t gwip[4];    // gateway
-  uint8_t dnsip[4];   // dns server
-} DHCPinfo;
-    
-struct EtherCard : Ethernet {
-  EtherCard (const uint16_t bufferSize) : Ethernet (bufferSize) {}
+class EtherCard : public Ethernet {
+public:
+  static uint8_t mymac[6];  // my MAC address
+  static uint8_t myip[4];   // my ip address
+  static uint8_t mymask[4]; // my net mask
+  static uint8_t gwip[4];   // gateway
+  static uint8_t dnsip[4];  // dns server
+  static uint8_t hisip[4];  // dns result
+  static uint16_t hisport;  // tcp port to browse to
+  
+  static uint8_t begin (const uint16_t size, const uint8_t* macaddr) {
+    copy_MAC(mymac, macaddr);
+    return initialize(size, mymac);
+  }
   
   // tcpip.cpp
-  static void initIp (uint8_t *mymac,uint8_t *myip,uint16_t wwwp);
+  static void initIp (uint8_t *myip,uint16_t wwwp);
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);
   static uint16_t packetLoop (uint16_t plen);
   static void httpServerReply (uint16_t dlen);
-  static void clientSetGwIp (const uint8_t *gwipaddr);
+  static void setGwIp (const uint8_t *gwipaddr);
   static uint8_t clientWaitingGw ();
-  static void clientSetServerIp (const uint8_t *ipaddr);
   static uint8_t clientTcpReq (uint8_t (*r)(uint8_t,uint8_t,uint16_t,uint16_t),
                                uint16_t (*d)(uint8_t),uint16_t port);
   static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
@@ -68,14 +72,12 @@ struct EtherCard : Ethernet {
   static uint8_t packetLoopIcmpCheckReply (const uint8_t *ip_mh);
   static void sendWol (uint8_t *wolmac);
   // dhcp.cpp
-  static uint8_t dhcpInit (uint8_t* macaddr, DHCPinfo& dip);
-  static uint8_t dhcpCheck (uint16_t len);
+  static bool dhcpSetup ();
   // dns.cpp
-  static void clientSetDnsIp (const uint8_t *dnsipaddr);
-  static const uint8_t* dnsLookup (prog_char* name);
+  static const bool dnsLookup (prog_char* name);
   // webutil.cpp
-  static void copy4 (uint8_t *dst, const uint8_t *src);
-  static void copy6 (uint8_t *dst, const uint8_t *src);
+  static void copy_IP (uint8_t *dst, const uint8_t *src);
+  static void copy_MAC (uint8_t *dst, const uint8_t *src);
   static void printIP (const char* msg, const uint8_t *buf);
   static uint8_t findKeyVal(const char *str,char *strbuf,
                             uint8_t maxlen, const char *key);
@@ -85,5 +87,7 @@ struct EtherCard : Ethernet {
   static void makeNetStr(char *rs,uint8_t *bs,uint8_t len,
                                               char sep,uint8_t base);
 };
+
+extern EtherCard ether;
 
 #endif

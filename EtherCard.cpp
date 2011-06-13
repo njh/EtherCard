@@ -43,3 +43,13 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
     }
     va_end(ap);
 }
+
+EtherCard ether;
+
+uint8_t EtherCard::mymac[6];  // my MAC address
+uint8_t EtherCard::myip[4];   // my ip address
+uint8_t EtherCard::mymask[4]; // my net mask
+uint8_t EtherCard::gwip[4];   // gateway
+uint8_t EtherCard::dnsip[4];  // dns server
+uint8_t EtherCard::hisip[4];  // dns result
+uint16_t EtherCard::hisport;  // tcp port to browse to

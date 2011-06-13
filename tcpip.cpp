@@ -15,7 +15,7 @@
 #include "net.h"
 #undef word // arduino nonsense
 
-#define gPB gPacketBuffer
+#define gPB ether.buffer
 
 #define PINGPATTERN 0x42
 
@@ -23,7 +23,6 @@ static byte wwwport_l=80; // server port
 static byte wwwport_h;   // Note: never use same as TCPCLIENT_SRC_PORT_H
 static byte tcpclient_src_port_l=1; 
 static byte tcp_fd; // a file descriptor, will be encoded into the port
-static byte tcpsrvip[4];
 static byte tcp_client_state;
 static byte tcp_client_port_h;
 static byte tcp_client_port_l;
@@ -39,17 +38,16 @@ static const char *client_urlbuf_var;
 static prog_char *client_hoststr;
 static void (*icmp_cb)(byte *ip);
 static int16_t delaycnt=1;
-static byte gwip[4]; 
 static byte gwmacaddr[6];
 static byte waitgwmac; // 0=wait, 1=first req no anser, 2=have gwmac, 4=refeshing but have gw mac, 8=accept an arp reply
 #define WGW_INITIAL_ARP 1
 #define WGW_HAVE_GW_MAC 2
 #define WGW_REFRESHING 4
 #define WGW_ACCEPT_ARP_REPLY 8
-static byte macaddr[6];
 static byte ipaddr[4];
 static word info_data_len;
 static byte seqnum = 0xa; // my initial tcp sequence number
+static BufferFiller bfill;
 
 #define CLIENTMSS 550
 #define TCP_DATA_START ((word)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
@@ -78,21 +76,20 @@ static void fill_checksum(byte dest, byte off, word len,byte type) {
 }
 
 static void setMACs (const byte *mac) {
-  EtherCard::copy6(gPB + ETH_DST_MAC, mac);
-  EtherCard::copy6(gPB + ETH_SRC_MAC, macaddr);
+  EtherCard::copy_MAC(gPB + ETH_DST_MAC, mac);
+  EtherCard::copy_MAC(gPB + ETH_SRC_MAC, EtherCard::mymac);
 }
 
 static void setMACandIPs (const byte *mac, const byte *dst) {
   setMACs(mac);
-  EtherCard::copy4(gPB + IP_DST_P, dst);
-  EtherCard::copy4(gPB + IP_SRC_P, ipaddr);
+  EtherCard::copy_IP(gPB + IP_DST_P, dst);
+  EtherCard::copy_IP(gPB + IP_SRC_P, ipaddr);
 }
 
-void EtherCard::initIp (byte *mymac,byte *myip,word port) {
+void EtherCard::initIp (byte *myip,word port) {
   wwwport_h=(port>>8);
   wwwport_l=(port);
-  copy4(ipaddr, myip);
-  copy6(macaddr, mymac);
+  copy_IP(ipaddr, myip);
 }
 
 static byte check_ip_message_is_from(const byte *ip) {
@@ -123,8 +120,8 @@ static void fill_ip_hdr_checksum() {
 
 static void make_eth_ip() {
   setMACs(gPB + ETH_SRC_MAC);
-  EtherCard::copy4(gPB + IP_DST_P, gPB + IP_SRC_P);
-  EtherCard::copy4(gPB + IP_SRC_P, ipaddr);
+  EtherCard::copy_IP(gPB + IP_DST_P, gPB + IP_SRC_P);
+  EtherCard::copy_IP(gPB + IP_SRC_P, ipaddr);
   fill_ip_hdr_checksum();
 }
 
@@ -162,10 +159,10 @@ static void make_arp_answer_from_request() {
   setMACs(gPB + ETH_SRC_MAC);
   gPB[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;
   gPB[ETH_ARP_OPCODE_L_P] = ETH_ARP_OPCODE_REPLY_L_V;
-  EtherCard::copy6(gPB + ETH_ARP_DST_MAC_P, gPB + ETH_ARP_SRC_MAC_P);
-  EtherCard::copy6(gPB + ETH_ARP_SRC_MAC_P, macaddr);
-  EtherCard::copy4(gPB + ETH_ARP_DST_IP_P, gPB + ETH_ARP_SRC_IP_P);
-  EtherCard::copy4(gPB + ETH_ARP_SRC_IP_P, ipaddr);
+  EtherCard::copy_MAC(gPB + ETH_ARP_DST_MAC_P, gPB + ETH_ARP_SRC_MAC_P);
+  EtherCard::copy_MAC(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
+  EtherCard::copy_IP(gPB + ETH_ARP_DST_IP_P, gPB + ETH_ARP_SRC_IP_P);
+  EtherCard::copy_IP(gPB + ETH_ARP_SRC_IP_P, ipaddr);
   EtherCard::packetSend(42); 
 }
 
@@ -364,11 +361,11 @@ void EtherCard::sendWol (byte *wolmac) {
   gPB[UDP_LEN_L_P] = 110; // fixed len
   gPB[UDP_CHECKSUM_H_P] = 0;
   gPB[UDP_CHECKSUM_L_P] = 0;
-  copy6(gPB + UDP_DATA_P, allOnes);
+  copy_MAC(gPB + UDP_DATA_P, allOnes);
   byte pos = UDP_DATA_P;
   for (byte m = 0; m < 16; ++m) {
     pos += 6;
-    copy6(gPB + pos, wolmac);
+    copy_MAC(gPB + pos, wolmac);
   }
   fill_checksum(UDP_CHECKSUM_H_P, IP_SRC_P, 16 + 102,1);
   packetSend(pos);
@@ -381,9 +378,9 @@ static void client_arp_whohas(byte *ip_we_search) {
   gPB[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
   memcpy_P(gPB + ETH_ARP_P,arpreqhdr,8);
   memset(gPB + ETH_ARP_DST_MAC_P, 0, 6);
-  EtherCard::copy6(gPB + ETH_ARP_SRC_MAC_P, macaddr);
-  EtherCard::copy4(gPB + ETH_ARP_DST_IP_P, ip_we_search);
-  EtherCard::copy4(gPB + ETH_ARP_SRC_IP_P, ipaddr);
+  EtherCard::copy_MAC(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
+  EtherCard::copy_IP(gPB + ETH_ARP_DST_IP_P, ip_we_search);
+  EtherCard::copy_IP(gPB + ETH_ARP_SRC_IP_P, ipaddr);
   waitgwmac |= WGW_ACCEPT_ARP_REPLY;
   EtherCard::packetSend(42);
 }
@@ -393,9 +390,9 @@ byte EtherCard::clientWaitingGw () {
 }
 
 static byte client_store_gw_mac() {
-  if (memcmp(gPB + ETH_ARP_SRC_IP_P, gwip, 4) != 0)
+  if (memcmp(gPB + ETH_ARP_SRC_IP_P, EtherCard::gwip, 4) != 0)
     return 0;
-  EtherCard::copy6(gwmacaddr, gPB + ETH_ARP_SRC_MAC_P);
+  EtherCard::copy_MAC(gwmacaddr, gPB + ETH_ARP_SRC_MAC_P);
   return 1;
 }
 
@@ -405,17 +402,13 @@ static void client_gw_arp_refresh() {
     waitgwmac |= WGW_REFRESHING;
 }
 
-void EtherCard::clientSetGwIp (const byte *gwipaddr) {
+void EtherCard::setGwIp (const byte *gwipaddr) {
   waitgwmac = WGW_INITIAL_ARP; // causes an arp request in the packet loop
-  copy4(gwip, gwipaddr);
-}
-
-void EtherCard::clientSetServerIp (const byte *ipaddr) {
-  copy4(tcpsrvip, ipaddr);
+  copy_IP(gwip, gwipaddr);
 }
 
 static void client_syn(byte srcport,byte dstport_h,byte dstport_l) {
-  setMACandIPs(gwmacaddr, tcpsrvip);
+  setMACandIPs(gwmacaddr, EtherCard::hisip);
   gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
   memcpy_P(gPB + IP_P,iphdr,9);
@@ -459,7 +452,7 @@ byte EtherCard::clientTcpReq (byte (*result_cb)(byte,byte,word,word),
 
 static word www_client_internal_datafill_cb(byte fd) {
   char strbuf[5];
-  BufferFiller bfill = EtherCard::tcpOffset();
+  bfill = EtherCard::tcpOffset();
   if (fd==www_fd) {
     if (client_postval == 0) {
       bfill.emit_p(PSTR("GET $F$S HTTP/1.1\r\n"
@@ -561,7 +554,7 @@ word EtherCard::packetLoop (word plen) {
   if (plen<54 && gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
     return 0;
   if ( gPB[TCP_DST_PORT_H_P]==TCPCLIENT_SRC_PORT_H) {
-    if (check_ip_message_is_from(tcpsrvip)==0)
+    if (check_ip_message_is_from(hisip)==0)
       return 0;
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_RST_V) {
       if (client_tcp_result_cb)

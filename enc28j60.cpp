@@ -11,7 +11,7 @@
 #include <WProgram.h>
 #include "enc28j60.h"
 
-uint16_t gPacketBufferLength;
+uint16_t ENC28J60::bufferSize;
 
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
@@ -239,7 +239,7 @@ static int16_t gNextPacketPtr;
 #define SELECT_BIT  0   // 0 = B0 = pin 8, 2 = B2 = pin 10
 #define FULL_SPEED  1   // use full-speed SPI for bulk transfers
 
-void ENC28J60::spiInit () {
+void ENC28J60::initSPI () {
     const byte SPI_SS   = 10;
     const byte SPI_MOSI = 11;
     const byte SPI_MISO = 12;
@@ -363,7 +363,11 @@ static void writePhy (byte address, word data) {
         ;
 }
 
-byte ENC28J60::initialize (byte* macaddr) {
+byte ENC28J60::initialize (word size, const byte* macaddr) {
+    bufferSize = size;
+    if (bitRead(SPCR, SPE) == 0)
+      initSPI();
+      
     bitSet(DDRB, SELECT_BIT);
     disableChip();
     
@@ -414,7 +418,7 @@ void ENC28J60::packetSend(word len) {
     writeReg(EWRPT, TXSTART_INIT);
     writeReg(ETXND, TXSTART_INIT+len);
     writeOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
-    writeBuf(len, gPacketBuffer);
+    writeBuf(len, buffer);
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 }
 
@@ -433,13 +437,13 @@ word ENC28J60::packetReceive() {
 
         gNextPacketPtr  = header.nextPacket;
         len = header.byteCount - 4; //remove the CRC count
-        if (len>gPacketBufferLength-1)
-            len=gPacketBufferLength-1;
+        if (len>bufferSize-1)
+            len=bufferSize-1;
         if ((header.status & 0x80)==0)
             len = 0;
         else
-            readBuf(len, gPacketBuffer);
-        gPacketBuffer[len] = 0;
+            readBuf(len, buffer);
+        buffer[len] = 0;
         if (gNextPacketPtr - 1 > RXSTOP_INIT)
             writeReg(ERXRDPT, RXSTOP_INIT);
         else

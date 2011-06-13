@@ -10,43 +10,36 @@
 
 #define DHCP_LED 9
 
-static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-byte gPacketBuffer[700];
-static EtherCard eth (sizeof gPacketBuffer);
-static DHCPinfo dhcp;
+byte Ethernet::buffer[700];
 
 void setup () {
-    Serial.begin(57600);
-    Serial.println("\n[testDHCP]");
+  Serial.begin(57600);
+  Serial.println("\n[testDHCP]");
 
-    pinMode(DHCP_LED, OUTPUT);
-    digitalWrite(DHCP_LED, LOW);
-    
-    Serial.print("MAC: ");
-    for (byte i = 0; i < 6; ++i) {
-        Serial.print(mymac[i], HEX);
-        if (i < 5)
-            Serial.print(':');
-    }
-    Serial.println();
-    
-    eth.spiInit();
+  pinMode(DHCP_LED, OUTPUT);
+  digitalWrite(DHCP_LED, LOW);
+  
+  Serial.print("MAC: ");
+  for (byte i = 0; i < 6; ++i) {
+    Serial.print(mymac[i], HEX);
+    if (i < 5)
+      Serial.print(':');
+  }
+  Serial.println();
+  
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+    Serial.println( "Failed to access Ethernet controller");
 
-    Serial.println("Setting up DHCP");
-    if (eth.dhcpInit(mymac, dhcp) == 0) 
-        Serial.println( "Failed to access Ethernet controller");
+  Serial.println("Setting up DHCP");
+  if (!ether.dhcpSetup())
+    Serial.println( "Failed to access Ethernet controller");
+  
+  ether.printIP("My IP: ", ether.myip);
+  ether.printIP("Netmask: ", ether.mymask);
+  ether.printIP("GW IP: ", ether.gwip);
+  ether.printIP("DNS IP: ", ether.dnsip);
 }
 
-void loop () {
-    word len = eth.packetReceive();
-    if (eth.dhcpCheck(len)) {
-        eth.printIP("My IP: ", dhcp.myip);
-        eth.printIP("Netmask: ", dhcp.mymask);
-        eth.printIP("DNS IP: ", dhcp.dnsip);
-        eth.printIP("GW IP: ", dhcp.gwip);
-
-        while (1)
-            digitalWrite(DHCP_LED, HIGH);
-    }
-}
+void loop () {}

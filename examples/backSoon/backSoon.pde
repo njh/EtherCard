@@ -4,13 +4,10 @@
 #include <EtherCard.h>
 
 // ethernet mac address - must be unique on your network
-static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-byte gPacketBuffer[1000]; // tcp/ip send and receive buffer
+byte Ethernet::buffer[1000]; // tcp/ip send and receive buffer
 static BufferFiller bfill;
-
-EtherCard eth (sizeof gPacketBuffer);
-DHCPinfo dhcp;
 
 char page[] PROGMEM =
 "HTTP/1.0 503 Service Unavailable\r\n"
@@ -33,21 +30,21 @@ char page[] PROGMEM =
 ;
 
 void setup(){
-    eth.spiInit();
-    eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(eth.packetReceive()))
-        ;
-    eth.printIP("IP: ", dhcp.myip);
-    eth.initIp(mymac, dhcp.myip, 80); // HTTP port
+    ether.begin(sizeof Ethernet::buffer, mymac);
+    if (!ether.dhcpSetup())
+      Serial.println("DHCP failed");
+
+    ether.printIP("IP: ", ether.myip);
+    ether.initIp(ether.myip, 80);
 }
 
 void loop(){
-    word len = eth.packetReceive();
-    word pos = eth.packetLoop(len);
+    word len = ether.packetReceive();
+    word pos = ether.packetLoop(len);
     
     if (pos) {
-        bfill = eth.tcpOffset();
+        bfill = ether.tcpOffset();
         bfill.emit_p(page);
-        eth.httpServerReply(bfill.position());
+        ether.httpServerReply(bfill.position());
     }
 }

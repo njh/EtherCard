@@ -5,53 +5,51 @@
 #include <EtherCard.h>
 
 // ethernet interface mac address, must be unique on the LAN
-static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-byte gPacketBuffer[700];
-static EtherCard eth (sizeof gPacketBuffer);
-static DHCPinfo dhcp;
+byte Ethernet::buffer[700];
 static uint32_t timer;
 
 static char website[] PROGMEM = "www.google.com";
-static byte dest[4];
 
 // called when a ping comes in (replies to it are automatic)
 static void gotPinged (byte* ptr) {
-  eth.printIP(">>> ping from: ", ptr);
+  ether.printIP(">>> ping from: ", ptr);
 }
 
 void setup () {
   Serial.begin(57600);
   Serial.println("\n[pings]");
   
-  // boilerplate to set things up with a DHCP request
-  eth.spiInit();
-  eth.dhcpInit(mymac, dhcp);
-  while (!eth.dhcpCheck(eth.packetReceive()))
-      ;
-  eth.printIP("IP: ", dhcp.myip);
-  eth.printIP("GW: ", dhcp.gwip);
-  eth.initIp(mymac, dhcp.myip, 0);
-  eth.clientSetGwIp(dhcp.gwip);
+  ether.begin(sizeof Ethernet::buffer, mymac);
+  if (!ether.dhcpSetup())
+    Serial.println("DHCP failed");
+
+  ether.printIP("IP: ", ether.myip);
+  ether.printIP("GW: ", ether.gwip);
 
   // use DNS to locate the IP address we want to ping
-  eth.copy4(dest, eth.dnsLookup(website));
-  // dest[0] = 74; dest[1] = 125; dest[2] = 77; dest[3] = 99;
-  eth.printIP("Server: ", dest);
+  if (!ether.dnsLookup(website))
+    Serial.println("DNS failed");
+  // ether.hisip[0] = 74;
+  // ether.hisip[1] = 125;
+  // ether.hisip[2] = 77;
+  // ether.hisip[3] = 99;
+  ether.printIP("Server: ", ether.hisip);
     
   // call this to report others pinging us
-  eth.registerPingCallback(gotPinged);
+  ether.registerPingCallback(gotPinged);
   
   timer = -9999999; // start timing out right away
   Serial.println();
 }
 
 void loop () {
-  word len = eth.packetReceive(); // go receive new packets
-  word pos = eth.packetLoop(len); // respond to incoming pings
+  word len = ether.packetReceive(); // go receive new packets
+  word pos = ether.packetLoop(len); // respond to incoming pings
   
   // report whenever a reply to our outgoing ping comes back
-  if (len > 0 && eth.packetLoopIcmpCheckReply(dest)) {
+  if (len > 0 && ether.packetLoopIcmpCheckReply(ether.hisip)) {
     Serial.print("  ");
     Serial.print((micros() - timer) * 0.001, 3);
     Serial.println(" ms");
@@ -59,8 +57,8 @@ void loop () {
   
   // ping a remote server once every few seconds
   if (micros() - timer >= 5000000) {
-    eth.printIP("Pinging: ", dest);
+    ether.printIP("Pinging: ", ether.hisip);
     timer = micros();
-    eth.clientIcmpRequest(dest);
+    ether.clientIcmpRequest(ether.hisip);
   }
 }

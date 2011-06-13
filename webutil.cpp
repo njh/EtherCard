@@ -6,11 +6,11 @@
 
 #include "EtherCard.h"
 
-void EtherCard::copy4 (byte *dst, const byte *src) {
+void EtherCard::copy_IP (byte *dst, const byte *src) {
     memcpy(dst, src, 4);
 }
 
-void EtherCard::copy6 (byte *dst, const byte *src) {
+void EtherCard::copy_MAC (byte *dst, const byte *src) {
     memcpy(dst, src, 6);
 }
 

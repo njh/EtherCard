@@ -5,16 +5,15 @@
 #include <EtherCard.h>
 
 // ethernet interface mac address, must be unique on the LAN
-static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 static byte myip[] = { 192,168,1,203 };
 
-byte gPacketBuffer[500];
-EtherCard eth (sizeof gPacketBuffer);
+byte Ethernet::buffer[500];
+BufferFiller bfill;
 
 void setup () {
-    eth.spiInit();
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, 80);
+    ether.begin(sizeof Ethernet::buffer, mymac);
+    ether.initIp(myip, 80);
 }
 
 static word homePage() {
@@ -22,7 +21,7 @@ static word homePage() {
     word h = t / 3600;
     byte m = (t / 60) % 60;
     byte s = t % 60;
-    BufferFiller bfill = eth.tcpOffset();
+    bfill = ether.tcpOffset();
     bfill.emit_p(PSTR(
         "HTTP/1.0 200 OK\r\n"
         "Content-Type: text/html\r\n"
@@ -36,9 +35,9 @@ static word homePage() {
 }
 
 void loop () {
-    word len = eth.packetReceive();
-    word pos = eth.packetLoop(len);
+    word len = ether.packetReceive();
+    word pos = ether.packetLoop(len);
     
     if (pos)  // check if valid tcp data is received
-        eth.httpServerReply(homePage()); // send web page data
+        ether.httpServerReply(homePage()); // send web page data
 }

@@ -29,7 +29,7 @@ struct Config {
 } config;
 
 // ethernet interface mac address - must be unique on your network
-static byte mymac[] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;
@@ -45,9 +45,7 @@ static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
 static byte next_msg;       // pointer to next rf12rcvd line
 static word msgs_rcvd;      // total number of lines received modulo 10,000
 
-byte gPacketBuffer[1000];   // tcp/ip send and receive buffer
-EtherCard eth (sizeof gPacketBuffer);
-DHCPinfo dhcp;
+byte Ethernet::buffer[1000];   // tcp/ip send and receive buffer
 
 static void loadConfig() {
     for (byte i = 0; i < sizeof config; ++i)
@@ -85,14 +83,13 @@ void setup(){
 #endif
     loadConfig();
     
-    eth.dhcpInit(mymac, dhcp);
-    while (!eth.dhcpCheck(eth.packetReceive()))
-        ;
+    ether.begin(sizeof Ethernet::buffer, mymac);
+    ether.dhcpSetup();
 #if SERIAL
-    eth.printIP("IP: ", dhcp.myip);
+    ether.printIP("IP: ", ether.myip);
 #endif
     
-    eth.initIp(mymac, dhcp.myip, 80);
+    ether.initIp(ether.myip, 80);
 }
 
 char okHeader[] PROGMEM = 
@@ -135,7 +132,7 @@ static void homePage(BufferFiller& buf) {
 
 static int getIntArg(const char* data, const char* key, int value =-1) {
     char temp[10];
-    if (eth.findKeyVal(data + 7, temp, sizeof temp, key) > 0)
+    if (ether.findKeyVal(data + 7, temp, sizeof temp, key) > 0)
         value = atoi(temp);
     return value;
 }
@@ -230,12 +227,12 @@ static void sendPage(const char* data, BufferFiller& buf) {
 }
 
 void loop(){
-    word len = eth.packetReceive();
-    word pos = eth.packetLoop(len);
+    word len = ether.packetReceive();
+    word pos = ether.packetLoop(len);
     // check if valid tcp data is received
     if (pos) {
-        bfill = eth.tcpOffset();
-        char* data = (char *) gPacketBuffer + pos;
+        bfill = ether.tcpOffset();
+        char* data = (char *) Ethernet::buffer + pos;
 #if SERIAL
         Serial.println(data);
 #endif
@@ -252,7 +249,7 @@ void loop(){
                 "Content-Type: text/html\r\n"
                 "\r\n"
                 "<h1>401 Unauthorized</h1>"));  
-        eth.httpServerReply(bfill.position()); // send web page data
+        ether.httpServerReply(bfill.position()); // send web page data
     }
 
     // RFM12 loop runner, don't report acks

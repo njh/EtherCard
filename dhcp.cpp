@@ -10,7 +10,7 @@
 #include "EtherCard.h"
 #include "net.h"
 
-#define gPB gPacketBuffer
+#define gPB ether.buffer
 
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTRESPONSE 2
@@ -38,10 +38,6 @@ typedef struct {
 #define DHCPCLIENT_SRC_PORT_H 0xe0 
 #define DHCP_SRC_PORT 67
 #define DHCP_DEST_PORT 68
-
-// Pointers to values we have set or need to set
-static byte *macaddr;
-static DHCPinfo *infoPtr;
 
 static byte dhcpState;
 static char hostname[] = "Arduino-00";
@@ -73,11 +69,11 @@ static void dhcp_send (byte request) {
         return;
     dhcpState = request;
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
-    EtherCard::udpPrepare(DHCP_DEST_PORT, infoPtr->myip, DHCP_SRC_PORT);
-    EtherCard::copy6(gPB + ETH_DST_MAC, allOnes);
+    EtherCard::udpPrepare(DHCP_DEST_PORT, EtherCard::myip, DHCP_SRC_PORT);
+    EtherCard::copy_MAC(gPB + ETH_DST_MAC, allOnes);
     gPB[IP_TOTLEN_L_P]=0x82;
     gPB[IP_PROTO_P]=IP_PROTO_UDP_V;
-    EtherCard::copy4(gPB + IP_DST_P, allOnes);
+    EtherCard::copy_IP(gPB + IP_DST_P, allOnes);
     
     // Build DHCP Packet from buf[UDP_DATA_P]
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
@@ -85,7 +81,7 @@ static void dhcp_send (byte request) {
     dhcpPtr->htype = 1;
     dhcpPtr->hlen = 6;
     dhcpPtr->xid = currentXid;
-    EtherCard::copy6(dhcpPtr->chaddr, macaddr);
+    EtherCard::copy_MAC(dhcpPtr->chaddr, EtherCard::mymac);
     
     // options defined as option, length, value
     bufPtr = gPB + UDP_DATA_P + sizeof( DHCPdata );
@@ -100,7 +96,7 @@ static void dhcp_send (byte request) {
     addToBuf(61);     // Client identifier
     addToBuf(7);      // Length 
     addToBuf(0x01);   // Ethernet
-    addBytes(6, macaddr);
+    addBytes(6, EtherCard::mymac);
     
     addToBuf(12);     // Host name Option
     addToBuf(10);
@@ -109,7 +105,7 @@ static void dhcp_send (byte request) {
     if( dhcpState == DHCP_STATE_REQUEST) {
         addToBuf(50); // Request IP address
         addToBuf(4);
-        addBytes(4, infoPtr->myip);
+        addBytes(4, EtherCard::myip);
     }
     
     // Additional info in parameter list - minimal list for what we need
@@ -130,18 +126,18 @@ static void have_dhcpoffer (word len) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     // Offered IP address is in yiaddr
-    EtherCard::copy4(infoPtr->myip, dhcpPtr->yiaddr);
+    EtherCard::copy_IP(EtherCard::myip, dhcpPtr->yiaddr);
     // Scan through variable length option list identifying options we want
     byte *ptr = (byte*) (dhcpPtr + 1) + 4;
     do {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:  EtherCard::copy4(infoPtr->mymask, ptr);
+            case 1:  EtherCard::copy_IP(EtherCard::mymask, ptr);
                      break;
-            case 3:  EtherCard::copy4(infoPtr->gwip, ptr);
+            case 3:  EtherCard::copy_IP(EtherCard::gwip, ptr);
                      break;
-            case 6:  EtherCard::copy4(infoPtr->dnsip, ptr);
+            case 6:  EtherCard::copy_IP(EtherCard::dnsip, ptr);
                      break;
             case 51: leaseTime = 0;
                      for (byte i = 0; i<4; i++)
@@ -174,23 +170,19 @@ static void check_for_dhcp_answer (word len) {
     }
 }
 
-byte EtherCard::dhcpInit (byte* macaddrin, DHCPinfo& di) {
-    byte rev = initialize(macaddrin);
-    if (rev != 0) {
-        macaddr = macaddrin;
-        infoPtr = &di;
-        currentXid = millis();
-        memset(infoPtr, 0, sizeof *infoPtr);
-        // Set a unique hostname, use Arduino-?? with last octet of mac address
-        hostname[8] = 'A' + (macaddr[6] >> 4);
-        hostname[9] = 'A' + (macaddr[6] & 0x0F);
-    }
-    return rev;
-}
+// use during setup, as this discards all incoming requests until it returns
+bool EtherCard::dhcpSetup () {
+  currentXid = millis();
+  // Set a unique hostname, use Arduino-?? with last octet of mac address
+  hostname[8] = 'A' + (mymac[6] >> 4);
+  hostname[9] = 'A' + (mymac[6] & 0x0F);
 
-byte EtherCard::dhcpCheck (word len) {
-    if (macaddr == 0)
-        return 0;
+  word start = millis();
+  while (myip[0] == 0 && (word) (millis() - start) < 30000) {
+    word len = packetReceive();
+    if (len == 0 || packetLoop(len) > 0)
+      continue;
+      
     switch (dhcpState) {
         case DHCP_STATE_INIT:
         case DHCP_STATE_RENEW:
@@ -204,5 +196,13 @@ byte EtherCard::dhcpCheck (word len) {
         case DHCP_STATE_OK:
             ; //TODO wait for lease expiration
     }
-    return infoPtr->myip[0] != 0;
+    
+    if (myip[0] != 0) {
+      initIp(myip, 0);
+      setGwIp(gwip);
+      return 1;
+    }
+  }
+
+  return false;
 }
