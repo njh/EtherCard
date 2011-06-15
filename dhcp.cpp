@@ -70,6 +70,7 @@ static void dhcp_send (byte request) {
     dhcpState = request;
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
     EtherCard::udpPrepare(DHCP_DEST_PORT, EtherCard::myip, DHCP_SRC_PORT);
+    EtherCard::copyMac(gPB + ETH_SRC_MAC, EtherCard::mymac);
     EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes);
     gPB[IP_TOTLEN_L_P]=0x82;
     gPB[IP_PROTO_P]=IP_PROTO_UDP_V;
