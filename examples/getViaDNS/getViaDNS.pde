@@ -13,7 +13,7 @@ static byte myip[] = { 192,168,1,203 };
 // gateway ip address
 static byte gwip[] = { 192,168,1,1 };
 // remote website name
-static char website[] PROGMEM = "jeefiles.equi4.com";
+char website[] PROGMEM = "jeefiles.equi4.com";
 
 #define REQUEST_RATE 5000 // milliseconds
 

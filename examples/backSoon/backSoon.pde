@@ -7,7 +7,6 @@
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
-static BufferFiller bfill;
 
 char page[] PROGMEM =
 "HTTP/1.0 503 Service Unavailable\r\n"
@@ -34,9 +33,9 @@ void setup(){
 }
 
 void loop(){
+  // wait for an incoming TCP packet, but ignore its contents
   if (ether.packetLoop(ether.packetReceive())) {
-    bfill = ether.tcpOffset();
-    bfill.emit_p(page);
-    ether.httpServerReply(bfill.position());
+    memcpy_P(ether.tcpOffset(), page, sizeof page);
+    ether.httpServerReply(sizeof page - 1);
   }
 }
