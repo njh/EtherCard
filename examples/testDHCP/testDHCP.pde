@@ -8,8 +8,6 @@
 
 #include <EtherCard.h>
 
-#define DHCP_LED 9
-
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[700];
@@ -18,9 +16,6 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[testDHCP]");
 
-  pinMode(DHCP_LED, OUTPUT);
-  digitalWrite(DHCP_LED, LOW);
-  
   Serial.print("MAC: ");
   for (byte i = 0; i < 6; ++i) {
     Serial.print(mymac[i], HEX);
