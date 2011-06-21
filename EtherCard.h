@@ -16,7 +16,7 @@
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 
-class BufferFiller : public Print {
+class BufferFiller : public Print { 
   uint8_t *start, *ptr;
 public:
   BufferFiller () {}
