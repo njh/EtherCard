@@ -460,7 +460,7 @@ static word www_client_internal_datafill_cb(byte fd) {
                         "$F$S"
                         "Accept: */*\r\n"
                         "Connection: close\r\n"
-                        "Content-Length: $D"
+                        "Content-Length: $D\r\n"
                         "Content-Type: application/x-www-form-urlencoded\r\n"
                         "\r\n"
                         "$D"), client_urlbuf,
