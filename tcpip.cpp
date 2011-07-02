@@ -463,7 +463,7 @@ static word www_client_internal_datafill_cb(byte fd) {
                         "Content-Length: $D\r\n"
                         "Content-Type: application/x-www-form-urlencoded\r\n"
                         "\r\n"
-                        "$D"), client_urlbuf,
+                        "$S"), client_urlbuf,
                                  client_hoststr,
                                  ahl != 0 ? ahl : "",
                                  ahl != 0 ? "\r\n" : "",
