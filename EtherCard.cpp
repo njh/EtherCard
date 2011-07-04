@@ -63,4 +63,5 @@ bool EtherCard::staticSetup (const uint8_t* my_ip,
     setGwIp(gw_ip);
   if (dns_ip != 0)
     copyIp(dnsip, dns_ip);
+  return true;
 }

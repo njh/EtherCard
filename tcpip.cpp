@@ -19,6 +19,13 @@
 
 #define PINGPATTERN 0x42
 
+// Avoid spurious pgmspace warnings - http://forum.jeelabs.net/node/327
+// See also http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
+#undef PROGMEM 
+#define PROGMEM __attribute__(( section(".progmem.data") )) 
+#undef PSTR 
+#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
+
 static byte tcpclient_src_port_l=1; 
 static byte tcp_fd; // a file descriptor, will be encoded into the port
 static byte tcp_client_state;
@@ -292,7 +299,7 @@ void EtherCard::ntpRequest (byte *ntpip,byte srcport) {
 }
 
 byte EtherCard::ntpProcessAnswer (uint32_t *time,byte dstport_l) {
-  if (dstport_l && gPB[UDP_DST_PORT_L_P]!=dstport_l || gPB[UDP_LEN_H_P]!=0 ||
+  if ((dstport_l && gPB[UDP_DST_PORT_L_P]!=dstport_l) || gPB[UDP_LEN_H_P]!=0 ||
       gPB[UDP_LEN_L_P]!=56 || gPB[UDP_SRC_PORT_L_P]!=0x7b)
     return 0;
   ((byte*) time)[3] = gPB[0x52];
@@ -387,11 +394,10 @@ static byte client_store_gw_mac() {
   return 1;
 }
 
-static void client_gw_arp_refresh() {
-  //FIXME not used?
-  if (waitgwmac & WGW_HAVE_GW_MAC)
-    waitgwmac |= WGW_REFRESHING;
-}
+// static void client_gw_arp_refresh() {
+//   if (waitgwmac & WGW_HAVE_GW_MAC)
+//     waitgwmac |= WGW_REFRESHING;
+// }
 
 void EtherCard::setGwIp (const byte *gwipaddr) {
   waitgwmac = WGW_INITIAL_ARP; // causes an arp request in the packet loop
@@ -424,7 +430,7 @@ static void client_syn(byte srcport,byte dstport_h,byte dstport_l) {
   gPB[TCP_OPTIONS_P] = 2;
   gPB[TCP_OPTIONS_P+1] = 4;
   gPB[TCP_OPTIONS_P+2] = (CLIENTMSS>>8);
-  gPB[TCP_OPTIONS_P+3] = CLIENTMSS;
+  gPB[TCP_OPTIONS_P+3] = (byte) CLIENTMSS;
   fill_checksum(TCP_CHECKSUM_H_P, IP_SRC_P, 8 +TCP_HEADER_LEN_PLAIN+4,2);
   // 4 is the tcp mss option:
   EtherCard::packetSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+ETH_HEADER_LEN+4);
@@ -442,7 +448,6 @@ byte EtherCard::clientTcpReq (byte (*result_cb)(byte,byte,word,word),
 }
 
 static word www_client_internal_datafill_cb(byte fd) {
-  char strbuf[5];
   bfill = EtherCard::tcpOffset();
   if (fd==www_fd) {
     if (client_postval == 0) {

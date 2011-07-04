@@ -77,7 +77,7 @@ public:
   // dhcp.cpp
   static bool dhcpSetup ();
   // dns.cpp
-  static const bool dnsLookup (prog_char* name);
+  static bool dnsLookup (prog_char* name);
   // webutil.cpp
   static void copyIp (uint8_t *dst, const uint8_t *src);
   static void copyMac (uint8_t *dst, const uint8_t *src);
