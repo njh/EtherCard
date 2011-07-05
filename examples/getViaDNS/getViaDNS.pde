@@ -30,7 +30,9 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[getViaDNS]");
   
-  ether.begin(sizeof Ethernet::buffer, mymac);
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+    Serial.println( "Failed to access Ethernet controller");
+
   ether.staticSetup(myip, gwip);
 
   if (!ether.dnsLookup(website))

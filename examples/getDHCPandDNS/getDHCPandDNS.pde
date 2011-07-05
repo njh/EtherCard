@@ -1,5 +1,5 @@
-// This demo does web requests to a fixed IP address, using a fixed gateway.
-// 2010-11-27 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
+// This demo does web requests via DHCP and DNS lookup.
+// 2011-07-05 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
 // $Id$
 
 #include <EtherCard.h>
@@ -8,16 +8,10 @@
 
 // ethernet interface mac address
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
-// ethernet interface ip address
-static byte myip[] = { 192,168,1,203 };
-// gateway ip address
-static byte gwip[] = { 192,168,1,1 };
-// remote website ip address and port
-static byte hisip[] = { 74,125,79,99 };
 // remote website name
 char website[] PROGMEM = "google.com";
 
-byte Ethernet::buffer[300];   // a very small tcp/ip buffer is enough here
+byte Ethernet::buffer[700];
 static long timer;
 
 // called when the client request is complete
@@ -30,19 +24,22 @@ static void my_result_cb (byte status, word off, word len) {
 
 void setup () {
   Serial.begin(57600);
-  Serial.println("\n[getStaticIP]");
+  Serial.println("\n[getDHCPandDNS]");
   
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
     Serial.println( "Failed to access Ethernet controller");
 
-  ether.staticSetup(myip, gwip);
+  if (!ether.dhcpSetup())
+    Serial.println( "DHCP failed");
+  
+  ether.printIp("My IP: ", ether.myip);
+  // ether.printIp("Netmask: ", ether.mymask);
+  ether.printIp("GW IP: ", ether.gwip);
+  ether.printIp("DNS IP: ", ether.dnsip);
 
-  ether.copyIp(ether.hisip, hisip);
+  if (!ether.dnsLookup(website))
+    Serial.println("DNS failed");
   ether.printIp("Server: ", ether.hisip);
-
-  while (ether.clientWaitingGw())
-    ether.packetLoop(ether.packetReceive());
-  Serial.println("Gateway found");
   
   timer = - REQUEST_RATE; // start timing out right away
 }
