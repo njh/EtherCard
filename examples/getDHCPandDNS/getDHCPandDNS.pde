@@ -30,7 +30,7 @@ void setup () {
     Serial.println( "Failed to access Ethernet controller");
 
   if (!ether.dhcpSetup())
-    Serial.println( "DHCP failed");
+    Serial.println("DHCP failed");
   
   ether.printIp("My IP: ", ether.myip);
   // ether.printIp("Netmask: ", ether.mymask);
@@ -45,6 +45,11 @@ void setup () {
 }
 
 void loop () {
+  // DHCP expiration is a bit brutal, because all other ethernet activity and
+  // incoming packets will be ignored until a new lease has been acquired
+  if (ether.dhcpExpired() && !ether.dhcpSetup())
+    Serial.println("DHCP failed");
+    
   ether.packetLoop(ether.packetReceive());
   
   if (millis() > timer + REQUEST_RATE) {

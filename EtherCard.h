@@ -76,6 +76,7 @@ public:
   static void sendWol (uint8_t *wolmac);
   // dhcp.cpp
   static bool dhcpSetup ();
+  static bool dhcpExpired ();
   // dns.cpp
   static bool dnsLookup (prog_char* name);
   // webutil.cpp

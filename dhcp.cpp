@@ -58,11 +58,11 @@ static void addBytes (byte len, const byte* data) {
         addToBuf(*data++);
 }
 
-// static byte dhcp_ready(void) {
-//     if (dhcpState == DHCP_STATE_OK && leaseStart + leaseTime <= millis())
-//         dhcpState = DHCP_STATE_RENEW;
-//     return dhcpState == DHCP_STATE_OK;
-// }
+static byte dhcp_ready () {
+    if (dhcpState == DHCP_STATE_OK && millis() >= leaseStart + leaseTime)
+        dhcpState = DHCP_STATE_RENEW;
+    return dhcpState == DHCP_STATE_OK;
+}
 
 // Main DHCP sending function, either DHCP_STATE_DISCOVER or DHCP_STATE_REQUEST
 static void dhcp_send (byte request) {
@@ -215,4 +215,8 @@ bool EtherCard::dhcpSetup () {
     }
   }
   return false;
+}
+
+bool EtherCard::dhcpExpired () {
+  return !dhcp_ready() && dhcpState == DHCP_STATE_RENEW;
 }
