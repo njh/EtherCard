@@ -185,6 +185,7 @@ bool EtherCard::dhcpSetup () {
   // Set a unique hostname, use Arduino-?? with last octet of mac address
   hostname[8] = 'A' + (mymac[5] >> 4);
   hostname[9] = 'A' + (mymac[5] & 0x0F);
+  myip[0] = 0; // force invalid IP address
 
   for (byte i = 0; i < 3; ++i) {
     dhcpState = DHCP_STATE_INIT;
