@@ -16,19 +16,6 @@ char website[] PROGMEM = "api.pachube.com";
 byte Ethernet::buffer[700];
 uint32_t timer;
 
-static void my_datafill (BufferFiller& buf) {
-  // generate the header
-  buf.emit_p(PSTR("GET http://$F/v2/feeds/$D.csv HTTP/1.0" "\r\n"
-                  "Host: $F" "\r\n"
-                  "X-PachubeApiKey: $F" "\r\n"
-                   "\r\n"), website, FEED, website, PSTR(APIKEY));
-  // send two fake values as payload
-  buf.print("0,");
-  buf.println(millis() / 123);
-  buf.print("1,");
-  buf.println(micros() / 123456);
-}
-
 //------------------------------------------------------------------------------
 // the following code needs to be moved into the EtherCard library
 
@@ -40,12 +27,38 @@ static word datafill (byte fd) {
   return buf.position();
 }
 
+static byte my_result (byte fd, byte statuscode, word datapos, word len_of_data) {
+  // Serial.println("REPLY:");
+  // Serial.println((char*) ether.buffer + datapos);
+}
+
 static void tcpRequest (word port, void (*df)(BufferFiller&)) {
   df_fun = df;
-  ether.clientTcpReq(0, datafill, 80);
+  ether.clientTcpReq(my_result, datafill, 80);
 }
 
 //------------------------------------------------------------------------------
+
+static void my_datafill (BufferFiller& buf) {
+  // generate two fake values as payload in a temporary string buffer
+  char valueBuf[30];
+  sprintf(valueBuf, "0,%ld" "\r\n"
+                    "1,%ld" "\r\n",
+                    millis() / 123,
+                    micros() / 123456);
+  // generate the header with payload
+  buf.emit_p(PSTR("PUT http://$F/v2/feeds/$D.csv HTTP/1.0" "\r\n"
+                  "Host: $F" "\r\n"
+                  "X-PachubeApiKey: $F" "\r\n"
+                  "Content-Length: $D" "\r\n"
+                   "\r\n"
+                   "$S"),
+                   website, FEED, website, PSTR(APIKEY),
+                   strlen(valueBuf), valueBuf);
+  
+  // Serial.println("REQUEST:");
+  // Serial.println((char*) EtherCard::tcpOffset());
+}
 
 void setup () {
   Serial.begin(57600);
