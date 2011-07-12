@@ -51,7 +51,6 @@ static byte waitgwmac; // 0=wait, 1=first req no anser, 2=have gwmac, 4=refeshin
 #define WGW_ACCEPT_ARP_REPLY 8
 static word info_data_len;
 static byte seqnum = 0xa; // my initial tcp sequence number
-static BufferFiller bfill;
 
 #define CLIENTMSS 550
 #define TCP_DATA_START ((word)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
@@ -448,7 +447,7 @@ byte EtherCard::clientTcpReq (byte (*result_cb)(byte,byte,word,word),
 }
 
 static word www_client_internal_datafill_cb(byte fd) {
-  bfill = EtherCard::tcpOffset();
+  BufferFiller bfill = EtherCard::tcpOffset();
   if (fd==www_fd) {
     if (client_postval == 0) {
       bfill.emit_p(PSTR("GET $F$S HTTP/1.1\r\n"
@@ -505,6 +504,27 @@ void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *addi
   client_postval = postval;
   client_browser_cb = callback;
   www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,80);
+}
+
+static word tcp_datafill_cb(byte fd) {
+  word len = Stash::length();
+  Stash::extract(0, len, EtherCard::tcpOffset());
+  Stash::cleanup();
+  EtherCard::tcpOffset()[len] = 0;
+  Serial.print("REQUEST: ");
+  Serial.println(len);
+  Serial.println((char*) EtherCard::tcpOffset());
+  return len;
+}
+
+static byte tcp_result_cb(byte fd, byte status, word datapos, word datalen) {
+  Serial.println("REPLY:");
+  Serial.println((char*) ether.buffer + datapos);
+}
+
+byte EtherCard::tcpSend () {
+  www_fd = clientTcpReq(&tcp_result_cb, &tcp_datafill_cb, hisport);
+  return www_fd;
 }
 
 void EtherCard::registerPingCallback (void (*callback)(byte *srcip)) {

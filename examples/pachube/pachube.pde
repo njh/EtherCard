@@ -15,50 +15,7 @@ char website[] PROGMEM = "api.pachube.com";
 
 byte Ethernet::buffer[700];
 uint32_t timer;
-
-//------------------------------------------------------------------------------
-// the following code needs to be moved into the EtherCard library
-
-static void (*df_fun)(BufferFiller&);
-
-static word datafill (byte fd) {
-  BufferFiller buf = EtherCard::tcpOffset();
-  df_fun(buf);
-  return buf.position();
-}
-
-static byte my_result (byte fd, byte statuscode, word datapos, word len_of_data) {
-  // Serial.println("REPLY:");
-  // Serial.println((char*) ether.buffer + datapos);
-}
-
-static void tcpRequest (word port, void (*df)(BufferFiller&)) {
-  df_fun = df;
-  ether.clientTcpReq(my_result, datafill, 80);
-}
-
-//------------------------------------------------------------------------------
-
-static void my_datafill (BufferFiller& buf) {
-  // generate two fake values as payload in a temporary string buffer
-  char valueBuf[30];
-  sprintf(valueBuf, "0,%ld" "\r\n"
-                    "1,%ld" "\r\n",
-                    millis() / 123,
-                    micros() / 123456);
-  // generate the header with payload
-  buf.emit_p(PSTR("PUT http://$F/v2/feeds/$D.csv HTTP/1.0" "\r\n"
-                  "Host: $F" "\r\n"
-                  "X-PachubeApiKey: $F" "\r\n"
-                  "Content-Length: $D" "\r\n"
-                   "\r\n"
-                   "$S"),
-                   website, FEED, website, PSTR(APIKEY),
-                   strlen(valueBuf), valueBuf);
-  
-  // Serial.println("REQUEST:");
-  // Serial.println((char*) EtherCard::tcpOffset());
-}
+Stash stash;
 
 void setup () {
   Serial.begin(57600);
@@ -84,6 +41,27 @@ void loop () {
   
   if (millis() > timer) {
     timer = millis() + 10000;
-    tcpRequest(80, my_datafill);
+    
+    // generate two fake values as payload - by using a separate stash,
+    // we can determine the size of the generated message ahead of time
+    byte sd = stash.create();
+    stash.print("0,");
+    stash.println((word) millis() / 123);
+    stash.print("1,");
+    stash.println((word) micros() / 456);
+    stash.save();
+    
+    // generate the header with payload - note that the stash size is used,
+    // and that a "stash descriptor" is passed in as argument using "$H"
+    Stash::prepare(PSTR("PUT http://$F/v2/feeds/$D.csv HTTP/1.0" "\r\n"
+                        "Host: $F" "\r\n"
+                        "X-PachubeApiKey: $F" "\r\n"
+                        "Content-Length: $D" "\r\n"
+                        "\r\n"
+                        "$H"),
+            website, FEED, website, PSTR(APIKEY), stash.size(), sd);
+
+    // send the packet - this also releases all stash buffers once done
+    ether.tcpSend();
   }
 }

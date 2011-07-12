@@ -44,7 +44,6 @@ static char hostname[] = "Arduino-00";
 static uint32_t currentXid;
 static uint32_t leaseStart;
 static uint32_t leaseTime;
-static byte dhcpserver[4];
 static byte* bufPtr;
 
 static const byte allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -112,7 +111,7 @@ static void dhcp_send (byte request) {
         // Request using server ip address
         addToBuf(54); // Server IP address
         addToBuf(4);
-        addBytes(4, dhcpserver);
+        addBytes(4, EtherCard::dhcpip);
     }
     
     // Additional info in parameter list - minimal list for what we need
@@ -151,7 +150,7 @@ static void have_dhcpoffer (word len) {
                          leaseTime = (leaseTime + ptr[i]) << 8;
                      leaseTime *= 1000;      // milliseconds
                      break;
-            case 54: EtherCard::copyIp(dhcpserver, ptr);
+            case 54: EtherCard::copyIp(EtherCard::dhcpip, ptr);
                      break;
         }
         ptr += optionLen;

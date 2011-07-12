@@ -16,6 +16,83 @@
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 
+typedef struct {
+  uint8_t count;     // number of allocated pages
+  uint8_t first;     // first allocated page
+  uint8_t last;      // last allocated page
+} StashHeader;
+
+class Stash : public /*Stream*/ Print, private StashHeader {
+  uint8_t curr;      // current page
+  uint8_t offs;      // current offset in page
+  
+  typedef struct {
+    union {
+      uint8_t bytes[64];
+      uint16_t words[32];
+      struct {
+        StashHeader head;
+        uint8_t filler[59];
+        uint8_t tail;
+        uint8_t next;
+      };
+    };
+    uint8_t bnum;
+  } Block;
+
+  static uint8_t allocBlock ();
+  static void freeBlock (uint8_t block);
+  static uint8_t fetchByte (uint8_t blk, uint8_t off);
+
+  static Block bufs[2];
+  static uint8_t map[256/8];
+
+public:
+  static void initMap (uint8_t last);
+  static void load (uint8_t idx, uint8_t blk);
+  static uint8_t freeCount ();
+
+  Stash () : curr (0) { first = 0; }
+  Stash (uint8_t fd) { open(fd); }
+  
+  uint8_t create ();
+  uint8_t open (uint8_t blk);
+  void save ();
+  void release ();
+
+  void put (char c);
+  char get ();
+  uint16_t size ();
+
+  virtual void write(uint8_t b) {
+    put(b);
+  }
+  // virtual int available() {
+  //   if (curr != last)
+  //     return 1;
+  //   load(1, last);
+  //   return offs < bufs[1].tail;
+  // }
+  // virtual int read() {
+  //   return available() ? get() : -1;      
+  // }
+  // virtual int peek() {
+  //   return available() ? bufs[1].bytes[offs] : -1;      
+  // }
+  // virtual void flush() {
+  //   curr = last;
+  //   offs = 63;
+  // }
+  
+  static void prepare (PGM_P fmt, ...);
+  static uint16_t length ();
+  static void extract (uint16_t offset, uint16_t count, void* buf);
+  static uint16_t cleanup ();
+
+  friend void dumpBlock (const char* msg, uint8_t idx); // optional
+  friend void dumpStash (const char* msg, void* ptr);   // optional
+};
+
 class BufferFiller : public Print {
   uint8_t *start, *ptr;
 public:
@@ -37,19 +114,17 @@ public:
   static uint8_t myip[4];   // my ip address
   static uint8_t mymask[4]; // my net mask
   static uint8_t gwip[4];   // gateway
+  static uint8_t dhcpip[4]; // dhcp server
   static uint8_t dnsip[4];  // dns server
   static uint8_t hisip[4];  // dns result
-  static uint16_t hisport;  // tcp port to browse to
+  static uint16_t hisport;  // tcp port to connect to (default 80)
   
-  static uint8_t begin (const uint16_t size, const uint8_t* macaddr) {
-    copyMac(mymac, macaddr);
-    return initialize(size, mymac);
-  }
+  static uint8_t begin (const uint16_t size, const uint8_t* macaddr);
+  
+  // tcpip.cpp
   static bool staticSetup (const uint8_t* my_ip =0,
                             const uint8_t* gw_ip =0,
                              const uint8_t* dns_ip =0);
-  
-  // tcpip.cpp
   static void initIp (uint8_t *myip,uint16_t wwwp);
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);
   static uint16_t packetLoop (uint16_t plen);
@@ -74,6 +149,8 @@ public:
   static void clientIcmpRequest (const uint8_t *destip);
   static uint8_t packetLoopIcmpCheckReply (const uint8_t *ip_mh);
   static void sendWol (uint8_t *wolmac);
+  // new stash-based API
+  static uint8_t tcpSend ();
   // dhcp.cpp
   static bool dhcpSetup ();
   static bool dhcpExpired ();

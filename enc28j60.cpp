@@ -468,3 +468,13 @@ void ENC28J60::copyin (byte page, byte* data) {
     writeReg(ERDPT, destPos);
     readBuf(SCRATCH_PAGE_SIZE, data);
 }
+
+byte ENC28J60::peekin (byte page, byte off) {
+    byte result = 0;
+    word destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT) + off;
+    if (SCRATCH_START <= destPos && destPos < SCRATCH_LIMIT) {
+        writeReg(ERDPT, destPos);
+        readBuf(1, &result);
+    }
+    return result;
+}

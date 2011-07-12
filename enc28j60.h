@@ -23,10 +23,13 @@ public:
   static void initSPI ();
   static uint8_t initialize (const uint16_t size, const uint8_t* macaddr);
   static bool isLinkUp ();
+  
   static void packetSend (uint16_t len);
   static uint16_t packetReceive ();
+  
   static void copyout (uint8_t page, const uint8_t* data);
   static void copyin (uint8_t page, uint8_t* data);
+  static uint8_t peekin (uint8_t page, uint8_t off);
 };
 
 typedef ENC28J60 Ethernet;
