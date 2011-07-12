@@ -79,7 +79,7 @@ static void checkForDnsAnswer (uint16_t plen) {
 
 // use during setup, as this discards all incoming requests until it returns
 bool EtherCard::dnsLookup (prog_char* name) {
-  while (clientWaitingGw())
+  while (!isLinkUp() || clientWaitingGw())
     packetLoop(packetReceive());
     
   memset(hisip, 0, 4);

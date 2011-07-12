@@ -190,6 +190,8 @@ bool EtherCard::dhcpSetup () {
     dhcpState = DHCP_STATE_INIT;
     word start = millis();
     while (myip[0] == 0 && (word) (millis() - start) < 10000) {
+      if (!isLinkUp())
+        continue;
       word len = packetReceive();
       if (len == 0 || packetLoop(len) > 0)
         continue;
