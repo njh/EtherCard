@@ -9,7 +9,7 @@
 // packet. The client "web browser" as implemented here can also receive
 // large pages.
 //
-// Mods bij jcw, 2010-05-20
+// 2010-05-20 <jc@wippler.nl>
 
 #include "EtherCard.h"
 #include "net.h"

@@ -8,7 +8,7 @@
 //
 // Mods bij jcw, 2010-05-20
 
-#include <WProgram.h>
+#include <Arduino.h>
 #include "enc28j60.h"
 
 uint16_t ENC28J60::bufferSize;

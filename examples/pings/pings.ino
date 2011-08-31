@@ -1,6 +1,5 @@
 // Ping a remote server, also uses DHCP and DNS.
-// 2011-06-12 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// 2011-06-12 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 

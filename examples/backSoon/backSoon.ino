@@ -1,5 +1,5 @@
 // Present a "Will be back soon web page", as stand-in webserver.
-// jcw, 2011-01-30
+// 2011-01-30 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
  
 #include <EtherCard.h>
 

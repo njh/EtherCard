@@ -7,12 +7,12 @@
 //      DHCP code: Andrew Lindsay
 // Hence: GPL V2
 //
-// jcw, 2010-05-19
+// 2010-05-19 <jc@wippler.nl>
 
 #ifndef EtherCard_h
 #define EtherCard_h
 
-#include <WProgram.h>
+#include <Arduino.h>
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 
@@ -64,8 +64,9 @@ public:
   char get ();
   uint16_t size ();
 
-  virtual void write(uint8_t b) {
+  virtual size_t write(uint8_t b) {
     put(b);
+    return 1;
   }
   // virtual int available() {
   //   if (curr != last)

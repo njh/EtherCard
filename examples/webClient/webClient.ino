@@ -1,6 +1,5 @@
 // Demo using DHCP and DNS to perform a web client request.
-// 2011-06-08 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// 2011-06-08 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 

@@ -1,6 +1,5 @@
 // This demo does web requests via DHCP and DNS lookup.
-// 2011-07-05 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// 2011-07-05 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 

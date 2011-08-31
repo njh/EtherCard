@@ -1,6 +1,5 @@
-// This demo does web requests to a fixed IP address, using a fixed gateway.
-// 2010-11-27 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// This demo does web requests via DNS lookup, using a fixed gateway.
+// 2010-11-27 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 
@@ -12,8 +11,6 @@ static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 static byte myip[] = { 192,168,1,203 };
 // gateway ip address
 static byte gwip[] = { 192,168,1,1 };
-// remote website ip address and port
-static byte hisip[] = { 74,125,79,99 };
 // remote website name
 char website[] PROGMEM = "google.com";
 
@@ -30,19 +27,16 @@ static void my_result_cb (byte status, word off, word len) {
 
 void setup () {
   Serial.begin(57600);
-  Serial.println("\n[getStaticIP]");
+  Serial.println("\n[getViaDNS]");
   
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
     Serial.println( "Failed to access Ethernet controller");
 
   ether.staticSetup(myip, gwip);
 
-  ether.copyIp(ether.hisip, hisip);
+  if (!ether.dnsLookup(website))
+    Serial.println("DNS failed");
   ether.printIp("Server: ", ether.hisip);
-
-  while (ether.clientWaitingGw())
-    ether.packetLoop(ether.packetReceive());
-  Serial.println("Gateway found");
   
   timer = - REQUEST_RATE; // start timing out right away
 }

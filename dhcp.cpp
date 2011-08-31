@@ -2,7 +2,7 @@
 // http://www.ietf.org/rfc/rfc2131.txt
 //
 // Author: Andrew Lindsay
-// Rewritten and optimized by Jean-Claude Wippler, http:// (labs.org/
+// Rewritten and optimized by Jean-Claude Wippler, http://jeelabs.org/
 //
 // Copyright: GPL V2
 // See http://www.gnu.org/licenses/gpl.html
@@ -16,13 +16,15 @@
 #define DHCP_BOOTRESPONSE 2
 
 // DHCP States for access in applications
-#define DHCP_STATE_INIT 0
-#define DHCP_STATE_DISCOVER 1
-#define DHCP_STATE_OFFER 2
-#define DHCP_STATE_REQUEST 3
-#define DHCP_STATE_ACK 4
-#define DHCP_STATE_OK 5
-#define DHCP_STATE_RENEW 6
+enum {
+    DHCP_STATE_INIT,
+    DHCP_STATE_DISCOVER,
+    DHCP_STATE_OFFER,
+    DHCP_STATE_REQUEST,
+    DHCP_STATE_ACK,
+    DHCP_STATE_OK,
+    DHCP_STATE_RENEW,
+};
 
 // size 236
 typedef struct {

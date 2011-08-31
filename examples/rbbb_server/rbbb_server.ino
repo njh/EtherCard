@@ -1,6 +1,5 @@
 // This is a demo of the RBBB running as webserver with the Ether Card
-// 2010-05-28 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// 2010-05-28 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 

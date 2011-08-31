@@ -1,6 +1,5 @@
 // Test the offloaded RAM stash mechanism.
-// 2011-07-10 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// 2011-07-10 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 #include <avr/eeprom.h>

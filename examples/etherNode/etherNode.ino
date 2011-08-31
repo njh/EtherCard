@@ -1,17 +1,14 @@
 // Arduino demo sketch for testing RFM12B + ethernet
+// 2010-05-20 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+
 // Listens for RF12 messages and displays valid messages on a webpage
 // Memory usage exceeds 1K, so use Atmega328 or decrease history/buffers
 //
 // This sketch is derived from RF12eth.pde:
 // May 2010, Andras Tucsni, http://opensource.org/licenses/mit-license.php
-//
-// The EtherCard library is based on Guido Socher's driver, licensed as GPL2.
-//
-// Mods bij jcw, 2010-05-20
  
 #include <EtherCard.h>
-#include <Ports.h>
-#include <RF12.h>
+#include <JeeLib.h>
 #include <avr/eeprom.h>
 
 #define DEBUG   1   // set to 1 to display free RAM on web page

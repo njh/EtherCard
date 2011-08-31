@@ -1,6 +1,5 @@
 // Simple demo for feeding some random data to Pachube.
-// 2011-07-08 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id$
+// 2011-07-08 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 #include <EtherCard.h>
 
