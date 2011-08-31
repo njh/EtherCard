@@ -2,7 +2,7 @@
 // Author: Guido Socher 
 // Copyright: GPL V2
 //
-// Mods bij jcw, 2010-05-20
+// 2010-05-20 <jc@wippler.nl>
 
 #include "EtherCard.h"
 #include "net.h"

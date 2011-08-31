@@ -8,7 +8,7 @@
 // This chip is novel in that it is a full MAC+PHY interface all in a 28-pin
 // chip, using an SPI interface to the host processor.
 //
-// Mods bij jcw, 2010-05-20
+// 2010-05-20 <jc@wippler.nl>
 
 #ifndef ENC28J60_H
 #define ENC28J60_H

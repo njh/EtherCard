@@ -6,7 +6,7 @@
 // For AVRlib See http://www.procyonengineering.com/
 // Used with explicit permission of Pascal Stang.
 //
-// Mods bij jcw, 2010-05-20
+// 2010-05-20 <jc@wippler.nl>
 
 #include <Arduino.h>
 #include "enc28j60.h"
