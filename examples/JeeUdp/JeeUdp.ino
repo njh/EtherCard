@@ -237,14 +237,14 @@ static void collectStr (word type, const char* data) {
 
 static void collectPayload (word type) {
   // Copy the received RF12 data into a as many values as needed.
-  byte num = (rf12_len + 7) / 8; // this many values will be needed
+  byte num = rf12_len / 8 + 1; // this many values will be needed
   collectTypeLen(type, 2 + 9 * num);
   collBuf[collPos++] = 0;
   collBuf[collPos++] = num;
   for (byte i = 0; i < num; ++i)
     collBuf[collPos++] = 0; // counter
-  for (byte i = 0; i < 8 * num; ++i)
-    collBuf[collPos++] = i < rf12_len ? rf12_data[i] : 0;
+  for (char i = 0; i < 8 * num; ++i) // include -1, i.e. the length byte
+    collBuf[collPos++] = i <= rf12_len ? rf12_data[i-1] : 0;
 }
 
 static void forwardToUDP () {
