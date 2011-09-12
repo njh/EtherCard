@@ -310,6 +310,9 @@ byte EtherCard::ntpProcessAnswer (uint32_t *time,byte dstport_l) {
 
 void EtherCard::udpPrepare (word sport, byte *dip, word dport) {
   setMACandIPs(gwmacaddr, dip);
+  // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
+  if ((dip[0] & 0xF0) == 0xE0) // multicast address
+    EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes);
   gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
   memcpy_P(gPB + IP_P,iphdr,9);
