@@ -106,7 +106,7 @@ public:
   uint8_t* buffer () const { return start; }
   uint16_t position () const { return ptr - start; }
   
-  virtual void write (uint8_t v) { *ptr++ = v; }
+  virtual size_t write (uint8_t v) { *ptr++ = v; return 1; }
 };
 
 class EtherCard : public Ethernet {
