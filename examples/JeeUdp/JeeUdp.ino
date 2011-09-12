@@ -11,7 +11,7 @@
 #define DEBUG   1   // set to 1 to display free RAM on web page
 #define SERIAL  1   // set to 1 to show incoming requests on serial port
 
-#define CONFIG_EEPROM_ADDR ((byte*) 0x08)
+#define CONFIG_EEPROM_ADDR ((byte*) 0x10)
 
 // configuration, as stored in EEPROM
 struct Config {
@@ -19,12 +19,12 @@ struct Config {
   byte group;
   byte collect;
   word port;
-  char name[12];
   byte valid; // keep this as last byte
 } config;
 
 // ethernet interface mac address - must be unique on your network
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+static char myIpAddr [16];
 
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;
@@ -54,7 +54,6 @@ static void loadConfig () {
     config.group = 1;
     config.collect = 1;
     config.port = 25827;
-    strncpy(config.name, "JeeTest", sizeof config.name);
   }
   byte freq = config.band == 4 ? RF12_433MHZ :
               config.band == 8 ? RF12_868MHZ :
@@ -76,18 +75,16 @@ return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 #endif
 
 void setup (){
-#if SERIAL
   Serial.begin(57600);
-  Serial.println("\n[etherCollect]");
-#endif
+  Serial.println("\n[JeeUdp]");
   loadConfig();
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
     Serial.println( "Failed to access Ethernet controller");
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
-#if SERIAL
   ether.printIp("IP: ", ether.myip);
-#endif
+  sprintf(myIpAddr, "%d.%d.%d.%d",
+            ether.myip[0], ether.myip[1], ether.myip[2], ether.myip[3]);
 }
 
 char okHeader[] PROGMEM = 
@@ -99,11 +96,11 @@ char okHeader[] PROGMEM =
 static void homePage (BufferFiller& buf) {
   word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
   buf.emit_p(PSTR("$F\r\n"
-    "<title>RF12 etherCollect</title>" 
-    "<h2>$S @ $D - RF12 @ $D.$D</h2>"
+    "<title>RF12 JeeUdp</title>" 
+    "<h2>RF12 JeeUdp - $S :$D - RF12 @ $D.$D</h2>"
         "<a href='c'>Configure</a> - <a href='s'>Send Packet</a>"
     "<h3>Last $D messages:</h3>"
-    "<pre>"), okHeader, config.name, config.port,
+    "<pre>"), okHeader, myIpAddr, config.port,
                         mhz, config.group, NUM_MESSAGES);
   for (byte i = 0; i < NUM_MESSAGES; ++i) {
     byte j = (next_msg + i) % NUM_MESSAGES;
@@ -169,13 +166,12 @@ static void configPage (const char* data, BufferFiller& buf) {
   "Net group <input type=text name=g value='$D' size=3> (1..250)<br>"
   "Collect mode: <input type=checkbox name=c value='1' $S> "
     "Don't send ACKs<br><br>"
-  "Host name <input type=text name=n value='$S' size=10> (1..10 characters)<br>"
   "UDP Port <input type=text name=p value='$D' size=5> (1024..30000)"
       "</p>"
       "<input type=submit value=Set>"
     "</form>"), okHeader, config.band, config.group,
                 config.collect ? "CHECKED" : "",
-                config.name, config.port);
+                config.port);
 }
 
 static void sendPage (const char* data, BufferFiller& buf) {
@@ -256,7 +252,7 @@ static void forwardToUDP () {
   char buf[10];
   
   collPos = 0;
-  collectStr(0x0000, config.name);
+  collectStr(0x0000, myIpAddr);
   collectStr(0x0002, "RF12");
   word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
   sprintf(buf, "%d.%d", mhz, config.group);
