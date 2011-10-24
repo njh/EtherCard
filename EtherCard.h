@@ -12,7 +12,13 @@
 #ifndef EtherCard_h
 #define EtherCard_h
 
-#include <Arduino.h>
+
+#if ARDUINO>=100
+ #include <Arduino.h> // Arduino 1.0
+#else
+  #include <WProgram.h> // Arduino 0022
+#endif
+
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 
@@ -64,9 +70,15 @@ public:
   char get ();
   uint16_t size ();
 
-  virtual size_t write(uint8_t b) {
+#if ARDUINO>99
+  virtual size_t write(uint8_t b) { // Arduino 1.0
+#else
+  virtual void write(uint8_t b) { // Arduino 0022
+#endif
     put(b);
-    return 1;
+#if ARDUINO>99
+    return 1; // Arduino 1.0 only
+#endif
   }
   // virtual int available() {
   //   if (curr != last)
@@ -106,7 +118,11 @@ public:
   uint8_t* buffer () const { return start; }
   uint16_t position () const { return ptr - start; }
   
-  virtual size_t write (uint8_t v) { *ptr++ = v; return 1; }
+#if ARDUINO>99
+  virtual size_t write (uint8_t v) { *ptr++ = v; return 1; } // Arduino 1.0
+#else
+  virtual void write (uint8_t v) { *ptr++ = v; } // Arduino 0022
+#endif
 };
 
 class EtherCard : public Ethernet {
