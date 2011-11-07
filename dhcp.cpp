@@ -195,7 +195,7 @@ bool EtherCard::dhcpSetup () {
       if (!isLinkUp())
         continue;
       word len = packetReceive();
-      if (len == 0 || packetLoop(len) > 0)
+      if (dhcpState != DHCP_STATE_INIT && (len == 0 || packetLoop(len) > 0))
         continue;
       
       switch (dhcpState) {
