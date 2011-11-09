@@ -130,6 +130,14 @@ uint16_t Stash::size () {
   return 63 * count + fetchByte(last, 62) - sizeof (StashHeader);
 }
 
+static char* wtoa (word value, char* ptr) {
+  if (value > 9)
+    ptr = wtoa(value / 10, ptr);
+  *ptr = '0' + value;
+  *++ptr = 0;
+  return ptr;
+}
+
 void Stash::prepare (PGM_P fmt, ...) {
   Stash::load(0, 0);
   word* segs = Stash::bufs[0].words;
@@ -146,7 +154,7 @@ void Stash::prepare (PGM_P fmt, ...) {
       switch (pgm_read_byte(fmt++)) {
         case 'D': {
           char buf[7];
-          itoa(argval, buf, 10); //TODO avoid itoa(), pulls in too much code
+          wtoa(argval, buf);
           arglen = strlen(buf);
           break;
         }
@@ -201,7 +209,7 @@ void Stash::extract (word offset, word count, void* buf) {
         mode = pgm_read_byte(fmt++);
         switch (mode) {
           case 'D':
-            itoa(arg, tmp, 10); //TODO avoid itoa(), pulls in too much code
+            wtoa(arg, tmp);
             ptr = tmp;
             break;
           case 'S':
@@ -272,7 +280,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         c = pgm_read_byte(fmt++);
         switch (c) {
             case 'D':
-                itoa(va_arg(ap, int), (char*) ptr, 10);
+                wtoa(va_arg(ap, word), (char*) ptr);
                 break;
             case 'S':
                 strcpy((char*) ptr, va_arg(ap, const char*));

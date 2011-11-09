@@ -4,7 +4,7 @@
 #include <EtherCard.h>
 
 // change these settings to match your own setup
-#define FEED    5942
+#define FEED    "5942"
 #define APIKEY  "bXkPFCiYm57f7flLyD86bm0HK3TXsfuQF-Jeyh3HeMg"
 
 // ethernet interface mac address, must be unique on the LAN
@@ -52,13 +52,13 @@ void loop () {
     
     // generate the header with payload - note that the stash size is used,
     // and that a "stash descriptor" is passed in as argument using "$H"
-    Stash::prepare(PSTR("PUT http://$F/v2/feeds/$D.csv HTTP/1.0" "\r\n"
+    Stash::prepare(PSTR("PUT http://$F/v2/feeds/$F.csv HTTP/1.0" "\r\n"
                         "Host: $F" "\r\n"
                         "X-PachubeApiKey: $F" "\r\n"
                         "Content-Length: $D" "\r\n"
                         "\r\n"
                         "$H"),
-            website, FEED, website, PSTR(APIKEY), stash.size(), sd);
+            website, PSTR(FEED), website, PSTR(APIKEY), stash.size(), sd);
 
     // send the packet - this also releases all stash buffers once done
     ether.tcpSend();
