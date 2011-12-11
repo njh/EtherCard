@@ -8,7 +8,7 @@
 //
 // 2010-05-20 <jc@wippler.nl>
 
-#if ARDUINO>=100
+#if ARDUINO >= 100
 #include <Arduino.h> // Arduino 1.0
 #else
 #include <Wprogram.h> // Arduino 0022
@@ -240,8 +240,7 @@ uint16_t ENC28J60::bufferSize;
 static byte Enc28j60Bank;
 static int16_t gNextPacketPtr;
 
-#define SELECT_BIT  0   // 0 = B0 = pin 8, 2 = B2 = pin 10
-#define FULL_SPEED  1   // use full-speed SPI for bulk transfers
+#define SELECT_BIT  0   // 0 = B0 = pin 8, 2 = B2 = pin 10 on ATmega328
 
 void ENC28J60::initSPI () {
     const byte SPI_SS   = 10;
@@ -298,33 +297,19 @@ static void writeOp (byte op, byte address, byte data) {
 
 static void readBuf(word len, byte* data) {
     enableChip();
-#if FULL_SPEED
-    byte spiSave = SPCR;
-    SPCR = bit(SPE) | bit(MSTR); // 8 MHz @ 16
-#endif
     xferSPI(ENC28J60_READ_BUF_MEM);
     while (len--) {
         xferSPI(0x00);
         *data++ = SPDR;
     }
-#if FULL_SPEED
-    SPCR = spiSave;
-#endif
     disableChip();
 }
 
 static void writeBuf(word len, const byte* data) {
     enableChip();
-#if FULL_SPEED
-    byte spiSave = SPCR;
-    SPCR = bit(SPE) | bit(MSTR); // 8 MHz @ 16
-#endif
     xferSPI(ENC28J60_WRITE_BUF_MEM);
     while (len--)
         xferSPI(*data++);
-#if FULL_SPEED
-    SPCR = spiSave;
-#endif
     disableChip();
 }
 
