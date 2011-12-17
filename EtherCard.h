@@ -132,8 +132,6 @@ public:
   static bool staticSetup (const uint8_t* my_ip =0,
                             const uint8_t* gw_ip =0,
                              const uint8_t* dns_ip =0);
-  static void powerDown();  // contrib by Alex M.
-  static void powerUp();    // contrib by Alex M.
   // tcpip.cpp
   static void initIp (uint8_t *myip,uint16_t wwwp);
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);

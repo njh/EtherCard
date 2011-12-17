@@ -30,6 +30,9 @@ public:
   static void copyout (uint8_t page, const uint8_t* data);
   static void copyin (uint8_t page, uint8_t* data);
   static uint8_t peekin (uint8_t page, uint8_t off);
+
+  static void powerDown();  // contrib by Alex M.
+  static void powerUp();    // contrib by Alex M.
 };
 
 typedef ENC28J60 Ethernet;
