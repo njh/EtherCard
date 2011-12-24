@@ -24,7 +24,6 @@ struct Config {
 
 // ethernet interface mac address - must be unique on your network
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
-static char myIpAddr [16];
 
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;
@@ -83,8 +82,6 @@ void setup (){
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
   ether.printIp("IP: ", ether.myip);
-  sprintf(myIpAddr, "%d.%d.%d.%d",
-            ether.myip[0], ether.myip[1], ether.myip[2], ether.myip[3]);
 }
 
 char okHeader[] PROGMEM = 
@@ -97,11 +94,10 @@ static void homePage (BufferFiller& buf) {
   word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
   buf.emit_p(PSTR("$F\r\n"
     "<title>RF12 JeeUdp</title>" 
-    "<h2>RF12 JeeUdp - $S :$D - RF12 @ $D.$D</h2>"
+    "<h2>RF12 JeeUdp @ $D - RF12 @ $D.$D</h2>"
         "<a href='c'>Configure</a> - <a href='s'>Send Packet</a>"
     "<h3>Last $D messages:</h3>"
-    "<pre>"), okHeader, myIpAddr, config.port,
-                        mhz, config.group, NUM_MESSAGES);
+    "<pre>"), okHeader, config.port, mhz, config.group, NUM_MESSAGES);
   for (byte i = 0; i < NUM_MESSAGES; ++i) {
     byte j = (next_msg + i) % NUM_MESSAGES;
     if (history_len[j] > 0) {
@@ -165,7 +161,7 @@ static void configPage (const char* data, BufferFiller& buf) {
   "Freq band <input type=text name=b value='$D' size=1> (4, 8, or 9)<br>"
   "Net group <input type=text name=g value='$D' size=3> (1..250)<br>"
   "Collect mode: <input type=checkbox name=c value='1' $S> "
-    "Don't send ACKs<br><br>"
+    "(don't send ACKs)<br><br>"
   "UDP Port <input type=text name=p value='$D' size=5> (1024..30000)"
       "</p>"
       "<input type=submit value=Set>"
@@ -252,7 +248,7 @@ static void forwardToUDP () {
   char buf[10];
   
   collPos = 0;
-  collectStr(0x0000, myIpAddr);
+  collectStr(0x0000, "JeeUdp");
   collectStr(0x0002, "RF12");
   word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
   sprintf(buf, "%d.%d", mhz, config.group);
@@ -321,3 +317,4 @@ void loop (){
     outCount = -1;
   }
 }
+

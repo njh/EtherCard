@@ -325,6 +325,12 @@ uint8_t EtherCard::begin (const uint16_t size, const uint8_t* macaddr) {
   return initialize(size, mymac);
 }
 
+uint8_t EtherCard::begin (const uint16_t size, const uint8_t* macaddr, uint8_t csPin ) {
+  Stash::initMap(56);
+  copyMac(mymac, macaddr);
+  return initialize(size, mymac, csPin);
+}
+
 bool EtherCard::staticSetup (const uint8_t* my_ip,
                               const uint8_t* gw_ip,
                                const uint8_t* dns_ip) {

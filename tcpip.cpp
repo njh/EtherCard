@@ -245,6 +245,8 @@ static void make_tcp_ack_with_data_noflags(word dlen) {
   gPB[TCP_CHECKSUM_H_P] = 0;
   gPB[TCP_CHECKSUM_L_P] = 0;
   fill_checksum(TCP_CHECKSUM_H_P, IP_SRC_P, 8+TCP_HEADER_LEN_PLAIN+dlen,2);
+
+ Serial.println((char*)&gPB[54]);
   EtherCard::packetSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+dlen+ETH_HEADER_LEN);
 }
 
@@ -523,6 +525,7 @@ static word tcp_datafill_cb(byte fd) {
 static byte tcp_result_cb(byte fd, byte status, word datapos, word datalen) {
   Serial.println("REPLY:");
   Serial.println((char*) ether.buffer + datapos);
+  return 1;
 }
 
 byte EtherCard::tcpSend () {
@@ -577,7 +580,7 @@ word EtherCard::packetLoop (word plen) {
       return 0;
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_RST_V) {
       if (client_tcp_result_cb)
-(*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,3,0,0);
+        (*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,3,0,0);
       tcp_client_state = 5;
       return 0;
     }
@@ -602,7 +605,8 @@ word EtherCard::packetLoop (word plen) {
       return 0;
     }
     if (tcp_client_state==3 && len>0) { 
-      tcp_client_state = 4;
+      // Comment out to enable large files, e.g. mp3 streams to be downloaded
+//      tcp_client_state = 4;
       if (client_tcp_result_cb) {
         word tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
         if (tcpstart>plen-8)

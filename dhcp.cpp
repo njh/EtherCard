@@ -188,6 +188,9 @@ bool EtherCard::dhcpSetup () {
   hostname[9] = 'A' + (mymac[5] & 0x0F);
   myip[0] = 0; // force invalid IP address
 
+  // Enable reception of broadcast packets as some DHCP servers
+  // use this to send responses
+  enableBroadcast();
   for (byte i = 0; i < 3; ++i) {
     dhcpState = DHCP_STATE_INIT;
     word start = millis();
@@ -214,10 +217,12 @@ bool EtherCard::dhcpSetup () {
       if (myip[0] != 0) {
         if (gwip[0] != 0)
           setGwIp(gwip);
+        disableBroadcast();
         return true;
       }
     }
   }
+  disableBroadcast();
   return false;
 }
 
