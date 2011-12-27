@@ -499,7 +499,7 @@ void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_c
   client_hoststr = hoststr;
   client_postval = 0;
   client_browser_cb = callback;
-  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,80);
+  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
 void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline,const char *postval,void (*callback)(byte,word,word)) {
@@ -508,7 +508,7 @@ void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *addi
   client_additionalheaderline = additionalheaderline;
   client_postval = postval;
   client_browser_cb = callback;
-  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,80);
+  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
 static word tcp_datafill_cb(byte fd) {
