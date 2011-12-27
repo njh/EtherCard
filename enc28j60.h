@@ -21,8 +21,8 @@ public:
   static uint8_t* tcpOffset () { return buffer + 0x36; }
 
   static void initSPI ();
-  static uint8_t initialize (const uint16_t size, const uint8_t* macaddr);
-  static uint8_t initialize (const uint16_t size, const uint8_t* macaddr, uint8_t csPin );
+  static uint8_t initialize (const uint16_t size, const uint8_t* macaddr,
+                             uint8_t csPin =8);
   static bool isLinkUp ();
   
   static void packetSend (uint16_t len);

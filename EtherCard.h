@@ -128,14 +128,14 @@ public:
   static uint8_t dnsip[4];  // dns server
   static uint8_t hisip[4];  // dns result
   static uint16_t hisport;  // tcp port to connect to (default 80)
-  
-  static uint8_t begin (const uint16_t size, const uint8_t* macaddr);
-  static uint8_t begin (const uint16_t size, const uint8_t* macaddr, uint8_t csPin );
-  
+  // EtherCard.cpp
+  static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
+                        uint8_t csPin =8);  
   // tcpip.cpp
   static bool staticSetup (const uint8_t* my_ip =0,
                             const uint8_t* gw_ip =0,
                              const uint8_t* dns_ip =0);
+  // tcpip.cpp
   static void initIp (uint8_t *myip,uint16_t wwwp);
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);
   static uint16_t packetLoop (uint16_t plen);
