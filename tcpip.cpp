@@ -245,6 +245,8 @@ static void make_tcp_ack_with_data_noflags(word dlen) {
   gPB[TCP_CHECKSUM_H_P] = 0;
   gPB[TCP_CHECKSUM_L_P] = 0;
   fill_checksum(TCP_CHECKSUM_H_P, IP_SRC_P, 8+TCP_HEADER_LEN_PLAIN+dlen,2);
+
+ Serial.println((char*)&gPB[54]);
   EtherCard::packetSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+dlen+ETH_HEADER_LEN);
 }
 
