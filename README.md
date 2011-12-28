@@ -4,7 +4,9 @@ Derived from code by Guido Socher and Pascal Stang, hence under GPL2 license.
 
 The home page for this library is <http://jeelabs.org/ethercard>
 
-This is a development branch and may contain bugs.
+You can download this project in either
+[zip](https://github.com/jcw/ethercard/zipball/master) or
+[tar](https://github.com/jcw/ethercard/tarball/master) formats.
 
 Unpack the archive and rename the result to `EtherCard`.  
 Put it in the `libraries` folder in your Arduino sketches area.  
