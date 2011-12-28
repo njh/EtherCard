@@ -15,7 +15,7 @@
 #endif
 #include "enc28j60.h"
 
-uint16_t ENC28J60::bufferSize;
+word ENC28J60::bufferSize;
 
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
@@ -237,10 +237,11 @@ uint16_t ENC28J60::bufferSize;
 // (note: maximum ethernet frame length would be 1518)
 #define MAX_FRAMELEN      1500        
 
-static byte Enc28j60Bank;
-static int16_t gNextPacketPtr;
+#define FULL_SPEED  1   // switch to full-speed SPI for bulk transfers
 
-#define SELECT_BIT  0   // 0 = B0 = pin 8, 2 = B2 = pin 10 on ATmega328
+static byte Enc28j60Bank;
+static int gNextPacketPtr;
+static byte selectBit;  // 0 = B0 = pin 8, 1 = B1 = pin 9, 2 = B2 = pin 10
 
 void ENC28J60::initSPI () {
     const byte SPI_SS   = 10;
@@ -263,11 +264,11 @@ void ENC28J60::initSPI () {
 
 static void enableChip () {
     cli();
-    bitClear(PORTB, SELECT_BIT);
+    bitClear(PORTB, selectBit);
 }
 
 static void disableChip () {
-    bitSet(PORTB, SELECT_BIT);
+    bitSet(PORTB, selectBit);
     sei();
 }
 
@@ -352,12 +353,12 @@ static void writePhy (byte address, word data) {
         ;
 }
 
-byte ENC28J60::initialize (word size, const byte* macaddr) {
+byte ENC28J60::initialize (word size, const byte* macaddr, byte csPin) {
     bufferSize = size;
     if (bitRead(SPCR, SPE) == 0)
       initSPI();
-      
-    bitSet(DDRB, SELECT_BIT);
+    selectBit = csPin - 8;  
+    bitSet(DDRB, selectBit);
     disableChip();
     
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
@@ -370,7 +371,7 @@ byte ENC28J60::initialize (word size, const byte* macaddr) {
     writeReg(ERXND, RXSTOP_INIT);
     writeReg(ETXST, TXSTART_INIT);
     writeReg(ETXND, TXSTOP_INIT);
-    writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
+    enableBroadcast(); // change to add ERXFCON_BCEN recommended by epam
     writeReg(EPMM0, 0x303f);
     writeReg(EPMCS, 0xf7f9);
     writeRegByte(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
@@ -391,7 +392,13 @@ byte ENC28J60::initialize (word size, const byte* macaddr) {
     writeOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE|EIE_PKTIE);
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
-    return readRegByte(EREVID);
+    byte rev = readRegByte(EREVID);
+    // microchip forgot to step the number on the silcon when they
+    // released the revision B7. 6 is now rev B7. We still have
+    // to see what they do when they release B8. At the moment
+    // there is no B8 out yet
+    if (rev > 5) ++rev;
+    return rev;
 }
 
 bool ENC28J60::isLinkUp() {
@@ -471,6 +478,7 @@ byte ENC28J60::peekin (byte page, byte off) {
 // Contributed by Alex M. Based on code from: http://blog.derouineau.fr
 //                  /2011/07/putting-enc28j60-ethernet-controler-in-sleep-mode/
 void ENC28J60::powerDown() {
+<<<<<<< HEAD
   writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_RXEN);
   while(readRegByte(ESTAT) & ESTAT_RXBUSY);
   while(readRegByte(ECON1) & ECON1_TXRTS);
@@ -482,4 +490,27 @@ void ENC28J60::powerUp() {
   writeOp(ENC28J60_BIT_FIELD_CLR, ECON2, ECON2_PWRSV);
   while(!readRegByte(ESTAT) & ESTAT_CLKRDY);
   writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
+=======
+    writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_RXEN);
+    while(readRegByte(ESTAT) & ESTAT_RXBUSY);
+    while(readRegByte(ECON1) & ECON1_TXRTS);
+    writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_VRPS);
+    writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PWRSV);
+}
+
+void ENC28J60::powerUp() {
+    writeOp(ENC28J60_BIT_FIELD_CLR, ECON2, ECON2_PWRSV);
+    while(!readRegByte(ESTAT) & ESTAT_CLKRDY);
+    writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
+}
+
+// Functions to enable/disable broadcast filter bits
+// With the bit set, broadcast packets are filtered.
+void ENC28J60::enableBroadcast () {
+    writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN|ERXFCON_BCEN);
+}
+
+void ENC28J60::disableBroadcast () {
+    writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
+>>>>>>> development
 }

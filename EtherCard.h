@@ -25,6 +25,7 @@
 
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
+#include "net.h"
 
 typedef struct {
   uint8_t count;     // number of allocated pages
@@ -128,7 +129,8 @@ public:
   static uint8_t hisip[4];  // dns result
   static uint16_t hisport;  // tcp port to connect to (default 80)
   // EtherCard.cpp
-  static uint8_t begin (const uint16_t size, const uint8_t* macaddr);
+  static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
+                        uint8_t csPin =8);  
   static bool staticSetup (const uint8_t* my_ip =0,
                             const uint8_t* gw_ip =0,
                              const uint8_t* dns_ip =0);

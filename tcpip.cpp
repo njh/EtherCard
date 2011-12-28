@@ -497,7 +497,7 @@ void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_c
   client_hoststr = hoststr;
   client_postval = 0;
   client_browser_cb = callback;
-  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,80);
+  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
 void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline,const char *postval,void (*callback)(byte,word,word)) {
@@ -506,7 +506,7 @@ void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *addi
   client_additionalheaderline = additionalheaderline;
   client_postval = postval;
   client_browser_cb = callback;
-  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,80);
+  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
 static word tcp_datafill_cb(byte fd) {
@@ -523,6 +523,7 @@ static word tcp_datafill_cb(byte fd) {
 static byte tcp_result_cb(byte fd, byte status, word datapos, word datalen) {
   Serial.println("REPLY:");
   Serial.println((char*) ether.buffer + datapos);
+  return 1;
 }
 
 byte EtherCard::tcpSend () {
@@ -577,7 +578,7 @@ word EtherCard::packetLoop (word plen) {
       return 0;
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_RST_V) {
       if (client_tcp_result_cb)
-(*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,3,0,0);
+        (*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,3,0,0);
       tcp_client_state = 5;
       return 0;
     }
@@ -602,7 +603,8 @@ word EtherCard::packetLoop (word plen) {
       return 0;
     }
     if (tcp_client_state==3 && len>0) { 
-      tcp_client_state = 4;
+      // Comment out to enable large files, e.g. mp3 streams to be downloaded
+//      tcp_client_state = 4;
       if (client_tcp_result_cb) {
         word tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
         if (tcpstart>plen-8)
