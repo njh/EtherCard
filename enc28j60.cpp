@@ -241,7 +241,7 @@ word ENC28J60::bufferSize;
 
 static byte Enc28j60Bank;
 static int gNextPacketPtr;
-static byte selectBit = 0; // 0 = B0 = pin 8, 1 = B1 = pin 9, 2 = B2 = pin 10
+static byte selectBit;  // 0 = B0 = pin 8, 1 = B1 = pin 9, 2 = B2 = pin 10
 
 void ENC28J60::initSPI () {
     const byte SPI_SS   = 10;

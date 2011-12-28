@@ -15,7 +15,7 @@ Updates by Andrew Lindsay, December 2011:
 1. Add alternative begin with 3rd parameter to specify CS pin to use. Only 8, 9 and 10 are usable.
 Default without 3rd parameter is pin 8.
 
-2. Updated DHCP to allow broadcast packets to be recieved as some DHCP servers (Some Linux and 
+2. Updated DHCP to allow broadcast packets to be received as some DHCP servers (Some Linux and 
 Windows DHCP servers) send responses to mac address ff:ff:ff:ff:ff:ff which would otherwise be
 filtered out. At end of DHCP process the broadcast filter is returned to block broadcast packets.
 ARP broadcasts are not affected as they have their own filter.
