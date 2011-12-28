@@ -478,19 +478,6 @@ byte ENC28J60::peekin (byte page, byte off) {
 // Contributed by Alex M. Based on code from: http://blog.derouineau.fr
 //                  /2011/07/putting-enc28j60-ethernet-controler-in-sleep-mode/
 void ENC28J60::powerDown() {
-<<<<<<< HEAD
-  writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_RXEN);
-  while(readRegByte(ESTAT) & ESTAT_RXBUSY);
-  while(readRegByte(ECON1) & ECON1_TXRTS);
-  writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_VRPS);
-  writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PWRSV);
-}
-
-void ENC28J60::powerUp() {
-  writeOp(ENC28J60_BIT_FIELD_CLR, ECON2, ECON2_PWRSV);
-  while(!readRegByte(ESTAT) & ESTAT_CLKRDY);
-  writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
-=======
     writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_RXEN);
     while(readRegByte(ESTAT) & ESTAT_RXBUSY);
     while(readRegByte(ECON1) & ECON1_TXRTS);
@@ -512,5 +499,4 @@ void ENC28J60::enableBroadcast () {
 
 void ENC28J60::disableBroadcast () {
     writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
->>>>>>> development
 }
