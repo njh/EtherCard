@@ -362,6 +362,7 @@ byte ENC28J60::initialize (word size, const byte* macaddr, byte csPin) {
     disableChip();
     
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
+    delay(2); // errata B7/2
     while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY)
         ;
         
