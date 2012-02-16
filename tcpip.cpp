@@ -59,6 +59,7 @@ const char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 };
 const char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
 const char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
 const byte allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+const byte ipBroadcast[] = {255, 255, 255, 255};
 
 static void fill_checksum(byte dest, byte off, word len,byte type) {
   const byte* ptr = gPB + off;
@@ -346,12 +347,12 @@ void EtherCard::sendUdp (char *data,byte datalen,word sport, byte *dip, word dpo
 }
 
 void EtherCard::sendWol (byte *wolmac) {
-  setMACandIPs(allOnes, EtherCard::myip);
+  setMACandIPs(allOnes, ipBroadcast);
   gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
   gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
   memcpy_P(gPB + IP_P,iphdr,9);
-  gPB[IP_TOTLEN_L_P] = 0x54;
-  gPB[IP_PROTO_P] = IP_PROTO_ICMP_V;
+  gPB[IP_TOTLEN_L_P] = 0x82;
+  gPB[IP_PROTO_P] = IP_PROTO_UDP_V;
   fill_ip_hdr_checksum();
   gPB[UDP_DST_PORT_H_P] = 0;
   gPB[UDP_DST_PORT_L_P] = 0x9; // wol = normally 9
@@ -368,7 +369,7 @@ void EtherCard::sendWol (byte *wolmac) {
     copyMac(gPB + pos, wolmac);
   }
   fill_checksum(UDP_CHECKSUM_H_P, IP_SRC_P, 16 + 102,1);
-  packetSend(pos);
+  packetSend(pos + 6);
 }
 
 // make a arp request
