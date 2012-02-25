@@ -41,10 +41,10 @@ word ENC28J60::bufferSize;
 #define ERXND           (0x0A|0x00)
 #define ERXRDPT         (0x0C|0x00)
 // #define ERXWRPT         (0x0E|0x00)
-// #define EDMAST          (0x10|0x00)
-// #define EDMAND          (0x12|0x00)
+#define EDMAST          (0x10|0x00)
+#define EDMAND          (0x12|0x00)
 // #define EDMADST         (0x14|0x00)
-// #define EDMACS          (0x16|0x00)
+#define EDMACS          (0x16|0x00)
 // Bank 1 registers
 #define EHT0             (0x00|0x20)
 #define EHT1             (0x01|0x20)
@@ -93,7 +93,7 @@ word ENC28J60::bufferSize;
 #define MAADR4           (0x05|0x60|0x80)
 #define EBSTSD           (0x06|0x60)
 #define EBSTCON          (0x07|0x60)
-// #define EBSTCS          (0x08|0x60)
+#define EBSTCS          (0x08|0x60)
 #define MISTAT           (0x0A|0x60|0x80)
 #define EREVID           (0x12|0x60)
 #define ECOCON           (0x15|0x60)
@@ -175,6 +175,16 @@ word ENC28J60::bufferSize;
 #define MISTAT_NVALID    0x04
 #define MISTAT_SCAN      0x02
 #define MISTAT_BUSY      0x01
+
+// ENC28J60 EBSTCON Register Bit Definitions
+#define EBSTCON_PSV2     0x80
+#define EBSTCON_PSV1     0x40
+#define EBSTCON_PSV0     0x20
+#define EBSTCON_PSEL     0x10
+#define EBSTCON_TMSEL1   0x08
+#define EBSTCON_TMSEL0   0x04
+#define EBSTCON_TME      0x02
+#define EBSTCON_BISTST    0x01
 
 // PHY registers
 #define PHCON1           0x00
@@ -325,6 +335,10 @@ static void SetBank (byte address) {
 static byte readRegByte (byte address) {
     SetBank(address);
     return readOp(ENC28J60_READ_CTRL_REG, address);
+}
+
+static word readReg(byte address) {
+	return readRegByte(address) + (readRegByte(address+1) << 8);
 }
 
 static void writeRegByte (byte address, byte data) {
@@ -501,3 +515,87 @@ void ENC28J60::enableBroadcast () {
 void ENC28J60::disableBroadcast () {
     writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
 }
+
+uint8_t ENC28J60::doBIST ( byte csPin) {
+	#define RANDOM_FILL		0b0000
+	#define ADDRESS_FILL	0b0100
+	#define PATTERN_SHIFT	0b1000
+	#define RANDOM_RACE		0b1100
+
+// init	
+    if (bitRead(SPCR, SPE) == 0)
+      initSPI();
+    selectBit = csPin - 8;  
+    bitSet(DDRB, selectBit);
+    disableChip();
+    
+    writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
+    delay(2); // errata B7/2
+    while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY) ;
+
+
+	// now we can start the memory test
+	
+	word macResult;
+	word bitsResult;
+
+	// clear some of the registers registers
+    writeRegByte(ECON1, 0);
+	writeReg(EDMAST, 0);
+	
+	// Set up necessary pointers for the DMA to calculate over the entire memory
+	writeReg(EDMAND, 0x1FFFu);
+	writeReg(ERXND, 0x1FFFu);
+
+	// Enable Test Mode and do an Address Fill
+	SetBank(EBSTCON);
+	writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_BISTST | ADDRESS_FILL);
+	
+	// wait for BISTST to be reset, only after that are we actually ready to
+	// start the test
+	// this was undocumented :(
+    while (readOp(ENC28J60_READ_CTRL_REG, EBSTCON) & EBSTCON_BISTST);
+	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
+
+
+	// now start the actual reading an calculating the checksum until the end is
+	// reached
+	writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
+	SetBank(EDMACS);
+	while(readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_DMAST);
+	macResult = readReg(EDMACS);
+	bitsResult = readReg(EBSTCS);
+	// Compare the results
+	// 0xF807 should always be generated in Address fill mode
+	if ((macResult != bitsResult) || (bitsResult != 0xF807)) {
+		return 0;
+	}
+	// reset test flag
+	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
+	
+	
+	// Now start the BIST with random data test, and also keep on swapping the
+	// DMA/BIST memory ports.
+	writeRegByte(EBSTSD, 0b10101010 | millis());
+	writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_PSEL | EBSTCON_BISTST | RANDOM_FILL);
+						 
+						 
+	// wait for BISTST to be reset, only after that are we actually ready to
+	// start the test
+	// this was undocumented :(
+    while (readOp(ENC28J60_READ_CTRL_REG, EBSTCON) & EBSTCON_BISTST);
+	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
+	
+	
+	// now start the actual reading an calculating the checksum until the end is
+	// reached
+	writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
+	SetBank(EDMACS);
+	while(readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_DMAST);
+
+	macResult = readReg(EDMACS);
+	bitsResult = readReg(EBSTCS);
+	// The checksum should be equal 
+	return macResult == bitsResult;
+}
+
