@@ -37,10 +37,12 @@ static word (*client_tcp_datafill_cb)(byte);
 static byte www_fd;
 static void (*client_browser_cb)(byte,word,word);
 static prog_char *client_additionalheaderline;
+static prog_char *client_content_type;
 static const char *client_postval;
 static prog_char *client_urlbuf;
 static const char *client_urlbuf_var;
 static prog_char *client_hoststr;
+static prog_char *client_method;
 static void (*icmp_cb)(byte *ip);
 static int16_t delaycnt=1;
 static byte gwmacaddr[6];
@@ -463,19 +465,21 @@ static word www_client_internal_datafill_cb(byte fd) {
                                  client_hoststr);
     } else {
       prog_char* ahl = client_additionalheaderline;
-      bfill.emit_p(PSTR("POST $F HTTP/1.1\r\n"
+      bfill.emit_p(PSTR("$F $F HTTP/1.1\r\n"
                         "Host: $F\r\n"
                         "$F$S"
                         "Accept: */*\r\n"
                         "Connection: close\r\n"
                         "Content-Length: $D\r\n"
-                        "Content-Type: application/x-www-form-urlencoded\r\n"
+                        "Content-Type: $F\r\n"
                         "\r\n"
-                        "$S"), client_urlbuf,
+                        "$S"), client_method,
+                        		client_urlbuf,
                                  client_hoststr,
-                                 ahl != 0 ? ahl : "",
+                                 ahl != 0 ? ahl : PSTR(""),
                                  ahl != 0 ? "\r\n" : "",
                                  strlen(client_postval),
+                                 client_content_type == NULL ? PSTR("application/x-www-form-urlencoded") : client_content_type,
                                  client_postval);
     }
   }
@@ -501,12 +505,25 @@ void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_c
   www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
-void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline,const char *postval,void (*callback)(byte,word,word)) {
+void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline, prog_char *contenttype, const char *postval,void (*callback)(byte,word,word)) {
+  client_method = PSTR("POST");
   client_urlbuf = urlbuf;
   client_hoststr = hoststr;
   client_additionalheaderline = additionalheaderline;
   client_postval = postval;
   client_browser_cb = callback;
+  client_content_type = contenttype;
+  www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
+}
+
+void EtherCard::httpPut (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline, prog_char *contenttype, const char *postval,void (*callback)(byte,word,word)) {
+  client_method = PSTR("PUT");
+  client_urlbuf = urlbuf;
+  client_hoststr = hoststr;
+  client_additionalheaderline = additionalheaderline;
+  client_postval = postval;
+  client_browser_cb = callback;
+  client_content_type = contenttype;
   www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
@@ -604,8 +621,7 @@ word EtherCard::packetLoop (word plen) {
       return 0;
     }
     if (tcp_client_state==3 && len>0) { 
-      // Comment out to enable large files, e.g. mp3 streams to be downloaded
-//      tcp_client_state = 4;
+      tcp_client_state = 4;
       if (client_tcp_result_cb) {
         word tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
         if (tcpstart>plen-8)
