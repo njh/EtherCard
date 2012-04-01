@@ -161,10 +161,9 @@ void Stash::prepare (PGM_P fmt, ...) {
         case 'S':
           arglen = strlen((const char*) argval);
           break;
-        case 'F': {
+        case 'F':
           arglen = strlen_P((PGM_P) argval);
           break;
-        }
         case 'E': {
           byte* s = (byte*) argval;
           char c;

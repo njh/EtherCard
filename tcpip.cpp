@@ -51,6 +51,8 @@ static byte waitgwmac; // 0=wait, 1=first req no anser, 2=have gwmac, 4=refeshin
 #define WGW_ACCEPT_ARP_REPLY 8
 static word info_data_len;
 static byte seqnum = 0xa; // my initial tcp sequence number
+static byte result_fd = 123; // session id of last reply
+static const char* result_ptr;
 
 #define CLIENTMSS 550
 #define TCP_DATA_START ((word)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
@@ -518,18 +520,29 @@ static word tcp_datafill_cb(byte fd) {
   Serial.print("REQUEST: ");
   Serial.println(len);
   Serial.println((char*) EtherCard::tcpOffset());
+  result_fd = 123; // bogus value
   return len;
 }
 
 static byte tcp_result_cb(byte fd, byte status, word datapos, word datalen) {
-  Serial.println("REPLY:");
-  Serial.println((char*) ether.buffer + datapos);
+  if (status == 0) {
+    result_fd = fd; // a valid result has been received, remember its session id
+    result_ptr = (char*) ether.buffer + datapos;
+    // result_ptr[datalen] = 0;
+  }
   return 1;
 }
 
 byte EtherCard::tcpSend () {
   www_fd = clientTcpReq(&tcp_result_cb, &tcp_datafill_cb, hisport);
   return www_fd;
+}
+
+const char* EtherCard::tcpReply (byte fd) {
+  if (result_fd != fd)
+    return 0;
+  result_fd = 123; // set to a bogus value to prevent future match
+  return result_ptr;
 }
 
 void EtherCard::registerPingCallback (void (*callback)(byte *srcip)) {

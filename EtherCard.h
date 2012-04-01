@@ -161,6 +161,7 @@ public:
   static void sendWol (uint8_t *wolmac);
   // new stash-based API
   static uint8_t tcpSend ();
+  static const char* tcpReply (byte fd);
   // dhcp.cpp
   static bool dhcpSetup ();
   static bool dhcpExpired ();
