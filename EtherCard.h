@@ -111,6 +111,7 @@ public:
       
   void emit_p (PGM_P fmt, ...);
   void emit_raw (const char* s, uint16_t n) { memcpy(ptr, s, n); ptr += n; }
+  void emit_raw_p (PGM_P p, uint16_t n) { memcpy_p(ptr, p, n); ptr += n; }
   
   uint8_t* buffer () const { return start; }
   uint16_t position () const { return ptr - start; }
