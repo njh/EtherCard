@@ -12,7 +12,7 @@
 static byte dnstid_l; // a counter for transaction ID
 #define DNSCLIENT_SRC_PORT_H 0xE0 
 
-static void dnsRequest (const prog_char *progmem_hostname) {
+static void dnsRequest (const prog_char *progmem_hostname, bool fromRam) {
   ++dnstid_l; // increment for next request, finally wrap
   if (ether.dnsip[0] == 0)
     memset(ether.dnsip, 8, 4); // use 8.8.8.8 Google DNS as default
@@ -25,7 +25,8 @@ static void dnsRequest (const prog_char *progmem_hostname) {
   do {
     byte n = 0;
     for(;;) {
-      c = pgm_read_byte(progmem_hostname++);
+      c = fromRam ? *progmem_hostname : pgm_read_byte(progmem_hostname);
+      ++progmem_hostname;
       if (c == '.' || c == 0)
         break;
       p[++n] = c;
