@@ -148,8 +148,11 @@ public:
                          prog_char *hoststr,
                          void (*cb)(uint8_t,uint16_t,uint16_t));
   static void httpPost (prog_char *urlbuf, prog_char *hoststr,
-                        prog_char *header, const char *postval,
+                        prog_char *header, prog_char *contenttype, const char *postval,
                         void (*cb)(uint8_t,uint16_t,uint16_t));
+  static void httpPut (prog_char *urlbuf, prog_char *hoststr, 
+  						prog_char *header, prog_char *contenttype, const char *postval,
+  						void (*cb)(uint8_t,uint16_t,uint16_t));
   static void ntpRequest (uint8_t *ntpip,uint8_t srcport);
   static uint8_t ntpProcessAnswer (uint32_t *time, uint8_t dstport_l);
   static void udpPrepare (uint16_t sport, uint8_t *dip, uint16_t dport);
@@ -179,6 +182,13 @@ public:
   static uint8_t parseIp(uint8_t *bytestr,char *str);
   static void makeNetStr(char *rs,uint8_t *bs,uint8_t len,
                                               char sep,uint8_t base);
+   // snmp.cpp
+   static size_t snmpGetRequest(byte *snmpAgentIP, word srcPort, char *communityString,
+   								uint16_t *oid, size_t oidLength);
+   static boolean snmpCheckResponse(word dstPort);
+   static char *snmpGetStringVariable(uint16_t *oid, size_t oidLength);
+   static unsigned long snmpGetUnsignedIntegerVariable(uint16_t *oid, size_t oidLength);
+   static byte *findVariableInBuffer(uint16_t *oid, size_t oidLength);
 };
 
 extern EtherCard ether;
