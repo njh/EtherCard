@@ -618,7 +618,7 @@ word EtherCard::packetLoop (word plen) {
     }
     if (tcp_client_state==3 && len>0) { 
       // Comment out to enable large files, e.g. mp3 streams to be downloaded
-//      tcp_client_state = 4;
+//      tcp_client_statete = 4;
       if (client_tcp_result_cb) {
         word tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
         if (tcpstart>plen-8)
