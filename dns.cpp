@@ -54,7 +54,7 @@ static void checkForDnsAnswer (uint16_t plen) {
                    gPB[UDP_DST_PORT_H_P] != DNSCLIENT_SRC_PORT_H ||
                    gPB[UDP_DST_PORT_L_P] != dnstid_l ||
                    p[1] != dnstid_l ||
-                   (p[3] & 0x8F) != 0x80) 
+                   (p[3] & 0x0F) != 0) 
     return;
 
   p += *p; // we encoded the query len into tid
