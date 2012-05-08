@@ -31,28 +31,7 @@ byte Ethernet::buffer[700];
 Stash stash;
 uint8_t runTime;
 
-void setup () {
-  Serial.begin(57600);
-  Serial.println("\n[webClient]");
-
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
-    Serial.println( "Failed to access Ethernet controller");
-  if (!ether.dhcpSetup())
-    Serial.println("DHCP failed");
-
-  ether.printIp("IP:  ", ether.myip);
-  ether.printIp("GW:  ", ether.gwip);  
-  ether.printIp("DNS: ", ether.dnsip);  
-
-  if (!ether.dnsLookup(website))
-    Serial.println("DNS failed");
-    
-  ether.printIp("SRV: ", ether.hisip);
-}
-
-void loop () {
-  ether.packetLoop(ether.packetReceive());
-  
+static void sendToTwitter () {
 	// generate two fake values as payload - by using a separate stash,
 	// we can determine the size of the generated message ahead of time
 	byte sd = stash.create();
@@ -73,7 +52,29 @@ void loop () {
 	
 	// send the packet - this also releases all stash buffers once done
 	ether.tcpSend();
-  
-  while (1)
-    ; // don't loop again
+}
+
+void setup () {
+  Serial.begin(57600);
+  Serial.println("\n[webClient]");
+
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+    Serial.println( "Failed to access Ethernet controller");
+  if (!ether.dhcpSetup())
+    Serial.println("DHCP failed");
+
+  ether.printIp("IP:  ", ether.myip);
+  ether.printIp("GW:  ", ether.gwip);  
+  ether.printIp("DNS: ", ether.dnsip);  
+
+  if (!ether.dnsLookup(website))
+    Serial.println("DNS failed");
+    
+  ether.printIp("SRV: ", ether.hisip);
+
+  sendToTwitter();
+}
+
+void loop () {
+  ether.packetLoop(ether.packetReceive());
 }
