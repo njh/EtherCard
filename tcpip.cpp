@@ -517,9 +517,11 @@ static word tcp_datafill_cb(byte fd) {
   Stash::extract(0, len, EtherCard::tcpOffset());
   Stash::cleanup();
   EtherCard::tcpOffset()[len] = 0;
-  Serial.print("REQUEST: ");
-  Serial.println(len);
-  Serial.println((char*) EtherCard::tcpOffset());
+  #if SERIAL
+    Serial.print("REQUEST: ");
+    Serial.println(len);
+    Serial.println((char*) EtherCard::tcpOffset());
+  #endif
   result_fd = 123; // bogus value
   return len;
 }
