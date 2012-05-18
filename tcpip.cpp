@@ -24,7 +24,7 @@
 #undef PROGMEM 
 #define PROGMEM __attribute__(( section(".progmem.data") )) 
 #undef PSTR 
-#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
+#define PSTR(s) (__extension__({static const char c[] PROGMEM = (s); &c[0];}))
 
 static byte tcpclient_src_port_l=1; 
 static byte tcp_fd; // a file descriptor, will be encoded into the port
@@ -36,11 +36,11 @@ static word (*client_tcp_datafill_cb)(byte);
 #define TCPCLIENT_SRC_PORT_H 11
 static byte www_fd;
 static void (*client_browser_cb)(byte,word,word);
-static prog_char *client_additionalheaderline;
+static const char *client_additionalheaderline;
 static const char *client_postval;
-static prog_char *client_urlbuf;
+static const char *client_urlbuf;
 static const char *client_urlbuf_var;
-static prog_char *client_hoststr;
+static const char *client_hoststr;
 static void (*icmp_cb)(byte *ip);
 static int16_t delaycnt=1;
 static byte gwmacaddr[6];
@@ -464,7 +464,7 @@ static word www_client_internal_datafill_cb(byte fd) {
                                  client_urlbuf_var,
                                  client_hoststr);
     } else {
-      prog_char* ahl = client_additionalheaderline;
+      const char *ahl = client_additionalheaderline;
       bfill.emit_p(PSTR("POST $F HTTP/1.1\r\n"
                         "Host: $F\r\n"
                         "$F$S"
@@ -494,7 +494,7 @@ static byte www_client_internal_result_cb(byte fd, byte statuscode, word datapos
   return 0;
 }
 
-void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr,void (*callback)(byte,word,word)) {
+void EtherCard::browseUrl (const char *urlbuf, const char *urlbuf_varpart, const char *hoststr,void (*callback)(byte,word,word)) {
   client_urlbuf = urlbuf;
   client_urlbuf_var = urlbuf_varpart;
   client_hoststr = hoststr;
@@ -503,7 +503,7 @@ void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_c
   www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
-void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline,const char *postval,void (*callback)(byte,word,word)) {
+void EtherCard::httpPost (const char *urlbuf, const char *hoststr, const char *additionalheaderline,const char *postval,void (*callback)(byte,word,word)) {
   client_urlbuf = urlbuf;
   client_hoststr = hoststr;
   client_additionalheaderline = additionalheaderline;
