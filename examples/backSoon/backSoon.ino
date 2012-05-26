@@ -3,6 +3,15 @@
  
 #include <EtherCard.h>
 
+#define STATIC 0  // set to 1 to disable DHCP (adjust myip/gwip values below)
+
+#if STATIC
+// ethernet interface ip address
+static byte myip[] = { 192,168,1,200 };
+// gateway ip address
+static byte gwip[] = { 192,168,1,1 };
+#endif
+
 // ethernet mac address - must be unique on your network
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
@@ -28,15 +37,30 @@ char page[] PROGMEM =
 ;
 
 void setup(){
-  ether.begin(sizeof Ethernet::buffer, mymac);
-  ether.dhcpSetup();
+  Serial.begin(57600);
+  Serial.println("\n[backSoon]");
+  
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+    Serial.println( "Failed to access Ethernet controller");
+#if STATIC
+  ether.staticSetup(myip, gwip);
+#else
+  if (!ether.dhcpSetup())
+    Serial.println("DHCP failed");
+#endif
+
+  ether.printIp("IP:  ", ether.myip);
+  ether.printIp("GW:  ", ether.gwip);  
+  ether.printIp("DNS: ", ether.dnsip);  
 }
 
 void loop(){
   // DHCP expiration is a bit brutal, because all other ethernet activity and
   // incoming packets will be ignored until a new lease has been acquired
-  if (ether.dhcpExpired())
+  if (!STATIC && ether.dhcpExpired()) {
+    Serial.println("Acquiring DHCP lease again");
     ether.dhcpSetup();
+  }
     
   // wait for an incoming TCP packet, but ignore its contents
   if (ether.packetLoop(ether.packetReceive())) {
