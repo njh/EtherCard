@@ -60,7 +60,7 @@ static void addBytes (byte len, const byte* data) {
 }
 
 static byte dhcp_ready () {
-    if (dhcpState == DHCP_STATE_OK && millis() >= leaseStart + leaseTime)
+    if (dhcpState == DHCP_STATE_OK && millis() >= leaseStart + leaseTime) 
         dhcpState = DHCP_STATE_RENEW;
     return dhcpState == DHCP_STATE_OK;
 }
@@ -147,9 +147,9 @@ static void have_dhcpoffer (word len) {
                      break;
             case 6:  EtherCard::copyIp(EtherCard::dnsip, ptr);
                      break;
-            case 51: leaseTime = 0;
+            case 58: leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
                      for (byte i = 0; i<4; i++)
-                         leaseTime = (leaseTime + ptr[i]) << 8;
+                         leaseTime = (leaseTime << 8) + ptr[i];
                      leaseTime *= 1000;      // milliseconds
                      break;
             case 54: EtherCard::copyIp(EtherCard::dhcpip, ptr);
@@ -164,14 +164,27 @@ static void have_dhcpack (word /*len*/) {
     dhcpState = DHCP_STATE_OK;
     leaseStart = millis();
 }
+  // option53
+  // Value   Message Type
+  // -----   ------------
+     // 1     DHCPDISCOVER
+     // 2     DHCPOFFER
+     // 3     DHCPREQUEST
+     // 4     DHCPDECLINE
+     // 5     DHCPACK
+     // 6     DHCPNAK
+     // 7     DHCPRELEASE
 
-static void check_for_dhcp_answer (word len) {
+	 static void check_for_dhcp_answer (word len) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SRC_PORT &&
             dhcpPtr->op == DHCP_BOOTRESPONSE && dhcpPtr->xid == currentXid ) {
         int optionIndex = UDP_DATA_P + sizeof( DHCPdata ) + 4;
         if (gPB[optionIndex] == 53) {
+
+			Serial.print("Debug dhcpAnswer: ");Serial.println(gPB[optionIndex+2]);
+		
             switch( gPB[optionIndex+2] ) {
                 case DHCP_STATE_OFFER: have_dhcpoffer(len); break;
                 case DHCP_STATE_OK:    have_dhcpack(len); break;
@@ -188,19 +201,21 @@ bool EtherCard::dhcpSetup () {
   hostname[9] = 'A' + (mymac[5] & 0x0F);
   myip[0] = 0; // force invalid IP address
 
-  // Enable reception of broadcast packets as some DHCP servers
-  // use this to send responses
-  enableBroadcast();
   for (byte i = 0; i < 3; ++i) {
     dhcpState = DHCP_STATE_INIT;
     word start = millis();
-    while (myip[0] == 0 && (word) (millis() - start) < 10000) {
-      if (!isLinkUp())
-        continue;
-      word len = packetReceive();
-      if (dhcpState != DHCP_STATE_INIT && (len == 0 || packetLoop(len) > 0))
-        continue;
+	
+    while (dhcpState != DHCP_STATE_OK && (word) (millis() - start) < 10000) {
       
+	  if (!isLinkUp())
+        continue;
+
+		word len = packetReceive();
+      if (dhcpState != DHCP_STATE_INIT && (len == 0 || packetLoop(len) > 0))
+          continue;
+		  
+	 Serial.print("Debug dhcpState: ");Serial.println(dhcpState);
+		  
       switch (dhcpState) {
           case DHCP_STATE_INIT:
           case DHCP_STATE_RENEW:
@@ -209,23 +224,21 @@ bool EtherCard::dhcpSetup () {
           case DHCP_STATE_DISCOVER:
           case DHCP_STATE_REQUEST:
               check_for_dhcp_answer(len);
+			  if (gwip[0] != 0)
+				setGwIp(gwip);
               break;
           case DHCP_STATE_OK:
               ; //TODO wait for lease expiration
       }
-    
-      if (myip[0] != 0) {
-        if (gwip[0] != 0)
-          setGwIp(gwip);
-        disableBroadcast();
-        return true;
-      }
     }
   }
-  disableBroadcast();
-  return false;
+  return dhcpState == DHCP_STATE_OK ;
 }
 
 bool EtherCard::dhcpExpired () {
   return !dhcp_ready() && dhcpState == DHCP_STATE_RENEW;
 }
+
+uint32_t EtherCard::dhcpLeaseTime () {
+   return leaseTime;
+};
