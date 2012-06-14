@@ -10,6 +10,7 @@
 // Copyright: GPL V2
 // See http://www.gnu.org/licenses/gpl.html
 
+#define DHCPDEBUG
 
 #include "EtherCard.h"
 #include "net.h"
@@ -141,8 +142,6 @@ static void send_dhcp_message (void) {
 
 	uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	
-    Serial.print("send dhcp request "); Serial.println(currentXid);
-
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
 	
     EtherCard::udpPrepare(DHCP_DEST_PORT, 
@@ -274,7 +273,7 @@ bool EtherCard::dhcpSetup () {
 
 void EtherCard::DhcpStateMachine (word len) {
 
-#ifdef DEBUG
+#ifdef DHCPDEBUG
 	if (dhcpState != DHCP_STATE_BOUND) {
 		Serial.print(millis());
 		Serial.print(" State: ");
