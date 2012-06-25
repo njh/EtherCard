@@ -281,6 +281,9 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             case 'D':
                 wtoa(va_arg(ap, word), (char*) ptr);
                 break;
+            case 'L':
+                ltoa(va_arg(ap, long), (char*) ptr, 10);
+                break;
             case 'S':
                 strcpy((char*) ptr, va_arg(ap, const char*));
                 break;
