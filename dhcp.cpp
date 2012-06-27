@@ -145,7 +145,7 @@ static void send_dhcp_message (void) {
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
 	
     EtherCard::udpPrepare(DHCP_DEST_PORT, 
-		(dhcpState == DHCP_STATE_BOUND ? EtherCard::gwip : allOnes),
+		(dhcpState == DHCP_STATE_BOUND ? EtherCard::dhcpip : allOnes),
 		DHCP_SRC_PORT);   // SRC<->DST ??
     
 	if (dhcpState != DHCP_STATE_BOUND)
@@ -266,7 +266,7 @@ bool EtherCard::dhcpSetup () {
 	 while (dhcpState != DHCP_STATE_BOUND && (word) (millis() - start) < 60000) {
 	  if (isLinkUp()) DhcpStateMachine(packetReceive());
     }
-	return dhcpState == DHCP_STATE_BOUND ;
+    return dhcpState == DHCP_STATE_BOUND ;
 }
 
 
@@ -308,12 +308,14 @@ void EtherCard::DhcpStateMachine (word len) {
 			currentXid = millis();
 			memset(myip,0,4); // force ip 0.0.0.0
 			send_dhcp_message();
+			enableBroadcast();
 			dhcpState = DHCP_STATE_SELECTING;
 			stateTimer = millis();
 			break;
 			
 		case DHCP_STATE_SELECTING: 
 			if (dhcp_received_message_type(len, DHCP_OFFER)) {
+				disableBroadcast();
 				process_dhcp_offer(len);
 				send_dhcp_message();
 				dhcpState = DHCP_STATE_REQUESTING;

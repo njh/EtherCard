@@ -165,7 +165,7 @@ public:
   static const char* tcpReply (byte fd);
   // dhcp.cpp
   static bool dhcpSetup ();
-  static bool dhcpExpired ();
+  static void DhcpStateMachine (word len);
   // dns.cpp
   static bool dnsLookup (prog_char* name, bool fromRam =false);
   // webutil.cpp
