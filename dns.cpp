@@ -80,13 +80,17 @@ static void checkForDnsAnswer (uint16_t plen) {
 
 // use during setup, as this discards all incoming requests until it returns
 bool EtherCard::dnsLookup (prog_char* name, bool fromRam) {
-  while (!isLinkUp() || clientWaitingGw())
+  word start = millis();
+  while (!isLinkUp() || clientWaitingGw()) {
     packetLoop(packetReceive());
+    if ((word) (millis() - start) >= 30000)
+      return false;
+  }
     
   memset(hisip, 0, 4);
   dnsRequest(name, fromRam);
 
-  word start = millis();
+  start = millis();
   while (hisip[0] == 0) {
     if ((word) (millis() - start) >= 30000)
       return false;
