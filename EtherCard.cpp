@@ -166,8 +166,8 @@ void Stash::prepare (PGM_P fmt, ...) {
           break;
         case 'E': {
           byte* s = (byte*) argval;
-          char c;
-          while ((c = eeprom_read_byte(s++)) != 0)
+          char d;
+          while ((d = eeprom_read_byte(s++)) != 0)
             ++arglen;
           break;
         }
@@ -194,7 +194,7 @@ void Stash::extract (word offset, word count, void* buf) {
   word* segs = Stash::bufs[0].words;
   PGM_P fmt = (PGM_P) *++segs;
   Stash stash;
-  char mode = '@', tmp[7], *ptr, *out = (char*) buf;
+  char mode = '@', tmp[7], *ptr = NULL, *out = (char*) buf;
   for (word i = 0; i < offset + count; ) {
     char c = 0;
     switch (mode) {
@@ -247,7 +247,7 @@ void Stash::extract (word offset, word count, void* buf) {
   }
 }
 
-word Stash::cleanup () {
+void Stash::cleanup () {
   Stash::load(0, 0);
   word* segs = Stash::bufs[0].words;
   PGM_P fmt = (PGM_P) *++segs;
@@ -281,21 +281,24 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             case 'D':
                 wtoa(va_arg(ap, word), (char*) ptr);
                 break;
+            case 'L':
+                ltoa(va_arg(ap, long), (char*) ptr, 10);
+                break;
             case 'S':
                 strcpy((char*) ptr, va_arg(ap, const char*));
                 break;
             case 'F': {
                 PGM_P s = va_arg(ap, PGM_P);
-                char c;
-                while ((c = pgm_read_byte(s++)) != 0)
-                    *ptr++ = c;
+                char d;
+                while ((d = pgm_read_byte(s++)) != 0)
+                    *ptr++ = d;
                 continue;
             }
             case 'E': {
                 byte* s = va_arg(ap, byte*);
-                char c;
-                while ((c = eeprom_read_byte(s++)) != 0)
-                    *ptr++ = c;
+                char d;
+                while ((d = eeprom_read_byte(s++)) != 0)
+                    *ptr++ = d;
                 continue;
             }
             default:
