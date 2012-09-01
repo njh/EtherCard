@@ -16,12 +16,22 @@ void EtherCard::copyMac (byte *dst, const byte *src) {
 
 void EtherCard::printIp (const char* msg, const byte *buf) {
     Serial.print(msg);
-    for (byte i = 0; i < 4; ++i) {
-        Serial.print( buf[i], DEC );
-        if (i < 3)
-            Serial.print('.');
-    }
+    EtherCard::printIp(buf);
     Serial.println();
+}
+
+void EtherCard::printIp (const __FlashStringHelper *ifsh, const byte *buf) {
+	Serial.print(ifsh);
+	EtherCard::printIp(buf);
+	Serial.println();
+}
+
+void EtherCard::printIp (const byte *buf) {
+	for (byte i = 0; i < 4; ++i) {
+		Serial.print( buf[i], DEC );
+		if (i < 3)
+			Serial.print('.');
+	}
 }
 
 // search for a string of the form key=value in
