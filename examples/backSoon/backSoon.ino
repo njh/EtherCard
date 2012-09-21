@@ -57,7 +57,7 @@ void setup(){
 void loop(){
   // DHCP expiration is a bit brutal, because all other ethernet activity and
   // incoming packets will be ignored until a new lease has been acquired
-  if (!STATIC && ether.dhcpExpired()) {
+  if (!STATIC && !ether.dhcpValid()) {
     Serial.println("Acquiring DHCP lease again");
     ether.dhcpSetup();
   }
