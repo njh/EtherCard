@@ -1,13 +1,14 @@
-// This code slightly follows the conventions of, but is not derived from:
-//      EHTERSHIELD_H library for Arduino etherShield
-//      Copyright (c) 2008 Xing Yu.  All right reserved. (this is LGPL v2.1)
-// It is however derived from the enc28j60 and ip code (which is GPL v2)
-//      Author: Pascal Stang 
-//      Modified by: Guido Socher
-//      DHCP code: Andrew Lindsay
-// Hence: GPL V2
-//
-// 2010-05-19 <jc@wippler.nl>
+/** This code slightly follows the conventions of, but is not derived from:
+       EHTERSHIELD_H library for Arduino etherShield
+       Copyright (c) 2008 Xing Yu.  All right reserved. (this is LGPL v2.1)
+  It is however derived from the enc28j60 and ip code (which is GPL v2)
+       Author: Pascal Stang 
+       Modified by: Guido Socher
+       DHCP code: Andrew Lindsay
+   Hence: GPL V2
+
+   2010-05-19 <jc@wippler.nl>
+*/
 
 #include <EtherCard.h>
 #include <stdarg.h>
@@ -16,6 +17,11 @@
 byte Stash::map[256/8];
 Stash::Block Stash::bufs[2];
 
+/**
+ * 
+ * 
+ * 
+ */
 uint8_t Stash::allocBlock () {
   for (uint8_t i = 0; i < sizeof map; ++i)
     if (map[i] != 0)
