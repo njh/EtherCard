@@ -456,7 +456,7 @@ static word www_client_internal_datafill_cb(byte fd) {
   BufferFiller bfill = EtherCard::tcpOffset();
   if (fd==www_fd) {
     if (client_postval == 0) {
-      bfill.emit_p(PSTR("GET $F$S HTTP/1.1\r\n"
+      bfill.emit_p(PSTR("GET $F$S HTTP/1.0\r\n"
                         "Host: $F\r\n"
                         "Accept: text/html\r\n"
                         "Connection: close\r\n"
@@ -465,7 +465,7 @@ static word www_client_internal_datafill_cb(byte fd) {
                                  client_hoststr);
     } else {
       prog_char* ahl = client_additionalheaderline;
-      bfill.emit_p(PSTR("POST $F HTTP/1.1\r\n"
+      bfill.emit_p(PSTR("POST $F HTTP/1.0\r\n"
                         "Host: $F\r\n"
                         "$F$S"
                         "Accept: */*\r\n"
@@ -579,8 +579,9 @@ word EtherCard::packetLoop (word plen) {
       waitgwmac = WGW_HAVE_GW_MAC;
     return 0;
   }
-  if (eth_type_is_ip_and_my_ip(plen)==0)
+  if (eth_type_is_ip_and_my_ip(plen)==0) {
     return 0;
+  }
   if (gPB[IP_PROTO_P]==IP_PROTO_ICMP_V && gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREQUEST_V) {
     if (icmp_cb)
       (*icmp_cb)(&(gPB[IP_SRC_P]));
@@ -595,7 +596,7 @@ word EtherCard::packetLoop (word plen) {
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_RST_V) {
       if (client_tcp_result_cb)
         (*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,3,0,0);
-      tcp_client_state = 5;
+	  tcp_client_state = 5;
       return 0;
     }
     len = get_tcp_data_len();
@@ -619,32 +620,33 @@ word EtherCard::packetLoop (word plen) {
       return 0;
     }
     if (tcp_client_state==3 && len>0) { 
-      // Comment out to enable large files, e.g. mp3 streams to be downloaded
-//      tcp_client_statete = 4;
-      if (client_tcp_result_cb) {
+	  if (client_tcp_result_cb) {
         word tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
         if (tcpstart>plen-8)
           tcpstart = plen-8; // dummy but save
         word save_len = len;
         if (tcpstart+len>plen)
           save_len = plen-tcpstart;
-        byte send_fin = (*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,0,tcpstart,save_len);
-        if (send_fin) {
-          make_tcp_ack_from_any(len,TCP_FLAGS_PUSH_V|TCP_FLAGS_FIN_V);
-          tcp_client_state = 5;
-          return 0;
-        }
+        (*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,0,tcpstart,save_len);
+		make_tcp_ack_from_any(len,TCP_FLAGS_PUSH_V|TCP_FLAGS_FIN_V);
+        tcp_client_state = 6;
+        return 0;
       }
     }
     if (tcp_client_state != 5) {
       if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V) {
+	    if(tcp_client_state == 3) {
+			return 0; // In some instances FIN is received *before* DATA.  If that is the case, we just return here and keep looking for the data packet
+		}
         make_tcp_ack_from_any(len+1,TCP_FLAGS_PUSH_V|TCP_FLAGS_FIN_V);
-        tcp_client_state = 5; // connection terminated
-      } else if (len>0)
+        tcp_client_state = 6; // connection terminated
+      } else if (len>0) {
         make_tcp_ack_from_any(len,0);
+	  }
     }
     return 0;
   }
+
   if (gPB[TCP_DST_PORT_H_P] == (hisport >> 8) &&
       gPB[TCP_DST_PORT_L_P] == ((byte) hisport)) {
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V)
