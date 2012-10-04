@@ -459,7 +459,6 @@ static word www_client_internal_datafill_cb(byte fd) {
       bfill.emit_p(PSTR("GET $F$S HTTP/1.0\r\n"
                         "Host: $F\r\n"
                         "Accept: text/html\r\n"
-                        "Connection: close\r\n"
                         "\r\n"), client_urlbuf,
                                  client_urlbuf_var,
                                  client_hoststr);
@@ -469,7 +468,6 @@ static word www_client_internal_datafill_cb(byte fd) {
                         "Host: $F\r\n"
                         "$F$S"
                         "Accept: */*\r\n"
-                        "Connection: close\r\n"
                         "Content-Length: $D\r\n"
                         "Content-Type: application/x-www-form-urlencoded\r\n"
                         "\r\n"
