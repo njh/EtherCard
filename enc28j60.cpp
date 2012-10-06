@@ -267,6 +267,7 @@ void ENC28J60::initSPI () {
 #endif
     
     pinMode(SPI_SS, OUTPUT);
+    digitalWrite(SPI_SS, HIGH);
     pinMode(SPI_MOSI, OUTPUT);
     pinMode(SPI_SCK, OUTPUT);   
     pinMode(SPI_MISO, INPUT);
