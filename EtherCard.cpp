@@ -13,6 +13,8 @@
 #include <stdarg.h>
 #include <avr/eeprom.h>
 
+//#define FLOATEMIT // uncomment line to enable $T in emit_P for float emitting
+
 byte Stash::map[256/8];
 Stash::Block Stash::bufs[2];
 
@@ -281,6 +283,24 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             case 'D':
                 wtoa(va_arg(ap, word), (char*) ptr);
                 break;
+            #ifdef FLOATEMIT
+            case 'T':
+                dtostrf	(	va_arg(ap, double), 10, 3, (char*)ptr );
+            break;
+            #endif
+            case 'H': {
+                char p1 =  va_arg(ap, word);
+                char p2;
+                p2 = (p1 >> 4) & 0x0F;
+                p1 = p1 & 0x0F;
+                if (p1 > 9) p1 += 0x07; // adjust 0x0a-0x0f to come out 'a'-'f'
+                p1 += 0x30;             // and complete
+                if (p2 > 9) p2 += 0x07; // adjust 0x0a-0x0f to come out 'a'-'f'
+                p2 += 0x30;             // and complete
+                *ptr++ = p2;
+                *ptr++ = p1;
+                continue;
+            }
             case 'L':
                 ltoa(va_arg(ap, long), (char*) ptr, 10);
                 break;
