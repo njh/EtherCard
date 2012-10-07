@@ -289,14 +289,8 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             break;
             #endif
             case 'H': {          
-                // upper-case HEX conversion   
-                snprintf_P((char *)ptr, 3, PSTR("%02X"), va_arg(ap, word));
-                ptr+=2;
-                continue;
-            }
-            case 'h': {
-                // lower-case HEX conversion
-                snprintf_P((char *)ptr, 3, PSTR("%02x"), va_arg(ap, word));
+                char p1 = va_arg(ap, word);
+                itoa(p1, (char *) ptr, 16);
                 ptr+=2;
                 continue;
             }
