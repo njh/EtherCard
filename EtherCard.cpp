@@ -288,10 +288,17 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
                 dtostrf	(	va_arg(ap, double), 10, 3, (char*)ptr );
             break;
             #endif
-            case 'H': {          
-                char p1 = va_arg(ap, word);
-                itoa(p1, (char *) ptr, 16);
-                ptr+=2;
+            case 'H': {
+                char p1 =  va_arg(ap, word);
+                char p2;
+                p2 = (p1 >> 4) & 0x0F;
+                p1 = p1 & 0x0F;
+                if (p1 > 9) p1 += 0x07; // adjust 0x0a-0x0f to come out 'a'-'f'
+                p1 += 0x30;             // and complete
+                if (p2 > 9) p2 += 0x07; // adjust 0x0a-0x0f to come out 'a'-'f'
+                p2 += 0x30;             // and complete
+                *ptr++ = p2;
+                *ptr++ = p1;
                 continue;
             }
             case 'L':
