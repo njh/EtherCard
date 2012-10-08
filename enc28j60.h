@@ -12,18 +12,6 @@
 
 #ifndef ENC28J60_H
 #define ENC28J60_H
-
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-  const byte SPI_SS   = 53;
-  const byte SPI_MOSI = 51;
-  const byte SPI_MISO = 50;
-  const byte SPI_SCK  = 52;
-#else
-  const byte SPI_SS   = 10;
-  const byte SPI_MOSI = 11;
-  const byte SPI_MISO = 12;
-  const byte SPI_SCK  = 13;
-#endif
     
 class ENC28J60 {
 public:
