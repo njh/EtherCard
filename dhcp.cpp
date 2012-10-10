@@ -73,7 +73,7 @@ typedef struct {
 #define DHCPCLIENT_SRC_PORT_H 0xe0
 #define DHCP_SRC_PORT 67
 #define DHCP_DEST_PORT 68
-#define DHCP_WAIT 20000 // msec to wait for DHCP address
+#define DHCP_WAIT 60000L // msec to wait for DHCP address
 
 static byte dhcpState;  // Current DHCP FSM state
 static char hostname[16] = "Arduino-00";
@@ -325,7 +325,7 @@ static bool dhcp_fsm () {
     // use this to send responses. Use only in DHCP_STATE_INIT ???
     EtherCard::enableBroadcast();
 
-    // We typically wait up to 20 seconds for an answer
+    // We typically wait up to 60 seconds for an answer
     uint32_t end = millis() + DHCP_WAIT;
     while (dhcpState != DHCP_STATE_BOUND && millis() < end) {
         byte rc = DHCP_STATE_BAD;

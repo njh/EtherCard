@@ -12,7 +12,7 @@
 
 #ifndef ENC28J60_H
 #define ENC28J60_H
-
+    
 class ENC28J60 {
 public:
   static uint8_t buffer[];
