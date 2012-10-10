@@ -1,20 +1,19 @@
 /**
- * ethercard.h
+ * \file ethercard.h
  * 
  * This code slightly follows the conventions of, but is not derived from:
  *       ETHERSHIELD_H library for Arduino etherShield
  *       Copyright (c) 2008 Xing Yu.  All right reserved. (this is LGPL v2.1)
  * 
  *  It is however derived from the enc28j60 and ip code (which is GPL v2)
+ *       hence this file is GPLv2 as well
  *       Author: Pascal Stang 
  *       Modified by: Guido Socher
  *       DHCP code: Andrew Lindsay
- *  Hence: GPL V2
+ *  \copyright GPL V2
  * 
- * \author
- *   Jean Claude Wippler <jc@wippler.nl>
- * \creation
- *   2010-05-19 
+ * \author Jean Claude Wippler <jc@wippler.nl>
+ * \creation  2010-05-19 
  */ 
 
 #ifndef EtherCard_h
@@ -36,17 +35,20 @@
 #include "net.h"
 
 typedef struct {
-  uint8_t count;     //< number of allocated pages
-  uint8_t first;     //< first allocated page
-  uint8_t last;      //< last allocated page
+  uint8_t count;     ///< number of allocated pages
+  uint8_t first;     ///< first allocated page
+  uint8_t last;      ///< last allocated page
 } StashHeader;
 
-class Stash : public /*Stream*/ Print, private StashHeader {
-  uint8_t curr;      // current page
-  uint8_t offs;      // current offset in page
+class Stash : 
+  public /*Stream*/ Print, 
+  private StashHeader {
+    uint8_t curr;      ///< current page
+    uint8_t offs;      ///< current offset in page
   
   typedef struct {
-    union {
+    union {               // a Block can be seen as 64 bytes, 32 words
+                          // or a formatter Stash
       uint8_t bytes[64];
       uint16_t words[32];
       struct {
@@ -56,8 +58,8 @@ class Stash : public /*Stream*/ Print, private StashHeader {
         uint8_t next;
       };
     };
-    uint8_t bnum;
-  } Block;
+    uint8_t bnum;  ///< Identifies the block number
+  } Block;   
 
   static uint8_t allocBlock ();
   static void freeBlock (uint8_t block);
