@@ -1,18 +1,26 @@
-// This code slightly follows the conventions of, but is not derived from:
-//      EHTERSHIELD_H library for Arduino etherShield
-//      Copyright (c) 2008 Xing Yu.  All right reserved. (this is LGPL v2.1)
-// It is however derived from the enc28j60 and ip code (which is GPL v2)
-//      Author: Pascal Stang 
-//      Modified by: Guido Socher
-//      DHCP code: Andrew Lindsay
-// Hence: GPL V2
-//
-// 2010-05-19 <jc@wippler.nl>
+/**
+ * ethercard.h
+ * 
+ * This code slightly follows the conventions of, but is not derived from:
+ *       ETHERSHIELD_H library for Arduino etherShield
+ *       Copyright (c) 2008 Xing Yu.  All right reserved. (this is LGPL v2.1)
+ * 
+ *  It is however derived from the enc28j60 and ip code (which is GPL v2)
+ *       Author: Pascal Stang 
+ *       Modified by: Guido Socher
+ *       DHCP code: Andrew Lindsay
+ *  Hence: GPL V2
+ * 
+ * \author
+ *   Jean Claude Wippler <jc@wippler.nl>
+ * \creation
+ *   2010-05-19 
+ */ 
 
 #ifndef EtherCard_h
 #define EtherCard_h
 
-
+// This Library is compatible with both pre- and post-1.0 Arduino IDEs
 #if ARDUINO >= 100
   #include <Arduino.h> // Arduino 1.0
   #define WRITE_RESULT size_t
@@ -28,9 +36,9 @@
 #include "net.h"
 
 typedef struct {
-  uint8_t count;     // number of allocated pages
-  uint8_t first;     // first allocated page
-  uint8_t last;      // last allocated page
+  uint8_t count;     //< number of allocated pages
+  uint8_t first;     //< first allocated page
+  uint8_t last;      //< last allocated page
 } StashHeader;
 
 class Stash : public /*Stream*/ Print, private StashHeader {
