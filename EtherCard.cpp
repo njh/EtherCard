@@ -16,27 +16,22 @@
 
 //#define FLOATEMIT // uncomment line to enable $T in emit_P for float emitting
 
-byte Stash::map[256/8];
+byte Stash::map[256/8];   // each 1 indicates a free Block
 Stash::Block Stash::bufs[2];
 
-/**
- * 
- * 
- * 
- */
 uint8_t Stash::allocBlock () {
   for (uint8_t i = 0; i < sizeof map; ++i)
     if (map[i] != 0)
       for (uint8_t j = 0; j < 8; ++j)
         if (bitRead(map[i], j)) {
-          bitClear(map[i], j);
-          return (i << 3) + j;
+          bitClear(map[i], j);    // Indicates Block is now allocated
+          return (i << 3) + j;    // returns BlockID
         }
-  return 0;
+  return 0;  // If all Blocks are in use, reuse first one ???
 }
 
 void Stash::freeBlock (uint8_t block) {
-  bitSet(map[block>>3], block & 7);
+  bitSet(map[block>>3], block & 7);  // Marks block as free in map
 }
 
 uint8_t Stash::fetchByte (uint8_t blk, uint8_t off) {
@@ -47,7 +42,7 @@ uint8_t Stash::fetchByte (uint8_t blk, uint8_t off) {
 
 void Stash::initMap (uint8_t last) {
   while (--last > 0)
-    freeBlock(last);
+    freeBlock(last);  // Marks bit by bit all blocks as free in map
 }
 
 void Stash::load (uint8_t idx, uint8_t blk) {
