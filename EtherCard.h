@@ -129,6 +129,7 @@ public:
   static uint8_t dnsip[4];  // dns server
   static uint8_t hisip[4];  // dns result
   static uint16_t hisport;  // tcp port to connect to (default 80)
+  static bool using_dhcp;   // whether dhcp is active or not
   // EtherCard.cpp
   static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
                         uint8_t csPin =8);  
@@ -164,10 +165,9 @@ public:
   static uint8_t tcpSend ();
   static const char* tcpReply (byte fd);
   // dhcp.cpp
+  static void DhcpStateMachine(word len);
   static uint32_t dhcpStartTime ();
   static uint32_t dhcpLeaseTime ();
-  static byte dhcpFSM ();
-  static bool dhcpValid ();
   static bool dhcpLease ();
   static bool dhcpSetup (const char *);
   static bool dhcpSetup ();
