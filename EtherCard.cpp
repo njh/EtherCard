@@ -340,10 +340,12 @@ uint8_t EtherCard::dhcpip[4]; // dhcp server
 uint8_t EtherCard::dnsip[4];  // dns server
 uint8_t EtherCard::hisip[4];  // dns result
 uint16_t EtherCard::hisport = 80; // tcp port to browse to
+bool EtherCard::using_dhcp = false;
 
 uint8_t EtherCard::begin (const uint16_t size,
                            const uint8_t* macaddr,
                             uint8_t csPin) {
+  using_dhcp = false;
   Stash::initMap(56);
   copyMac(mymac, macaddr);
   return initialize(size, mymac, csPin);
@@ -352,6 +354,8 @@ uint8_t EtherCard::begin (const uint16_t size,
 bool EtherCard::staticSetup (const uint8_t* my_ip,
                               const uint8_t* gw_ip,
                                const uint8_t* dns_ip) {
+  using_dhcp = false;
+
   if (my_ip != 0)
     copyIp(myip, my_ip);
   if (gw_ip != 0)

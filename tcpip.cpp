@@ -558,6 +558,11 @@ byte EtherCard::packetLoopIcmpCheckReply (const byte *ip_monitoredhost) {
 
 word EtherCard::packetLoop (word plen) {
   word len;
+
+  if(using_dhcp){
+    ether.DhcpStateMachine(len);
+  }
+
   if (plen==0) {
     if ((waitgwmac & WGW_INITIAL_ARP || waitgwmac & WGW_REFRESHING) &&
                                           delaycnt==0 && isLinkUp())
