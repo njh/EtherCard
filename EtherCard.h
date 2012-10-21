@@ -130,6 +130,8 @@ public:
   static uint8_t hisip[4];  // dns result
   static uint16_t hisport;  // tcp port to connect to (default 80)
   static bool using_dhcp;   // whether dhcp is active or not
+  static bool persist_tcp_connection; // whether to break connections on first packet received
+
   // EtherCard.cpp
   static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
                         uint8_t csPin =8);  
@@ -164,6 +166,9 @@ public:
   // new stash-based API
   static uint8_t tcpSend ();
   static const char* tcpReply (byte fd);
+
+  static void persistTcpConnection(bool persist);
+
   // dhcp.cpp
   static void DhcpStateMachine(word len);
   static uint32_t dhcpStartTime ();
