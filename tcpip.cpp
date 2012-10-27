@@ -57,9 +57,13 @@ static const char* result_ptr;
 #define CLIENTMSS 550
 #define TCP_DATA_START ((word)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
 
-const char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 };
-const char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
-const char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
+//const char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 };
+const char arpreqhdr[]  = { 0,1,8,0,6,4,0,1 };
+//const char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
+const char iphdr[] = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
+
+//const char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
+const char ntpreqhdr[] = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
 const byte allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 const byte ipBroadcast[] = {255, 255, 255, 255};
 
