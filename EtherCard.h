@@ -26,7 +26,7 @@
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 #include "net.h"
-
+#define	prog_char	char
 typedef struct {
   uint8_t count;     // number of allocated pages
   uint8_t first;     // first allocated page
