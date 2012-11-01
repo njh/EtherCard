@@ -1,3 +1,6 @@
+About {#index}
+=====
+
 Work in progress - see <http://forum.jeelabs.net/node/457>
 
 Derived from code by Guido Socher and Pascal Stang, hence under GPL2 license.
