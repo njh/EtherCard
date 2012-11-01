@@ -180,6 +180,8 @@ public:
   static bool dhcpPoll();
   // dns.cpp
   static bool dnsLookup (prog_char* name, bool fromRam =false);
+  static void dnsLookupAsync (const prog_char* name, bool fromRam =false);
+  static bool dnsLookupPoll();
   // webutil.cpp
   static void copyIp (uint8_t *dst, const uint8_t *src);
   static void copyMac (uint8_t *dst, const uint8_t *src);
