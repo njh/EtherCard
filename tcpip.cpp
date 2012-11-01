@@ -21,10 +21,10 @@
 
 // Avoid spurious pgmspace warnings - http://forum.jeelabs.net/node/327
 // See also http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
-#undef PROGMEM 
-#define PROGMEM __attribute__(( section(".progmem.data") )) 
-#undef PSTR 
-#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
+//#undef PROGMEM 
+//#define PROGMEM __attribute__(( section(".progmem.data") )) 
+//#undef PSTR 
+//#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
 
 static byte tcpclient_src_port_l=1; 
 static byte tcp_fd; // a file descriptor, will be encoded into the port
