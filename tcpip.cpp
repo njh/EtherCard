@@ -561,7 +561,7 @@ word EtherCard::packetLoop (word plen) {
   word len;
 
   if(using_dhcp){
-    ether.DhcpStateMachine(len);
+    ether.DhcpStateMachine(plen);
   }
 
   if (plen==0) {
