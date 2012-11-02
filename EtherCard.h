@@ -171,9 +171,6 @@ public:
 
   // dhcp.cpp
   static void DhcpStateMachine(word len);
-  static uint32_t dhcpStartTime ();
-  static uint32_t dhcpLeaseTime ();
-  static bool dhcpLease ();
   static bool dhcpSetup (const char *hostName=NULL);
   static void dhcpAsync (const char *hostName=NULL);
   static bool dhcpPoll();
