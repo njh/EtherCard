@@ -262,8 +262,8 @@ void EtherCard::dhcpAsync (const char *hostName) {
 	else
 	{
 		// Set a unique hostname, use Arduino-?? with last octet of mac address
-		default_hostname[8] = '0' + (mymac[5] >> 4);
-		default_hostname[9] = '0' + (mymac[5] & 0x0F);
+		default_hostname[8] = 'a' + (mymac[5] >> 4);
+		default_hostname[9] = 'a' + (mymac[5] & 0x0F);
 		hostname = default_hostname;
 	}
 }
