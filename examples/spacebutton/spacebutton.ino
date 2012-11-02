@@ -258,12 +258,9 @@ void setup()
 
 void loop()
 {
-	for (;;)
-	{
-		cur = millis();
-		blink();
-		button();
-		network();
-	}
+	cur = millis();
+	blink();
+	button();
+	network();
 }
 
