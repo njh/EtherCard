@@ -174,9 +174,8 @@ public:
   static uint32_t dhcpStartTime ();
   static uint32_t dhcpLeaseTime ();
   static bool dhcpLease ();
-  static bool dhcpSetup (const char *);
-  static bool dhcpSetup ();
-  static void dhcpAsync (char *hostname_);
+  static bool dhcpSetup (const char *hostName=NULL);
+  static void dhcpAsync (const char *hostName=NULL);
   static bool dhcpPoll();
   // dns.cpp
   static bool dnsLookup (prog_char* name, bool fromRam =false);
