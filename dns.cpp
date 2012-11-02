@@ -114,7 +114,7 @@ bool EtherCard::dnsLookupPoll()
 			checkForDnsAnswer(len);
 	}
 
-	return hisip[0] == 0;
+	return hisip[0] != 0;
 }
 
 // use during setup, as this discards all incoming requests until it returns
