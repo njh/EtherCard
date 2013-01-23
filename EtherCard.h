@@ -8,6 +8,7 @@
 // Hence: GPL V2
 //
 // 2010-05-19 <jc@wippler.nl>
+#define __PROG_TYPES_COMPAT__
 
 #ifndef EtherCard_h
 #define EtherCard_h
