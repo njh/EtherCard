@@ -8,6 +8,7 @@
 // Hence: GPL V2
 //
 // 2010-05-19 <jc@wippler.nl>
+#define __PROG_TYPES_COMPAT__
 
 #ifndef EtherCard_h
 #define EtherCard_h
@@ -142,6 +143,7 @@ public:
   static void initIp (uint8_t *myip,uint16_t wwwp);
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);
   static uint16_t packetLoop (uint16_t plen);
+  static uint16_t accept(uint16_t port, uint16_t plen);
   static void httpServerReply (uint16_t dlen);
   static void setGwIp (const uint8_t *gwipaddr);
   static uint8_t clientWaitingGw ();

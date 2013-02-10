@@ -21,10 +21,10 @@
 
 // Avoid spurious pgmspace warnings - http://forum.jeelabs.net/node/327
 // See also http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
-#undef PROGMEM 
-#define PROGMEM __attribute__(( section(".progmem.data") )) 
-#undef PSTR 
-#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
+//#undef PROGMEM 
+//#define PROGMEM __attribute__(( section(".progmem.data") )) 
+//#undef PSTR 
+//#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
 
 static byte tcpclient_src_port_l=1; 
 static byte tcp_fd; // a file descriptor, will be encoded into the port
@@ -557,6 +557,27 @@ byte EtherCard::packetLoopIcmpCheckReply (const byte *ip_monitoredhost) {
             check_ip_message_is_from(ip_monitoredhost);
 }
 
+word EtherCard::accept(const word port, word plen) {
+  word len;
+  len = get_tcp_data_len();
+  
+  if (gPB[TCP_DST_PORT_H_P] == (port >> 8) &&
+      gPB[TCP_DST_PORT_L_P] == ((byte) port)) {
+    if (gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V)
+      make_tcp_synack_from_syn();
+    else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) {
+      info_data_len = get_tcp_data_len();
+      if (info_data_len > 0) {
+        len = TCP_DATA_START; // TCP_DATA_START is a formula
+        if (len <= plen - 8)
+          return len;
+      } else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)
+        make_tcp_ack_from_any(0,0);
+    }
+  }
+  return 0;
+}
+
 word EtherCard::packetLoop (word plen) {
   word len;
 
@@ -657,21 +678,7 @@ word EtherCard::packetLoop (word plen) {
     return 0;
   }
 
-  if (gPB[TCP_DST_PORT_H_P] == (hisport >> 8) &&
-      gPB[TCP_DST_PORT_L_P] == ((byte) hisport)) {
-    if (gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V)
-      make_tcp_synack_from_syn();
-    else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) {
-      info_data_len = get_tcp_data_len();
-      if (info_data_len > 0) {
-        len = TCP_DATA_START; // TCP_DATA_START is a formula
-        if (len <= plen - 8)
-          return len;
-      } else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)
-        make_tcp_ack_from_any(0,0);
-    }
-  }
-  return 0;
+  return accept(hisport, plen);
 }
 
 void EtherCard::persistTcpConnection(bool persist){
