@@ -48,7 +48,7 @@ class Stash :
   
   typedef struct {
     union {               // a Block can be seen as 64 bytes, 32 words
-                          // or a formatter Stash
+                          // or a formatted Stash
       uint8_t bytes[64];
       uint16_t words[32];
       struct {
@@ -58,10 +58,10 @@ class Stash :
         uint8_t next;
       };
     };
-    uint8_t bnum;  ///< Identifies the block number
+    uint8_t bnum;  ///< The 65th byte identifies the block number
   } Block;   
 
-  static uint8_t allocBlock ();
+  static uint8_t allocBlock ();  ///< Returns Block number
   static void freeBlock (uint8_t block);
   static uint8_t fetchByte (uint8_t blk, uint8_t off);
 
@@ -73,7 +73,7 @@ public:
   static void load (uint8_t idx, uint8_t blk);
   static uint8_t freeCount ();
 
-  Stash () : curr (0) { first = 0; }
+  Stash () : curr (0) { first = 0; }  // Constructors
   Stash (uint8_t fd) { open(fd); }
   
   uint8_t create ();
