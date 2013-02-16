@@ -27,7 +27,7 @@
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 #include "net.h"
-
+#define	prog_char	char
 typedef struct {
   uint8_t count;     // number of allocated pages
   uint8_t first;     // first allocated page
@@ -173,13 +173,13 @@ public:
 
   // dhcp.cpp
   static void DhcpStateMachine(word len);
-  static uint32_t dhcpStartTime ();
-  static uint32_t dhcpLeaseTime ();
-  static bool dhcpLease ();
-  static bool dhcpSetup (const char *);
-  static bool dhcpSetup ();
+  static bool dhcpSetup (const char *hostName=NULL);
+  static void dhcpAsync (const char *hostName=NULL);
+  static bool dhcpPoll();
   // dns.cpp
   static bool dnsLookup (prog_char* name, bool fromRam =false);
+  static void dnsLookupAsync (const prog_char* name, bool fromRam =false);
+  static bool dnsLookupPoll();
   // webutil.cpp
   static void copyIp (uint8_t *dst, const uint8_t *src);
   static void copyMac (uint8_t *dst, const uint8_t *src);

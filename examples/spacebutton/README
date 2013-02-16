@@ -1,0 +1,12 @@
+SpaceButton:
+
+Code for a Nanode based networked on/off status button.
+Makes use of a polling interface for DHCP and DNS.
+
+The status LED should be connected to LED_PIN such that
+a LOW output state will make it light up.
+
+The button should be connected such that it pulls down BUTTON_PIN.
+The code assumes a circuit breaking button, change BUTTON_PRESS
+to LOW for a circuit making button.
+

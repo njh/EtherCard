@@ -42,7 +42,6 @@ static prog_char *client_urlbuf;
 static const char *client_urlbuf_var;
 static prog_char *client_hoststr;
 static void (*icmp_cb)(byte *ip);
-static int16_t delaycnt=1;
 static byte gwmacaddr[6];
 static byte waitgwmac; // 0=wait, 1=first req no anser, 2=have gwmac, 4=refeshing but have gw mac, 8=accept an arp reply
 #define WGW_INITIAL_ARP 1
@@ -586,10 +585,8 @@ word EtherCard::packetLoop (word plen) {
   }
 
   if (plen==0) {
-    if ((waitgwmac & WGW_INITIAL_ARP || waitgwmac & WGW_REFRESHING) &&
-                                          delaycnt==0 && isLinkUp())
+    if ((waitgwmac & WGW_INITIAL_ARP || waitgwmac & WGW_REFRESHING) && isLinkUp())
       client_arp_whohas(gwip);
-    delaycnt++;
     if (tcp_client_state==1 && (waitgwmac & WGW_HAVE_GW_MAC)) { // send a syn
       tcp_client_state = 2;
       tcpclient_src_port_l++; // allocate a new port

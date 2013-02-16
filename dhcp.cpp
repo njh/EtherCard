@@ -93,7 +93,8 @@ typedef struct {
 #define DHCP_REQUEST_TIMEOUT 10000
 
 static byte dhcpState = DHCP_STATE_INIT;
-static char hostname[] = "Arduino-00";
+static char default_hostname[] = "Arduino-00";
+static const char *hostname = default_hostname;
 static uint32_t currentXid;
 static uint32_t stateTimer;
 static uint32_t leaseStart;
@@ -253,28 +254,41 @@ static bool dhcp_received_message_type (word len, byte msgType) {
 	}
 }
 
+void EtherCard::dhcpAsync (const char *hostName) {
+    using_dhcp = true;
+	dhcpState = DHCP_STATE_INIT;
+	if (hostName)
+		hostname = hostName;
+	else
+	{
+		// Set a unique hostname, use Arduino-?? with last octet of mac address
+		default_hostname[8] = 'a' + (mymac[5] >> 4);
+		default_hostname[9] = 'a' + (mymac[5] & 0x0F);
+		hostname = default_hostname;
+	}
+}
 
-bool EtherCard::dhcpSetup () {
+bool EtherCard::dhcpPoll() {
+	if (dhcpState != DHCP_STATE_BOUND && isLinkUp())
+		DhcpStateMachine(packetReceive());
+
+	return dhcpState == DHCP_STATE_BOUND;
+}
+
+bool EtherCard::dhcpSetup (const char *hostName) {
 	// Use during setup, as this discards all incoming requests until it returns.
 	// That shouldn't be a problem, because we don't have an IP-address yet.
 	// Will try 60 secs to obtain DHCP-lease.
 
-    using_dhcp = true;
+	dhcpAsync (hostName);
+	word start = millis();	
 
-	// Set a unique hostname, use Arduino-?? with last octet of mac address
-	 hostname[8] = '0' + (mymac[5] >> 4);
-	 hostname[9] = '0' + (mymac[5] & 0x0F);
+	while ( (word) (millis() - start) < 60000)
+		if (dhcpPoll())
+			return true;
 
-	 dhcpState = DHCP_STATE_INIT;
-	 word start = millis();	
-
-	 while (dhcpState != DHCP_STATE_BOUND && (word) (millis() - start) < 60000) {
-	  if (isLinkUp()) DhcpStateMachine(packetReceive());
-    }
-    return dhcpState == DHCP_STATE_BOUND ;
+	return false;
 }
-
-
 
 void EtherCard::DhcpStateMachine (word len) {
 

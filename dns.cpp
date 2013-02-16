@@ -78,6 +78,45 @@ static void checkForDnsAnswer (uint16_t plen) {
   }
 }
 
+static const prog_char *dns_name;
+static bool from_ram;
+
+// use during setup, as this discards all incoming requests until it returns
+void EtherCard::dnsLookupAsync (const prog_char* name, bool fromRam) {
+
+  memset(hisip, 0, 4);
+  dns_name = name;
+  from_ram = fromRam;
+}
+
+bool EtherCard::dnsLookupPoll()
+{
+	if (!isLinkUp())
+		return false;
+
+	if (clientWaitingGw())
+	{
+	    packetLoop(packetReceive());
+		return false;
+	}
+
+	if (dns_name)
+	{
+		dnsRequest(dns_name, from_ram);
+		dns_name = NULL;
+		return false;
+	}
+
+	if (hisip[0] == 0)
+	{
+		word len = packetReceive();
+		if (len > 0 && packetLoop(len) == 0)
+			checkForDnsAnswer(len);
+	}
+
+	return hisip[0] != 0;
+}
+
 // use during setup, as this discards all incoming requests until it returns
 bool EtherCard::dnsLookup (prog_char* name, bool fromRam) {
   word start = millis();
