@@ -8,6 +8,16 @@
 // Hence: GPL V2
 //
 // 2010-05-19 <jc@wippler.nl>
+//
+//
+// PIN Connections (Using Arduino UNO):
+//   VCC -   3.3V
+//   GND -    GND
+//   SCK - Pin 13
+//   SO  - Pin 12
+//   SI  - Pin 11
+//   CS  - Pin  8
+//
 #define __PROG_TYPES_COMPAT__
 
 #ifndef EtherCard_h
