@@ -459,10 +459,10 @@ static word www_client_internal_datafill_cb(byte fd) {
     if (client_postval == 0) {
       bfill.emit_p(PSTR("GET $F$S HTTP/1.0\r\n"
                         "Host: $F\r\n"
-                        "Accept: text/html\r\n"
+                        "$F\r\n"
                         "\r\n"), client_urlbuf,
                                  client_urlbuf_var,
-                                 client_hoststr);
+                                 client_hoststr, client_additionalheaderline);
     } else {
       prog_char* ahl = client_additionalheaderline;
       bfill.emit_p(PSTR("POST $F HTTP/1.0\r\n"
@@ -493,10 +493,15 @@ static byte www_client_internal_result_cb(byte fd, byte statuscode, word datapos
   return 0;
 }
 
-void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr,void (*callback)(byte,word,word)) {
+void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr, void (*callback)(byte,word,word)) {
+  browseUrl(urlbuf, urlbuf_varpart, hoststr, PSTR("Accept: text/html"), callback);
+}
+
+void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr, prog_char *additionalheaderline, void (*callback)(byte,word,word)) {
   client_urlbuf = urlbuf;
   client_urlbuf_var = urlbuf_varpart;
   client_hoststr = hoststr;
+  client_additionalheaderline = additionalheaderline;
   client_postval = 0;
   client_browser_cb = callback;
   www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
