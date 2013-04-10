@@ -38,6 +38,12 @@
 #include "enc28j60.h"
 #include "net.h"
 
+typedef void (*UdpServerCallback)(
+	uint16_t dest_port,	// the port the packet was sent to
+	uint8_t src_ip[4],	// the ip of the sender
+	const char *data,			// the data
+	uint16_t len);		// the length of the data
+
 typedef struct {
   uint8_t count;     // number of allocated pages
   uint8_t first;     // first allocated page
@@ -183,6 +189,13 @@ public:
   static const char* tcpReply (byte fd);
 
   static void persistTcpConnection(bool persist);
+
+  //udpserver.cpp
+  static void udpServerListenOnPort(UdpServerCallback callback, uint16_t port);
+  static void udpServerPauseListenOnPort(uint16_t port);
+  static void udpServerResumeListenOnPort(uint16_t port);
+  static bool udpServerListening();						//called by tcpip, in packetLoop
+  static bool udpServerHasProcessedPacket(word len);	//called by tcpip, in packetLoop
 
   // dhcp.cpp
   static void DhcpStateMachine(word len);

@@ -618,6 +618,10 @@ word EtherCard::packetLoop (word plen) {
     make_echo_reply_from_request(plen);
     return 0;
   }
+  if (ether.udpServerListening() && gPB[IP_PROTO_P]==IP_PROTO_UDP_V) {
+  	if(ether.udpServerHasProcessedPacket(plen))
+	  	return 0;
+  }
   if (plen<54 && gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
     return 0;
   if ( gPB[TCP_DST_PORT_H_P]==TCPCLIENT_SRC_PORT_H) {
