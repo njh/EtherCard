@@ -242,17 +242,24 @@ static void process_dhcp_offer (word len) {
 static bool dhcp_received_message_type (word len, byte msgType) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
-	
-	if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SRC_PORT &&
-            dhcpPtr->op == DHCP_BOOTRESPONSE && dhcpPtr->xid == currentXid ) {
-	
-		int optionIndex = UDP_DATA_P + sizeof( DHCPdata ) + 4;
-		return gPB[optionIndex] == 53 ? gPB[optionIndex+2] == msgType : false;
-	} else {
-		return false;
-	}
-}
 
+    if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SRC_PORT &&
+        dhcpPtr->xid == currentXid ) {
+
+        byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+        do {
+            byte option = *ptr++;
+            byte optionLen = *ptr++;
+            if(option == 53 && *ptr == msgType ) {
+        // DHCP Message type match found
+        return true;
+            }
+            ptr += optionLen;
+        } while (ptr < gPB + len);
+    } else {
+        return false;
+    }
+}
 
 bool EtherCard::dhcpSetup () {
 	// Use during setup, as this discards all incoming requests until it returns.
