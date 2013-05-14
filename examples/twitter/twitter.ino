@@ -20,12 +20,14 @@
 #include <EtherCard.h>
 
 // supertweet.net username:password in base64
-#define KEY   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define KEY   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define API_URL "/1.1/statuses/update.json"
 
 // ethernet interface mac address, must be unique on the LAN
 byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 char website[] PROGMEM = "api.supertweet.net";
+
 
 byte Ethernet::buffer[700];
 Stash stash;
@@ -40,15 +42,7 @@ static void sendToTwitter () {
 	  
 	// generate the header with payload - note that the stash size is used,
 	// and that a "stash descriptor" is passed in as argument using "$H"
-	Stash::prepare(PSTR("POST /1/statuses/update.xml HTTP/1.1" "\r\n"
-          						"Host: $F" "\r\n"
-          						"Authorization: Basic $F" "\r\n"
-          						"User-Agent: Arduino EtherCard lib" "\r\n"                        
-          						"Content-Length: $D" "\r\n"
-          						"Content-Type: application/x-www-form-urlencoded" "\r\n"
-          						"\r\n"
-          						"$H"),
-					        website, PSTR(KEY), stash.size(), sd);
+	Stash::prepare(PSTR(API_URL),website, PSTR(KEY), stash.size(), sd);
 	
 	// send the packet - this also releases all stash buffers once done
 	ether.tcpSend();
