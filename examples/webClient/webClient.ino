@@ -9,7 +9,7 @@ static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 byte Ethernet::buffer[700];
 static uint32_t timer;
 
-char website[] PROGMEM = "www.google.com";
+const char website[] PROGMEM = "www.google.com";
 
 // called when the client request is complete
 static void my_callback (byte status, word off, word len) {

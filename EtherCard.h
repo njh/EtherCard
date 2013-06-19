@@ -165,14 +165,14 @@ public:
   static uint8_t clientWaitingGw ();
   static uint8_t clientTcpReq (uint8_t (*r)(uint8_t,uint8_t,uint16_t,uint16_t),
                                uint16_t (*d)(uint8_t),uint16_t port);
-  static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
-                         prog_char *hoststr, prog_char *header,
+  static void browseUrl (const prog_char *urlbuf, const char *urlbuf_varpart,
+                         const prog_char *hoststr, const prog_char *header,
                          void (*cb)(uint8_t,uint16_t,uint16_t));
-  static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
-                         prog_char *hoststr,
+  static void browseUrl (const prog_char *urlbuf, const char *urlbuf_varpart,
+                         const prog_char *hoststr,
                          void (*cb)(uint8_t,uint16_t,uint16_t));
-  static void httpPost (prog_char *urlbuf, prog_char *hoststr,
-                        prog_char *header, const char *postval,
+  static void httpPost (const prog_char *urlbuf, const prog_char *hoststr,
+                        const prog_char *header, const char *postval,
                         void (*cb)(uint8_t,uint16_t,uint16_t));
   static void ntpRequest (uint8_t *ntpip,uint8_t srcport);
   static uint8_t ntpProcessAnswer (uint32_t *time, uint8_t dstport_l);
@@ -205,7 +205,7 @@ public:
   static bool dhcpSetup (const char *);
   static bool dhcpSetup ();
   // dns.cpp
-  static bool dnsLookup (prog_char* name, bool fromRam =false);
+  static bool dnsLookup (const prog_char* name, bool fromRam =false);
   // webutil.cpp
   static void copyIp (uint8_t *dst, const uint8_t *src);
   static void copyMac (uint8_t *dst, const uint8_t *src);

@@ -12,7 +12,7 @@ static byte myip[] = { 192,168,1,203 };
 // gateway ip address
 static byte gwip[] = { 192,168,1,1 };
 // remote website name
-char website[] PROGMEM = "google.com";
+const char website[] PROGMEM = "google.com";
 
 byte Ethernet::buffer[300];   // a very small tcp/ip buffer is enough here
 static long timer;

@@ -14,7 +14,7 @@ static byte gwip[] = { 192,168,1,1 };
 // remote website ip address and port
 static byte hisip[] = { 74,125,79,99 };
 // remote website name
-char website[] PROGMEM = "google.com";
+const char website[] PROGMEM = "google.com";
 
 byte Ethernet::buffer[300];   // a very small tcp/ip buffer is enough here
 static long timer;

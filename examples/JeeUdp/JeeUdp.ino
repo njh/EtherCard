@@ -84,7 +84,7 @@ void setup (){
   ether.printIp("IP: ", ether.myip);
 }
 
-char okHeader[] PROGMEM = 
+const char okHeader[] PROGMEM = 
   "HTTP/1.0 200 OK\r\n"
   "Content-Type: text/html\r\n"
   "Pragma: no-cache\r\n"
