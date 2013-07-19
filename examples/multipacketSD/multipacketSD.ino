@@ -59,8 +59,6 @@ void loop()
             sendfiles((char*) temp);
             goto wait;
           }
-       for(int i=0;i<20;i++){
-       Serial.print(data[i]);}
        not_found();
        
   }
