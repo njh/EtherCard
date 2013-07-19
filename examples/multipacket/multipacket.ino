@@ -15,7 +15,6 @@ char pageA[] PROGMEM =
   "</title></head>"
   "<body>"
     "<a href='/'>Start here</a><br>"
-    "<a href='/test.jpg'>Image test</a><br>"
     "<h3>packet 1</h3>"
     "<p><em>"
       "the first packet send "
@@ -71,7 +70,7 @@ void loop(){
         else
         {
             ether.httpServerReplyAck(); // send ack to the request
-            memcpy_P(ether.tcpOffset(), pageA, sizeof pageA);
+            memcpy_P(ether.tcpOffset(), pageA, sizeof pageA);//only the first part will sended 
             ether.httpServerReply_with_flags(sizeof pageA - 1,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
         }
   }
