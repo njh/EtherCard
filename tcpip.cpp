@@ -53,6 +53,7 @@ static word info_data_len;
 static byte seqnum = 0xa; // my initial tcp sequence number
 static byte result_fd = 123; // session id of last reply
 static const char* result_ptr;
+static unsigned long SEQ; 
 
 #define CLIENTMSS 550
 #define TCP_DATA_START ((word)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
@@ -255,6 +256,29 @@ void EtherCard::httpServerReply (word dlen) {
   make_tcp_ack_from_any(info_data_len,0); // send ack for http get
   gPB[TCP_FLAGS_P] = TCP_FLAGS_ACK_V|TCP_FLAGS_PUSH_V|TCP_FLAGS_FIN_V;
   make_tcp_ack_with_data_noflags(dlen); // send data
+}
+
+static void get_seq() { //get the sequence number of packets after an ack from GET
+  SEQ =(((unsigned long)gPB[TCP_SEQ_H_P]*256+gPB[TCP_SEQ_H_P+1])*256+gPB[TCP_SEQ_H_P+2])*256+gPB[TCP_SEQ_H_P+3];
+} //thanks to mstuetz for the missing (unsigned long)
+
+static void set_seq() { //set the correct sequence number and calculate the next with the lenght of current packet
+gPB[TCP_SEQ_H_P]= (SEQ & 0xff000000 ) >> 24;
+gPB[TCP_SEQ_H_P+1]= (SEQ & 0xff0000 ) >> 16;
+gPB[TCP_SEQ_H_P+2]= (SEQ & 0xff00 ) >> 8;
+gPB[TCP_SEQ_H_P+3]= (SEQ & 0xff );
+}
+
+void EtherCard::httpServerReplyAck () {
+make_tcp_ack_from_any(info_data_len,0); // send ack for http get
+get_seq(); //get the sequence number of packets after an ack from GET
+}
+
+void EtherCard::httpServerReply_with_flags (word dlen , byte flags) {
+set_seq();
+gPB[TCP_FLAGS_P] = flags; // final packet
+make_tcp_ack_with_data_noflags(dlen); // send data
+SEQ=SEQ+dlen;
 }
 
 void EtherCard::clientIcmpRequest(const byte *destip) {
