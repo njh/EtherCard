@@ -18,11 +18,10 @@ static byte myip[] = { 192,168,0,66 };
 static byte gwip[] = { 192,168,0,250 };
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x39 };
 byte Ethernet::buffer[700]; // tcp/ip send and receive buffer
-unsigned long cur ;
-char dest[53];
+unsigned long cur;
 unsigned long pos;
 byte res;
-word result;
+
 void setup() {
   // Initialize serial communication at 115200 baud
   Serial.begin(115200);
@@ -34,8 +33,6 @@ void setup() {
   ether.begin(sizeof Ethernet::buffer, mymac , 10); //53 on mega ethernet shield 10 on others
   ether.staticSetup(myip, gwip);
   Serial.println("ETH started");
-
-  
 }  
 
 void loop() 
