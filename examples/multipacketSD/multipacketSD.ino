@@ -26,16 +26,13 @@ word result;
 void setup() {
   // Initialize serial communication at 115200 baud
   Serial.begin(115200);
-  Serial.println("demmarage");
   // Initialize tinyFAT 
   // You might need to select a lower speed than the default SPISPEED_HIGH
     file.setSSpin(4);
   res=file.initFAT(0); 
   if (res==NO_ERROR)    Serial.println("SD started");
-    ether.begin(sizeof Ethernet::buffer, mymac , 10); //53 on mega ethernet shield 10 on others
+  ether.begin(sizeof Ethernet::buffer, mymac , 10); //53 on mega ethernet shield 10 on others
   ether.staticSetup(myip, gwip);
- // ENC28J60::enableMulticast();
- ENC28J60::enableBroadcast();
   Serial.println("ETH started");
 
   
