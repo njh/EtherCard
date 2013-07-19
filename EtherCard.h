@@ -161,6 +161,8 @@ public:
   static uint16_t packetLoop (uint16_t plen);
   static uint16_t accept(uint16_t port, uint16_t plen);
   static void httpServerReply (uint16_t dlen);
+  static void httpServerReply_with_flags (uint16_t dlen , byte flags);
+  static void httpServerReplyAck ();
   static void setGwIp (const uint8_t *gwipaddr);
   static uint8_t clientWaitingGw ();
   static uint8_t clientTcpReq (uint8_t (*r)(uint8_t,uint8_t,uint16_t,uint16_t),
