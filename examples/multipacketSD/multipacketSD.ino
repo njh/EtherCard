@@ -51,7 +51,7 @@ void loop()
           }
         if (strncmp("GET /", data, 5) == 0) { // serve anything on sd card 
             int i =0;  
-            char temp[80]="";
+            char temp[15]=""; // here will be the name of requested file
             while (data[i+5]!=32) {temp[i]=data[i+5];i++;}//search the end
             sendfiles((char*) temp);
             goto wait;
