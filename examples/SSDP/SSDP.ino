@@ -1,5 +1,6 @@
 #include <EtherCard.h>//                                                                                                                                    |Mac adress|
 #define SSDP_RESPONSE "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1200\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://" //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
+#define SSDP_NOTIFY "NOTIFY * HTTP/1.1\r\nSERVER:Arduino\r\nHOST:239.255.255.250:1900\r\nCACHE-CONTROL: max-age=1200\r\nNT: urn:schemas-upnp-org:device:BinaryLight:1\r\nNST: ssdp:alive\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040::urn:schemas-upnp-org:device:BinaryLight:1\r\nLOCATION: http://" //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
 #define SSDP_RESPONSE_XML "/??\r\n\r\n" // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n 
 #define XML_DESCRIP "HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version='1.0'?>\r<root xmlns='urn:schemas-upnp-org:device-1-0'><device><deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType><presentationURL>/</presentationURL><friendlyName>Arduino</friendlyName><manufacturer>Fredycpu</manufacturer><manufacturerURL>http://fredycpu.pro</manufacturerURL><serialNumber>1</serialNumber><UDN>uuid:abcdefgh-7dec-11d0-a765-7499692d3040</UDN></device></root>     "
 //  in XML_DESCRIP // <deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType> // declare as home automation
@@ -14,6 +15,7 @@ static byte ssdp[] = {
 static byte mymac[] = { 
   0x74,0x99,0x69,0x2D,0x30,0x40 }; // if you change it you must update SSDP_RESPONSE and XML_DESCRIP
 byte Ethernet::buffer[750]; // tcp ip send and receive buffer
+unsigned long timer;
 char pageA[] PROGMEM =
 "HTTP/1.0 200 OK\r\n"
 "Content-Type: text/html\r\n"
@@ -48,14 +50,14 @@ char pageD[] PROGMEM =
 "if you read this it mean it works"
 "</em></p>"
 ;
-char SSDPA[] PROGMEM = XML_DESCRIP;
-//char SSDPB[] PROGMEM = XML_DESCRIP_B;
+
 void setup(){
   ether.begin(sizeof Ethernet::buffer, mymac , 10);// 53 for the mega ethernet shield and  10 for normal ethernet shield
   ether.staticSetup(myip, gwip);
   ENC28J60::disableMulticast(); //disable multicast filter means enable multicast reception
   Serial.begin(115200);
 }
+
 void loop(){
 wait:
   word pos = ether.packetLoop(ether.packetReceive());
@@ -85,6 +87,10 @@ wait:
       goto wait;  
     }
   }
+ if ((millis()-timer)>100000) {
+  timer=millis();
+  ssdpnotify();
+  }
 }
 void ssdpresp() { //response to m-search 
   byte ip_dst[4];
@@ -93,10 +99,23 @@ void ssdpresp() { //response to m-search
     ip_dst[i]=Ethernet::buffer[i+26];
   }
   int udppos = UDP_DATA_P;
-  int adr;
+  
   EtherCard::udpPrepare(1900,ip_dst,port_dst);
   memcpy(Ethernet::buffer + udppos, SSDP_RESPONSE, sizeof SSDP_RESPONSE);
-udppos = udppos  + sizeof SSDP_RESPONSE-1;
+  udppos = udppos  + sizeof SSDP_RESPONSE-1;
+  addip(udppos);
+}
+
+void ssdpnotify() { //Notification 
+  int udppos = UDP_DATA_P;
+  EtherCard::udpPrepare(1900,ssdp,1900);
+  memcpy(Ethernet::buffer + udppos, SSDP_NOTIFY, sizeof SSDP_NOTIFY);
+udppos = udppos  + sizeof SSDP_NOTIFY-1;
+addip(udppos);
+}
+
+void addip(int udppos) { // add current ip to the request and send it
+  int adr;
   for(int i=0;i<4;i++) { // extract the current ip of arduino
     adr = ether.myip[i]/100;
     if (adr)  {
