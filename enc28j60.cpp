@@ -512,6 +512,10 @@ void ENC28J60::disableBroadcast () {
     writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
 }
 
+void ENC28J60::disableMulticast () { // disable multicast filter , enable multicast reception
+    writeRegByte(ERXFCON, ERXFCON_CRCEN);
+}
+
 uint8_t ENC28J60::doBIST ( byte csPin) {
 	#define RANDOM_FILL		0b0000
 	#define ADDRESS_FILL	0b0100
