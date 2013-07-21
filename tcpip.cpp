@@ -626,6 +626,10 @@ word EtherCard::packetLoop (word plen) {
     }
     return 0;
   }
+  if ((gPB[30]==239)&&(gPB[31]==255)&&(gPB[32]==255)&&(gPB[33]==250)) { //multicast packets
+  	return UDP_DATA_P; //mark as udp structured packet
+  }
+  
   if (eth_type_is_arp_and_my_ip(plen)) {
     if (gPB[ETH_ARP_OPCODE_L_P]==ETH_ARP_OPCODE_REQ_L_V)
         make_arp_answer_from_request();
