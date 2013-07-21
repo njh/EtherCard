@@ -1,8 +1,8 @@
 #include <EtherCard.h>//                                                                                                                                    |Mac adress|
-#define SSDP_RESPONSE "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1200\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://" //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
-#define SSDP_NOTIFY "NOTIFY * HTTP/1.1\r\nSERVER:Arduino\r\nHOST:239.255.255.250:1900\r\nCACHE-CONTROL: max-age=1200\r\nNT: urn:schemas-upnp-org:device:BinaryLight:1\r\nNST: ssdp:alive\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040::urn:schemas-upnp-org:device:BinaryLight:1\r\nLOCATION: http://" //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
-#define SSDP_RESPONSE_XML "/??\r\n\r\n" // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n 
-#define XML_DESCRIP "HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version='1.0'?>\r<root xmlns='urn:schemas-upnp-org:device-1-0'><device><deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType><presentationURL>/</presentationURL><friendlyName>Arduino</friendlyName><manufacturer>Fredycpu</manufacturer><manufacturerURL>http://fredycpu.pro</manufacturerURL><serialNumber>1</serialNumber><UDN>uuid:abcdefgh-7dec-11d0-a765-7499692d3040</UDN></device></root>     "
+char SSDP_RESPONSE[] PROGMEM = "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=600\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
+char SSDP_RESPONSE_XML[] PROGMEM = "/??\r\n\r\n"; // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n 
+char XML_DESCRIP[] PROGMEM = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version='1.0'?>\r<root xmlns='urn:schemas-upnp-org:device-1-0'><device><deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType><presentationURL>/</presentationURL><friendlyName>Arduino</friendlyName><manufacturer>Fredycpu</manufacturer><manufacturerURL>http://fredycpu.pro</manufacturerURL><serialNumber>1</serialNumber><UDN>uuid:abcdefgh-7dec-11d0-a765-7499692d3040</UDN></device></root>     ";
+char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nCACHE-CONTROL: max-age=9999\r\nSERVER: Arduino\r\nNT: urn:schemas-upnp-org:device:BinaryLight:1\r\nNST: ssdp:alive\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040::urn:schemas-upnp-org:device:BinaryLight:1\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
 //  in XML_DESCRIP // <deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType> // declare as home automation
 //  in XML_DESCRIP // <friendlyName>Arduino</friendlyName> // declare the name of the service here Arduino
 //  in XML_DESCRIP // <presentationURL>/</presentationURL> // adress of the page who would opened on service double click ,you could use http://ip  but if you use dhcp it's better so and dont wase memory
@@ -78,7 +78,7 @@ wait:
     }
     if (strncmp("GET /??", data, 7) == 0) { // description of services (normaly an xml file but here .....)
       ether.httpServerReplyAck();
-      memcpy(Ethernet::buffer + TCP_OPTIONS_P,XML_DESCRIP, sizeof XML_DESCRIP);
+      memcpy_P(Ethernet::buffer + TCP_OPTIONS_P,XML_DESCRIP, sizeof XML_DESCRIP);
       ether.httpServerReply_with_flags(sizeof XML_DESCRIP - 1 ,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
       goto wait;  
     }
@@ -101,7 +101,7 @@ void ssdpresp() { //response to m-search
   int udppos = UDP_DATA_P;
   
   EtherCard::udpPrepare(1900,ip_dst,port_dst);
-  memcpy(Ethernet::buffer + udppos, SSDP_RESPONSE, sizeof SSDP_RESPONSE);
+  memcpy_P(Ethernet::buffer + udppos, SSDP_RESPONSE, sizeof SSDP_RESPONSE);
   udppos = udppos  + sizeof SSDP_RESPONSE-1;
   addip(udppos);
 }
@@ -109,7 +109,7 @@ void ssdpresp() { //response to m-search
 void ssdpnotify() { //Notification 
   int udppos = UDP_DATA_P;
   EtherCard::udpPrepare(1900,ssdp,1900);
-  memcpy(Ethernet::buffer + udppos, SSDP_NOTIFY, sizeof SSDP_NOTIFY);
+  memcpy_P(Ethernet::buffer + udppos, SSDP_NOTIFY, sizeof SSDP_NOTIFY);
 udppos = udppos  + sizeof SSDP_NOTIFY-1;
 addip(udppos);
 }
@@ -134,7 +134,7 @@ void addip(int udppos) { // add current ip to the request and send it
     udppos++; //"."
   }
   udppos--;//erase the last point
-  memcpy(Ethernet::buffer + udppos,SSDP_RESPONSE_XML,sizeof SSDP_RESPONSE_XML);
+  memcpy_P(Ethernet::buffer + udppos,SSDP_RESPONSE_XML,sizeof SSDP_RESPONSE_XML);
   udppos = udppos  + sizeof SSDP_RESPONSE_XML;
   udppos--;
   EtherCard::udpTransmit(udppos-UDP_DATA_P); // send all to the computer who make the request on her ip and port who make the request
