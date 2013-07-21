@@ -37,7 +37,7 @@ public:
   
   static void enableBroadcast();
   static void disableBroadcast();
-
+  static void disableMulticast ();
   static uint8_t doBIST(uint8_t csPin =8);
 };
 
