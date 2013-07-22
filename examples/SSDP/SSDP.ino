@@ -2,10 +2,11 @@
 char SSDP_RESPONSE[] PROGMEM = "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=600\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
 char SSDP_RESPONSE_XML[] PROGMEM = "/??\r\n\r\n"; // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n 
 char XML_DESCRIP[] PROGMEM = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version='1.0'?>\r<root xmlns='urn:schemas-upnp-org:device-1-0'><device><deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType><presentationURL>/</presentationURL><friendlyName>Arduino</friendlyName><manufacturer>Fredycpu</manufacturer><manufacturerURL>http://fredycpu.pro</manufacturerURL><serialNumber>1</serialNumber><UDN>uuid:abcdefgh-7dec-11d0-a765-7499692d3040</UDN></device></root>     ";
-char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nCACHE-CONTROL: max-age=9999\r\nSERVER: Arduino\r\nNT: urn:schemas-upnp-org:device:BinaryLight:1\r\nNST: ssdp:alive\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040::urn:schemas-upnp-org:device:BinaryLight:1\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
+char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nCACHE-CONTROL: max-age=300\r\nNT: upnp:rootdevice\r\nUSN: uuid:abcdefga-7dec-11d0-a765-7499692d3040::upnp:rootdevice\r\nNTS: ssdp:alive\r\nSERVER: Arduino UPnP/1.0\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
 //  in XML_DESCRIP // <deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType> // declare as home automation
 //  in XML_DESCRIP // <friendlyName>Arduino</friendlyName> // declare the name of the service here Arduino
 //  in XML_DESCRIP // <presentationURL>/</presentationURL> // adress of the page who would opened on service double click ,you could use http://ip  but if you use dhcp it's better so and dont wase memory
+// this is the entire protocol, but you can try to use SSDP_NOTIFY as SSDP_RESPONSE with most systems will work and you can free a bit of flash mem.
 static byte myip[] = { 
   192,168,0,67 };
 static byte gwip[] = { 
