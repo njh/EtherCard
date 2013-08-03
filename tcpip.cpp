@@ -498,7 +498,7 @@ static word www_client_internal_datafill_cb(byte fd) {
                         "\r\n"
                         "$S"), client_urlbuf,
                                  client_hoststr,
-                                 ahl != 0 ? ahl : "",
+                                 ahl != 0 ? ahl : PSTR(""),
                                  ahl != 0 ? "\r\n" : "",
                                  strlen(client_postval),
                                  client_postval);
