@@ -17,7 +17,7 @@ static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
 
-char page[] PROGMEM =
+const char page[] PROGMEM =
 "HTTP/1.0 503 Service Unavailable\r\n"
 "Content-Type: text/html\r\n"
 "Retry-After: 600\r\n"
