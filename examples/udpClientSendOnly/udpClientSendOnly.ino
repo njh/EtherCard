@@ -27,7 +27,7 @@ void setup () {
   ether.printIp("SRV: ", ether.hisip);
 }
 
-char textToSend[] PROGMEM = "test 123";
+char textToSend[] = "test 123";
 
 void loop () {  
     if (millis() > timer) {
