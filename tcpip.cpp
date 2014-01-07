@@ -103,11 +103,20 @@ static byte eth_type_is_arp_and_my_ip(word len) {
                       memcmp(gPB + ETH_ARP_DST_IP_P, EtherCard::myip, 4) == 0;
 }
 
-static byte eth_type_is_ip_and_my_ip(word len) {
+static byte eth_type_is_ip(word len) {
   return len >= 42 && gPB[ETH_TYPE_H_P] == ETHTYPE_IP_H_V &&
                       gPB[ETH_TYPE_L_P] == ETHTYPE_IP_L_V &&
-                      gPB[IP_HEADER_LEN_VER_P] == 0x45 &&
-                      memcmp(gPB + IP_DST_P, EtherCard::myip, 4) == 0;
+                      gPB[IP_HEADER_LEN_VER_P] == 0x45;
+}
+
+static byte is_my_ip(word len) {
+  return memcmp(gPB + IP_DST_P, EtherCard::myip, 4) == 0;
+}
+
+static byte is_multicast_ip(word len) {
+  	uint32_t mask = ~*((uint32_t *)EtherCard::mymask);
+  	uint32_t dst_ip = *((uint32_t *)(gPB + IP_DST_P));
+  	return (mask - (mask & dst_ip)) == 0;
 }
 
 static void fill_ip_hdr_checksum() {
@@ -637,18 +646,24 @@ word EtherCard::packetLoop (word plen) {
       waitgwmac = WGW_HAVE_GW_MAC;
     return 0;
   }
-  if (eth_type_is_ip_and_my_ip(plen)==0) {
-    return 0;
+  if (eth_type_is_ip(plen)==0) {
+    return 0;	//not ip traffic
+  }
+  if(is_my_ip(plen) || is_multicast_ip(plen))
+  {
+	  if (ether.udpServerListening() && gPB[IP_PROTO_P]==IP_PROTO_UDP_V) {
+		if(ether.udpServerHasProcessedPacket(plen))
+			return 0;
+	  }
+  }
+  if(is_my_ip(plen) ==0) {
+  	return 0;	//not for me
   }
   if (gPB[IP_PROTO_P]==IP_PROTO_ICMP_V && gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREQUEST_V) {
     if (icmp_cb)
       (*icmp_cb)(&(gPB[IP_SRC_P]));
     make_echo_reply_from_request(plen);
     return 0;
-  }
-  if (ether.udpServerListening() && gPB[IP_PROTO_P]==IP_PROTO_UDP_V) {
-  	if(ether.udpServerHasProcessedPacket(plen))
-	  	return 0;
   }
   if (plen<54 && gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
     return 0;
