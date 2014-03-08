@@ -1,5 +1,5 @@
 // IP, Arp, UDP and TCP functions.
-// Author: Guido Socher 
+// Author: Guido Socher
 // Copyright: GPL V2
 //
 // The TCP implementation uses some size optimisations which are valid
@@ -21,12 +21,12 @@
 
 // Avoid spurious pgmspace warnings - http://forum.jeelabs.net/node/327
 // See also http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
-//#undef PROGMEM 
-//#define PROGMEM __attribute__(( section(".progmem.data") )) 
-//#undef PSTR 
+//#undef PROGMEM
+//#define PROGMEM __attribute__(( section(".progmem.data") ))
+//#undef PSTR
 //#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
 
-static byte tcpclient_src_port_l=1; 
+static byte tcpclient_src_port_l=1;
 static byte tcp_fd; // a file descriptor, will be encoded into the port
 static byte tcp_client_state;
 static byte tcp_client_port_h;
@@ -36,7 +36,7 @@ static word (*client_tcp_datafill_cb)(byte);
 #define TCPCLIENT_SRC_PORT_H 11
 static byte www_fd;
 static void (*client_browser_cb)(byte,word,word);
-static prog_char *client_additionalheaderline;
+static const prog_char *client_additionalheaderline;
 static const char *client_postval;
 static prog_char *client_urlbuf;
 static const char *client_urlbuf_var;
@@ -53,7 +53,7 @@ static word info_data_len;
 static byte seqnum = 0xa; // my initial tcp sequence number
 static byte result_fd = 123; // session id of last reply
 static const char* result_ptr;
-static unsigned long SEQ; 
+static unsigned long SEQ;
 
 #define CLIENTMSS 550
 #define TCP_DATA_START ((word)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
@@ -164,7 +164,7 @@ static void make_arp_answer_from_request() {
   EtherCard::copyMac(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
   EtherCard::copyIp(gPB + ETH_ARP_DST_IP_P, gPB + ETH_ARP_SRC_IP_P);
   EtherCard::copyIp(gPB + ETH_ARP_SRC_IP_P, EtherCard::myip);
-  EtherCard::packetSend(42); 
+  EtherCard::packetSend(42);
 }
 
 static void make_echo_reply_from_request(word len) {
@@ -203,7 +203,7 @@ static void make_tcp_synack_from_syn() {
   make_tcphead(1,0);
   gPB[TCP_SEQ_H_P+0] = 0;
   gPB[TCP_SEQ_H_P+1] = 0;
-  gPB[TCP_SEQ_H_P+2] = seqnum; 
+  gPB[TCP_SEQ_H_P+2] = seqnum;
   gPB[TCP_SEQ_H_P+3] = 0;
   seqnum += 3;
   gPB[TCP_OPTIONS_P] = 2;
@@ -293,7 +293,7 @@ void EtherCard::clientIcmpRequest(const byte *destip) {
   gPB[ICMP_TYPE_P+1] = 0; // code
   gPB[ICMP_CHECKSUM_H_P] = 0;
   gPB[ICMP_CHECKSUM_L_P] = 0;
-  gPB[ICMP_IDENT_H_P] = 5; // some number 
+  gPB[ICMP_IDENT_H_P] = 5; // some number
   gPB[ICMP_IDENT_L_P] = EtherCard::myip[3]; // last byte of my IP
   gPB[ICMP_IDENT_L_P+1] = 0; // seq number, high byte
   gPB[ICMP_IDENT_L_P+2] = 1; // seq number, low byte, we send only 1 ping at a time
@@ -347,9 +347,9 @@ void EtherCard::udpPrepare (word sport, byte *dip, word dport) {
   gPB[IP_TOTLEN_H_P] = 0;
   gPB[IP_PROTO_P] = IP_PROTO_UDP_V;
   gPB[UDP_DST_PORT_H_P] = (dport>>8);
-  gPB[UDP_DST_PORT_L_P] = dport; 
+  gPB[UDP_DST_PORT_L_P] = dport;
   gPB[UDP_SRC_PORT_H_P] = (sport>>8);
-  gPB[UDP_SRC_PORT_L_P] = sport; 
+  gPB[UDP_SRC_PORT_L_P] = sport;
   gPB[UDP_LEN_H_P] = 0;
   gPB[UDP_CHECKSUM_H_P] = 0;
   gPB[UDP_CHECKSUM_L_P] = 0;
@@ -447,7 +447,7 @@ static void client_syn(byte srcport,byte dstport_h,byte dstport_l) {
   gPB[TCP_SRC_PORT_H_P] = TCPCLIENT_SRC_PORT_H;
   gPB[TCP_SRC_PORT_L_P] = srcport; // lower 8 bit of src port
   memset(gPB + TCP_SEQ_H_P, 0, 8);
-  gPB[TCP_SEQ_H_P+2] = seqnum; 
+  gPB[TCP_SEQ_H_P+2] = seqnum;
   seqnum += 3;
   gPB[TCP_HEADER_LEN_P] = 0x60; // 0x60=24 len: (0x60>>4) * 4
   gPB[TCP_FLAGS_P] = TCP_FLAGS_SYN_V;
@@ -488,7 +488,7 @@ static word www_client_internal_datafill_cb(byte fd) {
                                  client_urlbuf_var,
                                  client_hoststr, client_additionalheaderline);
     } else {
-      prog_char* ahl = client_additionalheaderline;
+      const prog_char* ahl = client_additionalheaderline;
       bfill.emit_p(PSTR("POST $F HTTP/1.0\r\n"
                         "Host: $F\r\n"
                         "$F$S"
@@ -521,7 +521,7 @@ void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_c
   browseUrl(urlbuf, urlbuf_varpart, hoststr, PSTR("Accept: text/html"), callback);
 }
 
-void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr, prog_char *additionalheaderline, void (*callback)(byte,word,word)) {
+void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr, const prog_char *additionalheaderline, void (*callback)(byte,word,word)) {
   client_urlbuf = urlbuf;
   client_urlbuf_var = urlbuf_varpart;
   client_hoststr = hoststr;
@@ -589,7 +589,7 @@ byte EtherCard::packetLoopIcmpCheckReply (const byte *ip_monitoredhost) {
 word EtherCard::accept(const word port, word plen) {
   word len;
   len = get_tcp_data_len();
-  
+
   if (gPB[TCP_DST_PORT_H_P] == (port >> 8) &&
       gPB[TCP_DST_PORT_L_P] == ((byte) port)) {
     if (gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V)
@@ -629,7 +629,7 @@ word EtherCard::packetLoop (word plen) {
   if ((gPB[30]==239)&&(gPB[31]==255)&&(gPB[32]==255)&&(gPB[33]==250)) { //multicast packets
   	return UDP_DATA_P; //mark as udp structured packet
   }
-  
+
   if (eth_type_is_arp_and_my_ip(plen)) {
     if (gPB[ETH_ARP_OPCODE_L_P]==ETH_ARP_OPCODE_REQ_L_V)
         make_arp_answer_from_request();
@@ -681,7 +681,7 @@ word EtherCard::packetLoop (word plen) {
       }
       return 0;
     }
-    if (tcp_client_state==3 && len>0) { 
+    if (tcp_client_state==3 && len>0) {
 	  if (client_tcp_result_cb) {
         word tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
         if (tcpstart>plen-8)
