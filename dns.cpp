@@ -1,5 +1,5 @@
 // DNS look-up functions based on the udp client
-// Author: Guido Socher 
+// Author: Guido Socher
 // Copyright: GPL V2
 //
 // 2010-05-20 <jc@wippler.nl>
@@ -10,7 +10,7 @@
 #define gPB ether.buffer
 
 static byte dnstid_l; // a counter for transaction ID
-#define DNSCLIENT_SRC_PORT_H 0xE0 
+#define DNSCLIENT_SRC_PORT_H 0xE0
 
 static void dnsRequest (const prog_char *progmem_hostname, bool fromRam) {
   ++dnstid_l; // increment for next request, finally wrap
@@ -19,7 +19,7 @@ static void dnsRequest (const prog_char *progmem_hostname, bool fromRam) {
   ether.udpPrepare((DNSCLIENT_SRC_PORT_H << 8) | dnstid_l,
                                                 ether.dnsip, 53);
   memset(gPB + UDP_DATA_P, 0, 12);
-  
+
   byte *p = gPB + UDP_DATA_P + 12;
   char c;
   do {
@@ -34,11 +34,11 @@ static void dnsRequest (const prog_char *progmem_hostname, bool fromRam) {
     *p++ = n;
     p += n;
   } while (c != 0);
-  
+
   *p++ = 0; // terminate with zero, means root domain.
   *p++ = 0;
   *p++ = 1; // type A
-  *p++ = 0; 
+  *p++ = 0;
   *p++ = 1; // class IN
   byte i = p - gPB - UDP_DATA_P;
   gPB[UDP_DATA_P] = i;
@@ -54,7 +54,7 @@ static void checkForDnsAnswer (uint16_t plen) {
                    gPB[UDP_DST_PORT_H_P] != DNSCLIENT_SRC_PORT_H ||
                    gPB[UDP_DST_PORT_L_P] != dnstid_l ||
                    p[1] != dnstid_l ||
-                   (p[3] & 0x0F) != 0) 
+                   (p[3] & 0x0F) != 0)
     return;
 
   p += *p; // we encoded the query len into tid
@@ -79,14 +79,14 @@ static void checkForDnsAnswer (uint16_t plen) {
 }
 
 // use during setup, as this discards all incoming requests until it returns
-bool EtherCard::dnsLookup (prog_char* name, bool fromRam) {
+bool EtherCard::dnsLookup (const prog_char* name, bool fromRam) {
   word start = millis();
   while (!isLinkUp() || clientWaitingGw()) {
     packetLoop(packetReceive());
     if ((word) (millis() - start) >= 30000)
       return false;
   }
-    
+
   memset(hisip, 0, 4);
   dnsRequest(name, fromRam);
 

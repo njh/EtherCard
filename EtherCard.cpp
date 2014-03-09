@@ -2,7 +2,7 @@
 //      EHTERSHIELD_H library for Arduino etherShield
 //      Copyright (c) 2008 Xing Yu.  All right reserved. (this is LGPL v2.1)
 // It is however derived from the enc28j60 and ip code (which is GPL v2)
-//      Author: Pascal Stang 
+//      Author: Pascal Stang
 //      Modified by: Guido Socher
 //      DHCP code: Andrew Lindsay
 // Hence: GPL V2
@@ -132,7 +132,7 @@ uint16_t Stash::size () {
   return 63 * count + fetchByte(last, 62) - sizeof (StashHeader);
 }
 
-static char* wtoa (word value, char* ptr) {
+static char* wtoa (uint16_t value, char* ptr) {
   if (value > 9)
     ptr = wtoa(value / 10, ptr);
   *ptr = '0' + value % 10;
@@ -142,9 +142,9 @@ static char* wtoa (word value, char* ptr) {
 
 void Stash::prepare (PGM_P fmt, ...) {
   Stash::load(0, 0);
-  word* segs = Stash::bufs[0].words;
+  uint16_t* segs = Stash::bufs[0].words;
   *segs++ = strlen_P(fmt);
-  *segs++ = (word) fmt;
+  *segs++ = (uint16_t) fmt;
   va_list ap;
   va_start(ap, fmt);
   for (;;) {
@@ -152,7 +152,7 @@ void Stash::prepare (PGM_P fmt, ...) {
     if (c == 0)
       break;
     if (c == '$') {
-      word argval = va_arg(ap, word), arglen = 0;
+      uint16_t argval = va_arg(ap, uint16_t), arglen = 0;
       switch (pgm_read_byte(fmt++)) {
         case 'D': {
           char buf[7];
@@ -186,18 +186,18 @@ void Stash::prepare (PGM_P fmt, ...) {
   va_end(ap);
 }
 
-word Stash::length () {
+uint16_t Stash::length () {
   Stash::load(0, 0);
   return Stash::bufs[0].words[0];
 }
 
-void Stash::extract (word offset, word count, void* buf) {
+void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
   Stash::load(0, 0);
-  word* segs = Stash::bufs[0].words;
+  uint16_t* segs = Stash::bufs[0].words;
   PGM_P fmt = (PGM_P) *++segs;
   Stash stash;
   char mode = '@', tmp[7], *ptr = NULL, *out = (char*) buf;
-  for (word i = 0; i < offset + count; ) {
+  for (uint16_t i = 0; i < offset + count; ) {
     char c = 0;
     switch (mode) {
       case '@': {
@@ -206,7 +206,7 @@ void Stash::extract (word offset, word count, void* buf) {
           return;
         if (c != '$')
           break;
-        word arg = *++segs;
+        uint16_t arg = *++segs;
         mode = pgm_read_byte(fmt++);
         switch (mode) {
           case 'D':
@@ -251,14 +251,14 @@ void Stash::extract (word offset, word count, void* buf) {
 
 void Stash::cleanup () {
   Stash::load(0, 0);
-  word* segs = Stash::bufs[0].words;
+  uint16_t* segs = Stash::bufs[0].words;
   PGM_P fmt = (PGM_P) *++segs;
   for (;;) {
     char c = pgm_read_byte(fmt++);
     if (c == 0)
       break;
     if (c == '$') {
-      word arg = *++segs;
+      uint16_t arg = *++segs;
       if (pgm_read_byte(fmt++) == 'H') {
         Stash stash (arg);
         stash.release();
@@ -281,7 +281,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         c = pgm_read_byte(fmt++);
         switch (c) {
             case 'D':
-                wtoa(va_arg(ap, word), (char*) ptr);
+                wtoa(va_arg(ap, uint16_t), (char*) ptr);
                 break;
             #ifdef FLOATEMIT
             case 'T':
@@ -289,7 +289,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             break;
             #endif
             case 'H': {
-                char p1 =  va_arg(ap, word);
+                char p1 =  va_arg(ap, uint16_t);
                 char p2;
                 p2 = (p1 >> 4) & 0x0F;
                 p1 = p1 & 0x0F;

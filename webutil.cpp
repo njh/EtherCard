@@ -6,28 +6,28 @@
 
 #include "EtherCard.h"
 
-void EtherCard::copyIp (byte *dst, const byte *src) {
+void EtherCard::copyIp (uint8_t *dst, const uint8_t *src) {
     memcpy(dst, src, 4);
 }
 
-void EtherCard::copyMac (byte *dst, const byte *src) {
+void EtherCard::copyMac (uint8_t *dst, const uint8_t *src) {
     memcpy(dst, src, 6);
 }
 
-void EtherCard::printIp (const char* msg, const byte *buf) {
+void EtherCard::printIp (const char* msg, const uint8_t *buf) {
     Serial.print(msg);
     EtherCard::printIp(buf);
     Serial.println();
 }
 
-void EtherCard::printIp (const __FlashStringHelper *ifsh, const byte *buf) {
+void EtherCard::printIp (const __FlashStringHelper *ifsh, const uint8_t *buf) {
 	Serial.print(ifsh);
 	EtherCard::printIp(buf);
 	Serial.println();
 }
 
-void EtherCard::printIp (const byte *buf) {
-	for (byte i = 0; i < 4; ++i) {
+void EtherCard::printIp (const uint8_t *buf) {
+	for (uint8_t i = 0; i < 4; ++i) {
 		Serial.print( buf[i], DEC );
 		if (i < 3)
 			Serial.print('.');
@@ -40,10 +40,10 @@ void EtherCard::printIp (const byte *buf) {
 // The returned value is stored in strbuf. You must allocate
 // enough storage for strbuf, maxlen is the size of strbuf.
 // I.e the value it is declated with: strbuf[5]-> maxlen=5
-byte EtherCard::findKeyVal (const char *str,char *strbuf, byte maxlen,const char *key)
+uint8_t EtherCard::findKeyVal (const char *str,char *strbuf, uint8_t maxlen,const char *key)
 {
-    byte found=0;
-    byte i=0;
+    uint8_t found=0;
+    uint8_t i=0;
     const char *kp;
     kp=key;
     while(*str &&  *str!=' ' && *str!='\n' && found==0){
@@ -123,14 +123,14 @@ void int2h(char c, char *hstr)
     hstr[2]='\0';
 }
 
-// there must be enoug space in urlbuf. In the worst case that is
+// there must be enough space in urlbuf. In the worst case that is
 // 3 times the length of str
 void EtherCard::urlEncode (char *str,char *urlbuf)
 {
     char c;
     while ((c = *str) != 0) {
-        if (c == ' '||isalnum(c)){ 
-            if (c == ' '){ 
+        if (c == ' '||isalnum(c)){
+            if (c == ' '){
                 c = '+';
             }
             *urlbuf=c;
@@ -148,11 +148,11 @@ void EtherCard::urlEncode (char *str,char *urlbuf)
     *urlbuf='\0';
 }
 
-// parse a string an extract the IP to bytestr
-byte EtherCard::parseIp (byte *bytestr,char *str)
+// parse a string and extract the IP to bytestr
+uint8_t EtherCard::parseIp (uint8_t *bytestr,char *str)
 {
     char *sptr;
-    byte i=0;
+    uint8_t i=0;
     sptr=NULL;
     while(i<4){
         bytestr[i]=0;
@@ -181,10 +181,10 @@ byte EtherCard::parseIp (byte *bytestr,char *str)
 }
 
 // take a byte string and convert it to a human readable display string  (base is 10 for ip and 16 for mac addr), len is 4 for IP addr and 6 for mac.
-void EtherCard::makeNetStr (char *resultstr,byte *bytestr,byte len,char separator,byte base)
+void EtherCard::makeNetStr (char *resultstr,uint8_t *bytestr,uint8_t len,char separator,uint8_t base)
 {
-    byte i=0;
-    byte j=0;
+    uint8_t i=0;
+    uint8_t j=0;
     while(i<len){
         itoa((int)bytestr[i],&resultstr[j],base);
         // search end of str:

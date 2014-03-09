@@ -1,7 +1,7 @@
 // Microchip ENC28J60 Ethernet Interface Driver
 // Author: Guido Socher
 // Copyright: GPL V2
-// 
+//
 // Based on the enc28j60.c file from the AVRlib library by Pascal Stang.
 // For AVRlib See http://www.procyonengineering.com/
 // Used with explicit permission of Pascal Stang.
@@ -15,7 +15,7 @@
 #endif
 #include "enc28j60.h"
 
-word ENC28J60::bufferSize;
+uint16_t ENC28J60::bufferSize;
 
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
@@ -234,18 +234,18 @@ word ENC28J60::bufferSize;
 
 #define RXSTART_INIT        0x0000  // start of RX buffer, room for 2 packets
 #define RXSTOP_INIT         0x0BFF  // end of RX buffer
-                            
+
 #define TXSTART_INIT        0x0C00  // start of TX buffer, room for 1 packet
 #define TXSTOP_INIT         0x11FF  // end of TX buffer
-                            
+
 #define SCRATCH_START       0x1200  // start of scratch area
-#define SCRATCH_LIMIT       0x2000  // past end of area, i.e. 3.5 Kb 
+#define SCRATCH_LIMIT       0x2000  // past end of area, i.e. 3.5 Kb
 #define SCRATCH_PAGE_SHIFT  6       // addressing is in pages of 64 bytes
 #define SCRATCH_PAGE_SIZE   (1 << SCRATCH_PAGE_SHIFT)
 
 // max frame length which the conroller will accept:
 // (note: maximum ethernet frame length would be 1518)
-#define MAX_FRAMELEN      1500        
+#define MAX_FRAMELEN      1500
 
 #define FULL_SPEED  1   // switch to full-speed SPI for bulk transfers
 
@@ -257,9 +257,9 @@ void ENC28J60::initSPI () {
     pinMode(SS, OUTPUT);
     digitalWrite(SS, HIGH);
     pinMode(MOSI, OUTPUT);
-    pinMode(SCK, OUTPUT);   
+    pinMode(SCK, OUTPUT);
     pinMode(MISO, INPUT);
-    
+
     digitalWrite(MOSI, HIGH);
     digitalWrite(MOSI, LOW);
     digitalWrite(SCK, LOW);
@@ -302,7 +302,7 @@ static void writeOp (byte op, byte address, byte data) {
     disableChip();
 }
 
-static void readBuf(word len, byte* data) {
+static void readBuf(uint16_t len, byte* data) {
     enableChip();
     xferSPI(ENC28J60_READ_BUF_MEM);
     while (len--) {
@@ -312,7 +312,7 @@ static void readBuf(word len, byte* data) {
     disableChip();
 }
 
-static void writeBuf(word len, const byte* data) {
+static void writeBuf(uint16_t len, const byte* data) {
     enableChip();
     xferSPI(ENC28J60_WRITE_BUF_MEM);
     while (len--)
@@ -333,7 +333,7 @@ static byte readRegByte (byte address) {
     return readOp(ENC28J60_READ_CTRL_REG, address);
 }
 
-static word readReg(byte address) {
+static uint16_t readReg(byte address) {
 	return readRegByte(address) + (readRegByte(address+1) << 8);
 }
 
@@ -342,12 +342,12 @@ static void writeRegByte (byte address, byte data) {
     writeOp(ENC28J60_WRITE_CTRL_REG, address, data);
 }
 
-static void writeReg(byte address, word data) {
+static void writeReg(byte address, uint16_t data) {
     writeRegByte(address, data);
     writeRegByte(address + 1, data >> 8);
 }
 
-static word readPhyByte (byte address) {
+static uint16_t readPhyByte (byte address) {
     writeRegByte(MIREGADR, address);
     writeRegByte(MICMD, MICMD_MIIRD);
     while (readRegByte(MISTAT) & MISTAT_BUSY)
@@ -356,26 +356,26 @@ static word readPhyByte (byte address) {
     return readRegByte(MIRD+1);
 }
 
-static void writePhy (byte address, word data) {
+static void writePhy (byte address, uint16_t data) {
     writeRegByte(MIREGADR, address);
     writeReg(MIWR, data);
     while (readRegByte(MISTAT) & MISTAT_BUSY)
         ;
 }
 
-byte ENC28J60::initialize (word size, const byte* macaddr, byte csPin) {
+byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     bufferSize = size;
     if (bitRead(SPCR, SPE) == 0)
       initSPI();
-    selectPin = csPin;  
+    selectPin = csPin;
     pinMode(selectPin, OUTPUT);
     disableChip();
-    
+
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
     delay(2); // errata B7/2
     while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY)
         ;
-        
+
     gNextPacketPtr = RXSTART_INIT;
     writeReg(ERXST, RXSTART_INIT);
     writeReg(ERXRDPT, RXSTART_INIT);
@@ -391,7 +391,7 @@ byte ENC28J60::initialize (word size, const byte* macaddr, byte csPin) {
                         MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
     writeReg(MAIPG, 0x0C12);
     writeRegByte(MABBIPG, 0x12);
-    writeReg(MAMXFL, MAX_FRAMELEN);  
+    writeReg(MAMXFL, MAX_FRAMELEN);
     writeRegByte(MAADR5, macaddr[0]);
     writeRegByte(MAADR4, macaddr[1]);
     writeRegByte(MAADR3, macaddr[2]);
@@ -416,7 +416,7 @@ bool ENC28J60::isLinkUp() {
     return (readPhyByte(PHSTAT2) >> 2) & 1;
 }
 
-void ENC28J60::packetSend(word len) {
+void ENC28J60::packetSend(uint16_t len) {
     while (readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_TXRTS)
         if (readRegByte(EIR) & EIR_TXERIF) {
             writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
@@ -429,17 +429,17 @@ void ENC28J60::packetSend(word len) {
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 }
 
-word ENC28J60::packetReceive() {
-    word len = 0;
+uint16_t ENC28J60::packetReceive() {
+    uint16_t len = 0;
     if (readRegByte(EPKTCNT) > 0) {
         writeReg(ERDPT, gNextPacketPtr);
 
         struct {
-            word nextPacket;
-            word byteCount;
-            word status;
+            uint16_t nextPacket;
+            uint16_t byteCount;
+            uint16_t status;
         } header;
-        
+
         readBuf(sizeof header, (byte*) &header);
 
         gNextPacketPtr  = header.nextPacket;
@@ -461,7 +461,7 @@ word ENC28J60::packetReceive() {
 }
 
 void ENC28J60::copyout (byte page, const byte* data) {
-    word destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT);
+    uint16_t destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT);
     if (destPos < SCRATCH_START || destPos > SCRATCH_LIMIT - SCRATCH_PAGE_SIZE)
         return;
     writeReg(EWRPT, destPos);
@@ -469,7 +469,7 @@ void ENC28J60::copyout (byte page, const byte* data) {
 }
 
 void ENC28J60::copyin (byte page, byte* data) {
-    word destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT);
+    uint16_t destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT);
     if (destPos < SCRATCH_START || destPos > SCRATCH_LIMIT - SCRATCH_PAGE_SIZE)
         return;
     writeReg(ERDPT, destPos);
@@ -478,7 +478,7 @@ void ENC28J60::copyin (byte page, byte* data) {
 
 byte ENC28J60::peekin (byte page, byte off) {
     byte result = 0;
-    word destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT) + off;
+    uint16_t destPos = SCRATCH_START + (page << SCRATCH_PAGE_SHIFT) + off;
     if (SCRATCH_START <= destPos && destPos < SCRATCH_LIMIT) {
         writeReg(ERDPT, destPos);
         readBuf(1, &result);
@@ -522,27 +522,27 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
 	#define PATTERN_SHIFT	0b1000
 	#define RANDOM_RACE		0b1100
 
-// init	
+// init
     if (bitRead(SPCR, SPE) == 0)
       initSPI();
-    selectPin = csPin;  
+    selectPin = csPin;
     pinMode(selectPin, OUTPUT);
     disableChip();
-    
+
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
     delay(2); // errata B7/2
     while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY) ;
 
 
 	// now we can start the memory test
-	
-	word macResult;
-	word bitsResult;
+
+	uint16_t macResult;
+	uint16_t bitsResult;
 
 	// clear some of the registers registers
     writeRegByte(ECON1, 0);
 	writeReg(EDMAST, 0);
-	
+
 	// Set up necessary pointers for the DMA to calculate over the entire memory
 	writeReg(EDMAND, 0x1FFFu);
 	writeReg(ERXND, 0x1FFFu);
@@ -550,7 +550,7 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
 	// Enable Test Mode and do an Address Fill
 	SetBank(EBSTCON);
 	writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_BISTST | ADDRESS_FILL);
-	
+
 	// wait for BISTST to be reset, only after that are we actually ready to
 	// start the test
 	// this was undocumented :(
@@ -572,21 +572,21 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
 	}
 	// reset test flag
 	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
-	
-	
+
+
 	// Now start the BIST with random data test, and also keep on swapping the
 	// DMA/BIST memory ports.
 	writeRegByte(EBSTSD, 0b10101010 | millis());
 	writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_PSEL | EBSTCON_BISTST | RANDOM_FILL);
-						 
-						 
+
+
 	// wait for BISTST to be reset, only after that are we actually ready to
 	// start the test
 	// this was undocumented :(
     while (readOp(ENC28J60_READ_CTRL_REG, EBSTCON) & EBSTCON_BISTST);
 	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
-	
-	
+
+
 	// now start the actual reading an calculating the checksum until the end is
 	// reached
 	writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
@@ -595,7 +595,7 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
 
 	macResult = readReg(EDMACS);
 	bitsResult = readReg(EBSTCS);
-	// The checksum should be equal 
+	// The checksum should be equal
 	return macResult == bitsResult;
 }
 

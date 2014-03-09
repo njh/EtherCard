@@ -150,77 +150,268 @@ public:
   static bool persist_tcp_connection; // whether to break connections on first packet received
 
   // EtherCard.cpp
+  /**   @brief  Initialise the network interface
+  *     @param  size Size of data buffer
+  *     @param  macaddr Hardware address to assign to the network interface (6 bytes)
+  *     @param  csPin Arduino pin number connected to chip select. Default = 8
+  *     @return <i>uint8_t</i> Firmware version
+  */
   static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
                         uint8_t csPin =8);
+  /**   @brief  Configure network interface with static IP
+  *     @param  my_ip IP address (4 bytes). Default = 0.0.0.0
+  *     @param  gw_ip Gateway address (4 bytes). Default = 0.0.0.0
+  *     @param  dns_ip DNS address (4 bytes). Default = 0.0.0.0
+  *     @return <i>bool</i> Returns true on success - actually always true
+  */
   static bool staticSetup (const uint8_t* my_ip =0,
                             const uint8_t* gw_ip =0,
                              const uint8_t* dns_ip =0);
   // tcpip.cpp
+  /**   @brief  Does not seem to be implemented
+  *     @todo   Remove declaration or impelement
+  */
   static void initIp (uint8_t *myip,uint16_t wwwp);
+  /**   @brief
+  *     @todo   Document makeUdpReply
+  */
   static void makeUdpReply (char *data,uint8_t len, uint16_t port);
+  /**   @brief
+  *     @todo   Document packetLoop
+  */
   static uint16_t packetLoop (uint16_t plen);
+  /**   @brief
+  *     @todo   Document accept
+  */
   static uint16_t accept(uint16_t port, uint16_t plen);
+  /**   @brief
+  *     @todo   Document httpServerReply
+  */
   static void httpServerReply (uint16_t dlen);
-  static void httpServerReply_with_flags (uint16_t dlen , byte flags);
+  /**   @brief
+  *     @todo   Document httpServerReply_with_flags
+  */
+  static void httpServerReply_with_flags (uint16_t dlen , uint8_t flags);
+  /**   @brief
+  *     @todo   Document httpServerReplyAck
+  */
   static void httpServerReplyAck ();
+  /**   @brief  Set the gateway address
+  *     @param  gwipaddr Gateway address (4 bytes)
+  */
   static void setGwIp (const uint8_t *gwipaddr);
+  /**   @brief
+  *     @todo   Document setGwIp
+  *     @return <i>unit8_t</i>
+  */
   static uint8_t clientWaitingGw ();
+  /**   @brief
+  *     @todo   Document clientTcpReq
+  *     @return <i>unit8_t</i>
+  */
   static uint8_t clientTcpReq (uint8_t (*r)(uint8_t,uint8_t,uint16_t,uint16_t),
                                uint16_t (*d)(uint8_t),uint16_t port);
+  /**   @brief
+  *     @todo   Document browseUrl
+  */
   static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
-                         prog_char *hoststr, const prog_char *header,
-                         void (*cb)(uint8_t,uint16_t,uint16_t));
+                         prog_char *hoststr, const prog_char *additionalheaderline,
+                         void (*callback)(uint8_t,uint16_t,uint16_t));
+  /**   @brief
+  *     @todo   Document browseUrl
+  */
   static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
                          prog_char *hoststr,
-                         void (*cb)(uint8_t,uint16_t,uint16_t));
+                         void (*callback)(uint8_t,uint16_t,uint16_t));
+  /**   @brief
+  *     @todo   Document httpPost
+  */
   static void httpPost (prog_char *urlbuf, prog_char *hoststr,
-                        prog_char *header, const char *postval,
-                        void (*cb)(uint8_t,uint16_t,uint16_t));
+                        prog_char *additionalheaderline, const char *postval,
+                        void (*callback)(uint8_t,uint16_t,uint16_t));
+  /**   @brief
+  *     @todo   Document ntpRequest
+  */
   static void ntpRequest (uint8_t *ntpip,uint8_t srcport);
+  /**   @brief
+  *     @todo   Document ntpProcessAnswer
+  */
   static uint8_t ntpProcessAnswer (uint32_t *time, uint8_t dstport_l);
+  /**   @brief  Prepare a UDP message for transmission
+  *     @param  sport Source port
+  *     @param  dip Pointer to 4 byte destination IP address
+  *     @param  dport Destination port
+  */
   static void udpPrepare (uint16_t sport, uint8_t *dip, uint16_t dport);
+  /**   @brief  Transmit UDP packet
+  *     @param  len Size of payload
+  */
   static void udpTransmit (uint16_t len);
+  /**   @brief  Sends a UDP packet
+  *     @param  data Pointer to data
+  *     @param  len Size of payload
+  *     @param  sport Source port
+  *     @param  dip Pointer to 4 byte destination IP address
+  *     @param  dport Destination port
+  */
   static void sendUdp (char *data,uint8_t len,uint16_t sport,
                                               uint8_t *dip, uint16_t dport);
+  /**   @brief  Resister the function to handle ping events
+  *     @param  cb Pointer to function
+  */
   static void registerPingCallback (void (*cb)(uint8_t*));
+  /**   @brief
+  *     @todo Docuement clientIcmpRequest
+  */
   static void clientIcmpRequest (const uint8_t *destip);
+  /**   @brief
+  *     @todo Docuement packetLoopIcmpCheckReply
+  */
   static uint8_t packetLoopIcmpCheckReply (const uint8_t *ip_mh);
+  /**   @brief
+  *     @todo Docuement sendWol
+  */
   static void sendWol (uint8_t *wolmac);
   // new stash-based API
+  /**   @brief
+  *     @todo Docuement tcpSend
+  */
   static uint8_t tcpSend ();
-  static const char* tcpReply (byte fd);
+  /**   @brief
+  *     @todo Docuement tcpRelay
+  */
+  static const char* tcpReply (uint8_t fd);
 
+  /**   @brief
+  *     @todo Docuement persistTcpConnection
+  */
   static void persistTcpConnection(bool persist);
 
   //udpserver.cpp
+  /**   @brief  Register function to handle incomint UDP events
+  *     @param  callback Function to handle event
+  *     @param  port Port to listen on
+  */
   static void udpServerListenOnPort(UdpServerCallback callback, uint16_t port);
+  /**   @brief  Pause listing on UDP port
+  *     @brief  port Port to pause
+  */
   static void udpServerPauseListenOnPort(uint16_t port);
+  /**   @brief  Resume listing on UDP port
+  *     @brief  port Port to pause
+  */
   static void udpServerResumeListenOnPort(uint16_t port);
+  /**   @brief  Check if UDP server is listening on any ports
+  *     @return <i>bool</i> True if listening on any ports
+  */
   static bool udpServerListening();						//called by tcpip, in packetLoop
-  static bool udpServerHasProcessedPacket(word len);	//called by tcpip, in packetLoop
+  /**   @brief
+  *     @param len Not used
+  *     @return <i>bool</i> True if packet processed
+  *     @todo   Document udpServerHasProcessedPacket
+  */
+  static bool udpServerHasProcessedPacket(uint16_t len);	//called by tcpip, in packetLoop
 
   // dhcp.cpp
-  static void DhcpStateMachine(word len);
+  /**   @brief
+  *     @todo document DhcpStateMachine
+  */
+  static void DhcpStateMachine(uint16_t len);
+  /**   @brief Not implemented
+  *     @todo Implement dhcpStartTime or remove declaration
+  */
   static uint32_t dhcpStartTime ();
+  /**   @brief Not implemented
+  *     @todo Implement dhcpLeaseTime or remove declaration
+  */
   static uint32_t dhcpLeaseTime ();
+  /**   @brief Not implemented
+  *     @todo Implement dhcpLease or remove declaration
+  */
   static bool dhcpLease ();
+  /**   @brief Not implemented
+  *     @todo Implement dhcpSetup(const char *) or remove declaration
+  */
   static bool dhcpSetup (const char *);
+  /**   @brief  Wait for DHCP configuration to complete
+  *     @return <i>bool</i> True if DHCP successful
+  *     @note   Timeout after waiting 60 seconds
+  */
   static bool dhcpSetup ();
   // dns.cpp
-  static bool dnsLookup (prog_char* name, bool fromRam =false);
+  /**   @brief  Perform DNS lookup
+  *     @param  name Host name to lookup
+  *     @param  fromRam Set true to look up cached name. Default = false
+  *     @todo   Describe where the result is stored
+  */
+  static bool dnsLookup (const prog_char* name, bool fromRam =false);
   // webutil.cpp
+  /**   @brief  Copies an IP address
+  *     @param  dst Pointer to the 4 byte destination
+  *     @param  src Pointer to the 4 byte source
+  *     @note   There is no check of source or destination size. Ensure both are 4 bytes
+  */
   static void copyIp (uint8_t *dst, const uint8_t *src);
+  /**   @brief  Copies a hardware address
+  *     @param  dst Pointer to the 6 byte destination
+  *     @param  src Pointer to the 6 byte destination
+  *     @note   There is no check of source or destination size. Ensure both are 6 bytes
+  */
   static void copyMac (uint8_t *dst, const uint8_t *src);
-  static void printIp (const byte *buf);
+  /**   @brief  Output to serial port in dotted decimal IP format
+  *     @param  buf Pointer to 4 byte IP address
+  *     @note   There is no check of source or destination size. Ensure both are 4 bytes
+  */
+  static void printIp (const uint8_t *buf);
+  /**   @brief  Output message and IP address to serial port in dotted decimal IP format
+  *     @param  msg Pointer to null terminated string
+  *     @param  buf Pointer to 4 byte IP address
+  *     @note   There is no check of source or destination size. Ensure both are 4 bytes
+  */
   static void printIp (const char* msg, const uint8_t *buf);
+  /**   @brief  Output Flash String Helper and IP address to serial port in dotted decimal IP format
+  *     @param  ifsh Pointer to Flash String Helper
+  *     @param  buf Pointer to 4 byte IP address
+  *     @note   There is no check of source or destination size. Ensure both are 4 bytes
+  *     @todo   What is a FlashStringHelper?
+  */
   static void printIp (const __FlashStringHelper *ifsh, const uint8_t *buf);
+  /**   @brief  Search for a string of the form key=value in a string that looks like q?xyz=abc&uvw=defgh HTTP/1.1\\r\\n
+  *     @param  str Pointer to the null terminated string to search
+  *     @param  strbuf Pointer to buffer to hold null terminated result string
+  *     @param  maxlen Maximum length of result
+  *     @param  key Pointer to null terminated string holding the key to search for
+  *     @return <i>unit_t</i> Length of the value. 0 if not found
+  *     @note   Ensure strbuf has memory allocated of at least maxlen + 1 (to accomodate result plus terminating null)
+  */
   static uint8_t findKeyVal(const char *str,char *strbuf,
                             uint8_t maxlen, const char *key);
+  /**   @brief  Decode a URL string e.g "hello%20joe" or "hello+joe" becomes "hello joe"
+  *     @param  urlbuf Pointer to the null terminated URL
+  *     @note   urlbuf is modified
+  */
   static void urlDecode(char *urlbuf);
+  /**   @brief  Encode a URL, replacing illegal charaters like ' '
+  *     @param  str Pointer to the null terminated string to encode
+  *     @param  urlbuf Pointer to a buffer to contain the null terminated encoded URL
+  *     @note   There must be enough space in urlbuf. In the worst case that is 3 times the length of str
+  */
   static  void urlEncode(char *str,char *urlbuf);
+  /**   @brief  Convert an IP address from srting to 4 bytes
+  *     @param  bytestr Pointer to the 4 byte array to store IP address
+  *     @param  str Pointer to string to parse
+  *     @return <i>uint8_t</i> 0 on success
+  */
   static uint8_t parseIp(uint8_t *bytestr,char *str);
-  static void makeNetStr(char *rs,uint8_t *bs,uint8_t len,
-                                              char sep,uint8_t base);
+  /**   @brief  Convert a byte array to a human readable display string
+  *     @param  resultstr Pointer to a buffer to hold the resulting null terminated string
+  *     @param  bytestr Pointer to the byte array containing the address to convert
+  *     @param  len Length of the array (4 for IP address, 6 for hardware (MAC) address)
+  *     @param  separator Delimiter character (typically '.' for IP address and ':' for hardware (MAC) address)
+  *     @param  base Base for numerical representation (typically 10 for IP address and 16 for hardware (MAC) address
+  */
+  static void makeNetStr(char *resultstr,uint8_t *bytestr,uint8_t len,
+                                              char separator,uint8_t base);
 };
 
 extern EtherCard ether;

@@ -4,7 +4,7 @@
 // Author: Andrew Lindsay
 // Rewritten and optimized by Jean-Claude Wippler, http://jeelabs.org/
 //
-// Rewritten dhcpStateMachine by Chris van den Hooven 
+// Rewritten dhcpStateMachine by Chris van den Hooven
 // as to implement dhcp-renew when lease expires (jun 2012)
 //
 // Various modifications and bug fixes contributed by Victor Aprea (oct 2012)
@@ -31,16 +31,16 @@
 #define DHCP_NAK 6
 #define DHCP_RELEASE 7
 
-// DHCP States for access in applications (ref RFC 2131) 
+// DHCP States for access in applications (ref RFC 2131)
 enum {
     DHCP_STATE_INIT,
-    DHCP_STATE_SELECTING,       
+    DHCP_STATE_SELECTING,
     DHCP_STATE_REQUESTING,
     DHCP_STATE_BOUND,
     DHCP_STATE_RENEWING,
 };
 
-/* 
+/*
    op            1  Message op code / message type.
                     1 = BOOTREQUEST, 2 = BOOTREPLY
    htype         1  Hardware address type, see ARP section in "Assigned
@@ -75,12 +75,12 @@ enum {
 
 
 
- 
+
 // size 236
 typedef struct {
     byte op, htype, hlen, hops;
     uint32_t xid;
-    word secs, flags;
+    uint16_t secs, flags;
     byte ciaddr[4], yiaddr[4], siaddr[4], giaddr[4];
     byte chaddr[16], sname[64], file[128];
     // options
@@ -89,7 +89,7 @@ typedef struct {
 #define DHCP_SRC_PORT 67
 #define DHCP_DEST_PORT 68
 
-// timeouts im ms 
+// timeouts im ms
 #define DHCP_REQUEST_TIMEOUT 10000
 
 static byte dhcpState = DHCP_STATE_INIT;
@@ -115,9 +115,9 @@ static void addBytes (byte len, const byte* data) {
 // Main DHCP sending function
 
 // implemented
-// state             / msgtype       
-// INIT              / DHCPDISCOVER 
-// SELECTING         / DHCPREQUEST 
+// state             / msgtype
+// INIT              / DHCPDISCOVER
+// SELECTING         / DHCPREQUEST
 // BOUND (RENEWING)  / DHCPREQUEST
 
 // ----------------------------------------------------------
@@ -143,16 +143,16 @@ static void addBytes (byte len, const byte* data) {
 static void send_dhcp_message (void) {
 
 	uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	
+
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
-	
-    EtherCard::udpPrepare(DHCP_DEST_PORT, 
+
+    EtherCard::udpPrepare(DHCP_DEST_PORT,
 		(dhcpState == DHCP_STATE_BOUND ? EtherCard::dhcpip : allOnes),
 		DHCP_SRC_PORT);   // SRC<->DST ??
-    
+
 	if (dhcpState != DHCP_STATE_BOUND)
 		EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes); //force broadcast mac
-   
+
     // Build DHCP Packet from buf[UDP_DATA_P]
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     dhcpPtr->op = DHCP_BOOTREQUEST;
@@ -160,30 +160,30 @@ static void send_dhcp_message (void) {
     dhcpPtr->hlen = 6;
     dhcpPtr->xid = currentXid;
 	if (dhcpState == DHCP_STATE_BOUND) {
-		EtherCard::copyIp(dhcpPtr->ciaddr, EtherCard::myip); 
+		EtherCard::copyIp(dhcpPtr->ciaddr, EtherCard::myip);
 	}
     EtherCard::copyMac(dhcpPtr->chaddr, EtherCard::mymac);
-    
+
     // options defined as option, length, value
     bufPtr = gPB + UDP_DATA_P + sizeof( DHCPdata );
     // DHCP magic cookie, followed by message type
     static byte cookie[] = { 99, 130, 83, 99, 53, 1 };
     addBytes(sizeof cookie, cookie);
     // addToBuf(53);  // DHCP_STATE_SELECTING, DHCP_STATE_REQUESTING
-    // addToBuf(1);   // Length 
+    // addToBuf(1);   // Length
  	addToBuf(dhcpState == DHCP_STATE_INIT ? DHCP_DISCOVER : DHCP_REQUEST);
-    
+
     // Client Identifier Option, this is the client mac address
     addToBuf(61);     // Client identifier
-    addToBuf(7);      // Length 
+    addToBuf(7);      // Length
     addToBuf(0x01);   // Ethernet
     addBytes(6, EtherCard::mymac);
-    
+
     addToBuf(12);     // Host name Option
     addToBuf(10);
     addBytes(10, (byte*) hostname);
-    
-	
+
+
 	if( dhcpState == DHCP_STATE_SELECTING) {
         addToBuf(50); // Request IP address
         addToBuf(4);
@@ -194,12 +194,12 @@ static void send_dhcp_message (void) {
         addToBuf(4);
         addBytes(4, EtherCard::dhcpip);
     }
-    
+
     // Additional info in parameter list - minimal list for what we need
     static byte tail[] = { 55, 3, 1, 3, 6, 255 };
     addBytes(sizeof tail, tail);
     // addToBuf(55);     // Parameter request list
-    // addToBuf(3);      // Length 
+    // addToBuf(3);      // Length
     // addToBuf(1);      // Subnet mask
     // addToBuf(3);      // Route/Gateway
     // addToBuf(6);      // DNS Server
@@ -209,7 +209,7 @@ static void send_dhcp_message (void) {
     EtherCard::udpTransmit((bufPtr - gPB) - UDP_DATA_P);
 }
 
-static void process_dhcp_offer (word len) {
+static void process_dhcp_offer (uint16_t len) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
     // Offered IP address is in yiaddr
@@ -239,7 +239,7 @@ static void process_dhcp_offer (word len) {
     } while (ptr < gPB + len);
 }
 
-static bool dhcp_received_message_type (word len, byte msgType) {
+static bool dhcp_received_message_type (uint16_t len, byte msgType) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
 
@@ -256,9 +256,8 @@ static bool dhcp_received_message_type (word len, byte msgType) {
             }
             ptr += optionLen;
         } while (ptr < gPB + len);
-    } else {
-        return false;
     }
+    return false;
 }
 
 bool EtherCard::dhcpSetup () {
@@ -273,9 +272,9 @@ bool EtherCard::dhcpSetup () {
 	 hostname[9] = '0' + (mymac[5] & 0x0F);
 
 	 dhcpState = DHCP_STATE_INIT;
-	 word start = millis();	
+	 uint16_t start = millis();
 
-	 while (dhcpState != DHCP_STATE_BOUND && (word) (millis() - start) < 60000) {
+	 while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
 	  if (isLinkUp()) DhcpStateMachine(packetReceive());
     }
     return dhcpState == DHCP_STATE_BOUND ;
@@ -283,7 +282,7 @@ bool EtherCard::dhcpSetup () {
 
 
 
-void EtherCard::DhcpStateMachine (word len) {
+void EtherCard::DhcpStateMachine (uint16_t len) {
 
 #ifdef DHCPDEBUG
 	if (dhcpState != DHCP_STATE_BOUND) {
@@ -296,26 +295,26 @@ void EtherCard::DhcpStateMachine (word len) {
 			break;
 		case DHCP_STATE_SELECTING:
 			Serial.println("Selecting");
-			break;		
+			break;
 		case DHCP_STATE_REQUESTING:
 			Serial.println("Requesting");
-			break;		
+			break;
 		case DHCP_STATE_RENEWING:
 			Serial.println("Renew");
-			break;		
+			break;
 	}
 #endif
 
 	switch (dhcpState) {
-	
+
 		case DHCP_STATE_BOUND:
 		    if (millis() >= leaseStart + leaseTime) {
-				send_dhcp_message(); 
+				send_dhcp_message();
 				dhcpState = DHCP_STATE_RENEWING;
 				stateTimer = millis();
-			} 
+			}
 			break;
-	
+
 		case DHCP_STATE_INIT:
 			currentXid = millis();
 			memset(myip,0,4); // force ip 0.0.0.0
@@ -324,20 +323,20 @@ void EtherCard::DhcpStateMachine (word len) {
 			dhcpState = DHCP_STATE_SELECTING;
 			stateTimer = millis();
 			break;
-			
-		case DHCP_STATE_SELECTING: 
+
+		case DHCP_STATE_SELECTING:
 			if (dhcp_received_message_type(len, DHCP_OFFER)) {
 				process_dhcp_offer(len);
 				send_dhcp_message();
 				dhcpState = DHCP_STATE_REQUESTING;
 			    stateTimer = millis();
-			} else { 
+			} else {
 				if (millis() > stateTimer + DHCP_REQUEST_TIMEOUT) {
 					dhcpState = DHCP_STATE_INIT;
 				}
 			}
 			break;
-			
+
 		case DHCP_STATE_REQUESTING:
 		case DHCP_STATE_RENEWING:
 			if (dhcp_received_message_type(len, DHCP_ACK)) {
@@ -345,12 +344,12 @@ void EtherCard::DhcpStateMachine (word len) {
 				leaseStart = millis();
 				if (gwip[0] != 0) setGwIp(gwip); // why is this? because it initiates an arp request
 				dhcpState = DHCP_STATE_BOUND;
-			} else { 
+			} else {
 				if (millis() > stateTimer + DHCP_REQUEST_TIMEOUT) {
 					dhcpState = DHCP_STATE_INIT;
 				}
 			}
-			break;		
+			break;
 
 	}
 }

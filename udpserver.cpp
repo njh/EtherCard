@@ -51,7 +51,7 @@ bool EtherCard::udpServerListening() {
 	return numListeners > 0;
 }
 
-bool EtherCard::udpServerHasProcessedPacket(word plen) {
+bool EtherCard::udpServerHasProcessedPacket(uint16_t plen) {
 	bool packetProcessed = false;
 	for(int i = 0; i < numListeners; i++)
 	{
