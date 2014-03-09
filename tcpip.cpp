@@ -1,4 +1,4 @@
-// IP, Arp, UDP and TCP functions.
+// IP, ARP, UDP and TCP functions.
 // Author: Guido Socher
 // Copyright: GPL V2
 //

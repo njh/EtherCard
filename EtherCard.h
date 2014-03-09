@@ -38,21 +38,24 @@
 #include "enc28j60.h"
 #include "net.h"
 
+/** This type definition defines the structure of a UDP server event handler callback funtion */
 typedef void (*UdpServerCallback)(
-	uint16_t dest_port,	// the port the packet was sent to
-	uint8_t src_ip[4],	// the ip of the sender
-	const char *data,			// the data
-	uint16_t len);		// the length of the data
+	uint16_t dest_port,	///< Port the packet was sent to
+	uint8_t src_ip[4],	///< IP address of the sender
+	const char *data,   ///< UDP payload data
+	uint16_t len);		///< Length of the payload data
 
+/** This structure describes the structure of memory used within the ENC28J60 network interface. This is used by Stash class and not intended for user by (normal) end users. */
 typedef struct {
-  uint8_t count;     // number of allocated pages
-  uint8_t first;     // first allocated page
-  uint8_t last;      // last allocated page
+  uint8_t count;     ///< Number of allocated pages
+  uint8_t first;     ///< First allocated page
+  uint8_t last;      ///< Last allocated page
 } StashHeader;
 
+/** This class provides access to the memory within the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class Stash : public /*Stream*/ Print, private StashHeader {
-  uint8_t curr;      // current page
-  uint8_t offs;      // current offset in page
+  uint8_t curr;      //!< Current page
+  uint8_t offs;      //!< Current offset in page
 
   typedef struct {
     union {
@@ -120,6 +123,7 @@ public:
   friend void dumpStash (const char* msg, void* ptr);   // optional
 };
 
+/** This class populates network send / recieve buffers. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class BufferFiller : public Print {
   uint8_t *start, *ptr;
 public:
