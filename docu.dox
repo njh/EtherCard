@@ -62,11 +62,11 @@ ether.printIp("DHCP server: ", ether.dhcpip); // output IP address of the DHCP s
 
 @subsection StaticIP To configure a static IP address use EtherCard::staticSetup
 <pre>
-const static uint8_t[] ip = {192,168,0,100};
-const static uint8_t[] gw = {192,168,0,254};
-const static uint8_t[] dns = {192,168,0,1};
+const static uint8_t ip[] = {192,168,0,100};
+const static uint8_t gw[] = {192,168,0,254};
+const static uint8_t dns[] = {192,168,0,1};
 
-if(!staticSetup(ip, gw, dns);
+if(!ether.staticSetup(ip, gw, dns);
 {
     // handle failure to configure static IP address (current implementation always returns true!)
 }
