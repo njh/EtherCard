@@ -16,7 +16,7 @@
 /** This class provide low-level interfacing with the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class ENC28J60 {
 public:
-  static uint8_t buffer[]; //!< Data buffer (shared by recieve and transmit)
+  static uint8_t* buffer; //!< Pointer to data buffer (shared by recieve and transmit)
   static uint16_t bufferSize; //!< Size of data buffer
 
   static uint8_t* tcpOffset () { return buffer + 0x36; } //!< Pointer to the start of TCP payload
@@ -89,19 +89,23 @@ public:
   */
   static void disableBroadcast();
 
+  /**   @brief  Enables reception of mulitcast messages
+  *     @note   This will increase load on recieved data handling
+  */
+  static void enableMulticast ();
+
   /**   @brief  Disable reception of mulitcast messages
   *     @note   This will reduce load on recieved data handling
   */
-  static void disableMulticast ();
+  static void disableMulticast();
 
   ///@todo Provide enableMulticast function and allow individual enable disable of such options. (Currently enable or disable all.)
 
   /**   @brief  Reset and fully initialise ENC28J60
   *     @param  csPin Arduino pin used for chip select (enable SPI bus)
-  *     @return <i>uint8_t</i> 1 on success?
-  *     @todo   Check return value of doBIST. Seems to return Boolean value but defined as uint8_t
+  *     @return <i>uint8_t</i> 0 on failure
   */
-  static uint8_t doBIST(uint8_t csPin =8);
+  static uint8_t doBIST(uint8_t csPin = 8);
 };
 
 typedef ENC28J60 Ethernet; //!< Define alias Ethernet for ENC28J60

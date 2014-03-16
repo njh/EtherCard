@@ -220,7 +220,7 @@ static void process_dhcp_offer (uint16_t len) {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:  EtherCard::copyIp(EtherCard::mymask, ptr);
+            case 1:  EtherCard::copyIp(EtherCard::netmask, ptr);
                      break;
             case 3:  EtherCard::copyIp(EtherCard::gwip, ptr);
                      break;
@@ -277,6 +277,7 @@ bool EtherCard::dhcpSetup () {
 	 while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
 	  if (isLinkUp()) DhcpStateMachine(packetReceive());
     }
+    updateBroadcastAddress();
     return dhcpState == DHCP_STATE_BOUND ;
 }
 

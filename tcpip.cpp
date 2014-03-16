@@ -107,7 +107,9 @@ static uint8_t eth_type_is_ip_and_my_ip(uint16_t len) {
   return len >= 42 && gPB[ETH_TYPE_H_P] == ETHTYPE_IP_H_V &&
                       gPB[ETH_TYPE_L_P] == ETHTYPE_IP_L_V &&
                       gPB[IP_HEADER_LEN_VER_P] == 0x45 &&
-                      memcmp(gPB + IP_DST_P, EtherCard::myip, 4) == 0;
+                      (memcmp(gPB + IP_DST_P, EtherCard::myip, 4) == 0  //not my IP
+                       || (memcmp(gPB + IP_DST_P, EtherCard::broadcastip, 4) == 0) //not subnet broadcast
+                       || (memcmp(gPB + IP_DST_P, allOnes, 4) == 0)); //not global broadcasts
 }
 
 static void fill_ip_hdr_checksum() {
@@ -432,6 +434,12 @@ static uint8_t client_store_gw_mac() {
 void EtherCard::setGwIp (const uint8_t *gwipaddr) {
   waitgwmac = WGW_INITIAL_ARP; // causes an arp request in the packet loop
   copyIp(gwip, gwipaddr);
+}
+
+void EtherCard::updateBroadcastAddress()
+{
+    for(uint8_t i=0; i<4; i++)
+        broadcastip[i] = myip[i] | ~netmask[i];
 }
 
 static void client_syn(uint8_t srcport,uint8_t dstport_h,uint8_t dstport_l) {

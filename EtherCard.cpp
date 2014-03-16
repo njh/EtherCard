@@ -334,11 +334,12 @@ EtherCard ether;
 
 uint8_t EtherCard::mymac[6];  // my MAC address
 uint8_t EtherCard::myip[4];   // my ip address
-uint8_t EtherCard::mymask[4]; // my net mask
+uint8_t EtherCard::netmask[4]; // subnet mask
+uint8_t EtherCard::broadcastip[4]; // broadcast address
 uint8_t EtherCard::gwip[4];   // gateway
 uint8_t EtherCard::dhcpip[4]; // dhcp server
 uint8_t EtherCard::dnsip[4];  // dns server
-uint8_t EtherCard::hisip[4];  // dns result
+uint8_t EtherCard::hisip[4];  // ip address of remote host
 uint16_t EtherCard::hisport = 80; // tcp port to browse to
 bool EtherCard::using_dhcp = false;
 bool EtherCard::persist_tcp_connection = false;
@@ -353,8 +354,9 @@ uint8_t EtherCard::begin (const uint16_t size,
 }
 
 bool EtherCard::staticSetup (const uint8_t* my_ip,
-                              const uint8_t* gw_ip,
-                               const uint8_t* dns_ip) {
+                                const uint8_t* gw_ip,
+                                const uint8_t* dns_ip,
+                                const uint8_t* mask) {
   using_dhcp = false;
 
   if (my_ip != 0)
@@ -363,5 +365,8 @@ bool EtherCard::staticSetup (const uint8_t* my_ip,
     setGwIp(gw_ip);
   if (dns_ip != 0)
     copyIp(dnsip, dns_ip);
+  if(mask != 0)
+    copyIp(netmask, mask);
+  updateBroadcastAddress();
   return true;
 }

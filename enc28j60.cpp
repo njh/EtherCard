@@ -365,6 +365,7 @@ static void writePhy (byte address, uint16_t data) {
 
 byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     bufferSize = size;
+    buffer = new uint8_t[size];
     if (bitRead(SPCR, SPE) == 0)
       initSPI();
     selectPin = csPin;
@@ -505,15 +506,19 @@ void ENC28J60::powerUp() {
 // Functions to enable/disable broadcast filter bits
 // With the bit set, broadcast packets are filtered.
 void ENC28J60::enableBroadcast () {
-    writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN|ERXFCON_BCEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_BCEN);
 }
 
 void ENC28J60::disableBroadcast () {
-    writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_BCEN);
 }
 
-void ENC28J60::disableMulticast () { // disable multicast filter , enable multicast reception
-    writeRegByte(ERXFCON, ERXFCON_CRCEN);
+void ENC28J60::enableMulticast () {
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_MCEN);
+}
+
+void ENC28J60::disableMulticast () {
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MCEN);
 }
 
 uint8_t ENC28J60::doBIST ( byte csPin) {
