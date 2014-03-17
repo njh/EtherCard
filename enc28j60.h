@@ -16,7 +16,7 @@
 /** This class provide low-level interfacing with the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class ENC28J60 {
 public:
-  static uint8_t* buffer; //!< Pointer to data buffer (shared by recieve and transmit)
+  static uint8_t buffer[]; //!< Data buffer (shared by recieve and transmit)
   static uint16_t bufferSize; //!< Size of data buffer
 
   static uint8_t* tcpOffset () { return buffer + 0x36; } //!< Pointer to the start of TCP payload
