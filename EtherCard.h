@@ -276,7 +276,7 @@ public:
   *     @param  dip Pointer to 4 byte destination IP address
   *     @param  dport Destination port
   */
-  static void udpPrepare (uint16_t sport, uint8_t *dip, uint16_t dport);
+  static void udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport);
 
   /**   @brief  Transmit UDP packet
   *     @param  len Size of payload
@@ -290,8 +290,8 @@ public:
   *     @param  dip Pointer to 4 byte destination IP address
   *     @param  dport Destination port
   */
-  static void sendUdp (char *data,uint8_t len,uint16_t sport,
-                                              uint8_t *dip, uint16_t dport);
+  static void sendUdp (const char *data, uint8_t len, uint16_t sport,
+                       const uint8_t *dip, uint16_t dport);
   /**   @brief  Resister the function to handle ping events
   *     @param  cb Pointer to function
   */

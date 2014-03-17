@@ -337,7 +337,7 @@ uint8_t EtherCard::ntpProcessAnswer (uint32_t *time,uint8_t dstport_l) {
   return 1;
 }
 
-void EtherCard::udpPrepare (uint16_t sport, uint8_t *dip, uint16_t dport) {
+void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) {
   setMACandIPs(gwmacaddr, dip);
   // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
   // multicast or broadcast address, https://github.com/jcw/ethercard/issues/59
@@ -367,7 +367,8 @@ void EtherCard::udpTransmit (uint16_t datalen) {
   packetSend(UDP_HEADER_LEN+IP_HEADER_LEN+ETH_HEADER_LEN+datalen);
 }
 
-void EtherCard::sendUdp (char *data,uint8_t datalen,uint16_t sport, uint8_t *dip, uint16_t dport) {
+void EtherCard::sendUdp (const char *data, uint8_t datalen, uint16_t sport,
+                         const uint8_t *dip, uint16_t dport) {
   udpPrepare(sport, dip, dport);
   if (datalen>220)
     datalen = 220;
