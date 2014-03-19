@@ -21,17 +21,17 @@ void EtherCard::printIp (const char* msg, const uint8_t *buf) {
 }
 
 void EtherCard::printIp (const __FlashStringHelper *ifsh, const uint8_t *buf) {
-	Serial.print(ifsh);
-	EtherCard::printIp(buf);
-	Serial.println();
+    Serial.print(ifsh);
+    EtherCard::printIp(buf);
+    Serial.println();
 }
 
 void EtherCard::printIp (const uint8_t *buf) {
-	for (uint8_t i = 0; i < 4; ++i) {
-		Serial.print( buf[i], DEC );
-		if (i < 3)
-			Serial.print('.');
-	}
+    for (uint8_t i = 0; i < 4; ++i) {
+        Serial.print( buf[i], DEC );
+        if (i < 3)
+            Serial.print('.');
+    }
 }
 
 // search for a string of the form key=value in
