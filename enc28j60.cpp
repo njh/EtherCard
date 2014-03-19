@@ -334,7 +334,7 @@ static byte readRegByte (byte address) {
 }
 
 static uint16_t readReg(byte address) {
-	return readRegByte(address) + (readRegByte(address+1) << 8);
+    return readRegByte(address) + (readRegByte(address+1) << 8);
 }
 
 static void writeRegByte (byte address, byte data) {
@@ -366,7 +366,7 @@ static void writePhy (byte address, uint16_t data) {
 byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     bufferSize = size;
     if (bitRead(SPCR, SPE) == 0)
-      initSPI();
+        initSPI();
     selectPin = csPin;
     pinMode(selectPin, OUTPUT);
     disableChip();
@@ -388,7 +388,7 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeRegByte(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
     writeRegByte(MACON2, 0x00);
     writeOp(ENC28J60_BIT_FIELD_SET, MACON3,
-                        MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
+            MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
     writeReg(MAIPG, 0x0C12);
     writeRegByte(MABBIPG, 0x12);
     writeReg(MAMXFL, MAX_FRAMELEN);
@@ -521,14 +521,14 @@ void ENC28J60::disableMulticast () {
 }
 
 uint8_t ENC28J60::doBIST ( byte csPin) {
-	#define RANDOM_FILL		0b0000
-	#define ADDRESS_FILL	0b0100
-	#define PATTERN_SHIFT	0b1000
-	#define RANDOM_RACE		0b1100
+#define RANDOM_FILL        0b0000
+#define ADDRESS_FILL    0b0100
+#define PATTERN_SHIFT    0b1000
+#define RANDOM_RACE        0b1100
 
 // init
     if (bitRead(SPCR, SPE) == 0)
-      initSPI();
+        initSPI();
     selectPin = csPin;
     pinMode(selectPin, OUTPUT);
     disableChip();
@@ -538,68 +538,68 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
     while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY) ;
 
 
-	// now we can start the memory test
+    // now we can start the memory test
 
-	uint16_t macResult;
-	uint16_t bitsResult;
+    uint16_t macResult;
+    uint16_t bitsResult;
 
-	// clear some of the registers registers
+    // clear some of the registers registers
     writeRegByte(ECON1, 0);
-	writeReg(EDMAST, 0);
+    writeReg(EDMAST, 0);
 
-	// Set up necessary pointers for the DMA to calculate over the entire memory
-	writeReg(EDMAND, 0x1FFFu);
-	writeReg(ERXND, 0x1FFFu);
+    // Set up necessary pointers for the DMA to calculate over the entire memory
+    writeReg(EDMAND, 0x1FFFu);
+    writeReg(ERXND, 0x1FFFu);
 
-	// Enable Test Mode and do an Address Fill
-	SetBank(EBSTCON);
-	writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_BISTST | ADDRESS_FILL);
+    // Enable Test Mode and do an Address Fill
+    SetBank(EBSTCON);
+    writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_BISTST | ADDRESS_FILL);
 
-	// wait for BISTST to be reset, only after that are we actually ready to
-	// start the test
-	// this was undocumented :(
+    // wait for BISTST to be reset, only after that are we actually ready to
+    // start the test
+    // this was undocumented :(
     while (readOp(ENC28J60_READ_CTRL_REG, EBSTCON) & EBSTCON_BISTST);
-	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
+    writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
 
 
-	// now start the actual reading an calculating the checksum until the end is
-	// reached
-	writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
-	SetBank(EDMACS);
-	while(readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_DMAST);
-	macResult = readReg(EDMACS);
-	bitsResult = readReg(EBSTCS);
-	// Compare the results
-	// 0xF807 should always be generated in Address fill mode
-	if ((macResult != bitsResult) || (bitsResult != 0xF807)) {
-		return 0;
-	}
-	// reset test flag
-	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
+    // now start the actual reading an calculating the checksum until the end is
+    // reached
+    writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
+    SetBank(EDMACS);
+    while(readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_DMAST);
+    macResult = readReg(EDMACS);
+    bitsResult = readReg(EBSTCS);
+    // Compare the results
+    // 0xF807 should always be generated in Address fill mode
+    if ((macResult != bitsResult) || (bitsResult != 0xF807)) {
+        return 0;
+    }
+    // reset test flag
+    writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
 
 
-	// Now start the BIST with random data test, and also keep on swapping the
-	// DMA/BIST memory ports.
-	writeRegByte(EBSTSD, 0b10101010 | millis());
-	writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_PSEL | EBSTCON_BISTST | RANDOM_FILL);
+    // Now start the BIST with random data test, and also keep on swapping the
+    // DMA/BIST memory ports.
+    writeRegByte(EBSTSD, 0b10101010 | millis());
+    writeRegByte(EBSTCON, EBSTCON_TME | EBSTCON_PSEL | EBSTCON_BISTST | RANDOM_FILL);
 
 
-	// wait for BISTST to be reset, only after that are we actually ready to
-	// start the test
-	// this was undocumented :(
+    // wait for BISTST to be reset, only after that are we actually ready to
+    // start the test
+    // this was undocumented :(
     while (readOp(ENC28J60_READ_CTRL_REG, EBSTCON) & EBSTCON_BISTST);
-	writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
+    writeOp(ENC28J60_BIT_FIELD_CLR, EBSTCON, EBSTCON_TME);
 
 
-	// now start the actual reading an calculating the checksum until the end is
-	// reached
-	writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
-	SetBank(EDMACS);
-	while(readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_DMAST);
+    // now start the actual reading an calculating the checksum until the end is
+    // reached
+    writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_DMAST | ECON1_CSUMEN);
+    SetBank(EDMACS);
+    while(readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_DMAST);
 
-	macResult = readReg(EDMACS);
-	bitsResult = readReg(EBSTCS);
-	// The checksum should be equal
-	return macResult == bitsResult;
+    macResult = readReg(EDMACS);
+    bitsResult = readReg(EBSTCS);
+    // The checksum should be equal
+    return macResult == bitsResult;
 }
 

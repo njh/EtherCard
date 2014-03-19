@@ -1,5 +1,5 @@
 // Based on the net.h file from the AVRlib library by Pascal Stang.
-// Author: Guido Socher 
+// Author: Guido Socher
 // Copyright: GPL V2
 //
 // For AVRlib See http://www.procyonengineering.com/
@@ -14,7 +14,7 @@
 #define NET_H
 
 // ******* ETH *******
-#define ETH_HEADER_LEN	14
+#define ETH_HEADER_LEN    14
 // values of certain bytes:
 #define ETHTYPE_ARP_H_V 0x08
 #define ETHTYPE_ARP_L_V 0x06
@@ -51,7 +51,7 @@
 #define ETH_ARP_DST_IP_P 0x26
 
 // ******* IP *******
-#define IP_HEADER_LEN	20
+#define IP_HEADER_LEN    20
 // ip.src
 #define IP_SRC_P 0x1a
 #define IP_DST_P 0x1e
@@ -63,7 +63,7 @@
 #define IP_TOTLEN_H_P 0x10
 #define IP_TOTLEN_L_P 0x11
 
-#define IP_PROTO_P 0x17  
+#define IP_PROTO_P 0x17
 
 #define IP_PROTO_ICMP_V 1
 #define IP_PROTO_TCP_V 6
@@ -82,7 +82,7 @@
 #define ICMP_DATA_P 0x2a
 
 // ******* UDP *******
-#define UDP_HEADER_LEN	8
+#define UDP_HEADER_LEN    8
 //
 #define UDP_SRC_PORT_H_P 0x22
 #define UDP_SRC_PORT_L_P 0x23
