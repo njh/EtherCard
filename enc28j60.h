@@ -99,8 +99,6 @@ public:
     */
     static void disableMulticast();
 
-    ///@todo Provide enableMulticast function and allow individual enable disable of such options. (Currently enable or disable all.)
-
     /**   @brief  Reset and fully initialise ENC28J60
     *     @param  csPin Arduino pin used for chip select (enable SPI bus)
     *     @return <i>uint8_t</i> 0 on failure

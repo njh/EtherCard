@@ -309,6 +309,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
     switch (dhcpState) {
 
     case DHCP_STATE_BOUND:
+        //!@todo Due to millis() 49 day wrap-around, DHCP renewal may not work as expected
         if (millis() >= leaseStart + leaseTime) {
             send_dhcp_message();
             dhcpState = DHCP_STATE_RENEWING;
