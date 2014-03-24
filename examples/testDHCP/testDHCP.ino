@@ -32,7 +32,7 @@ void setup () {
     Serial.println( "DHCP failed");
   
   ether.printIp("My IP: ", ether.myip);
-  ether.printIp("Netmask: ", ether.mymask);
+  ether.printIp("Netmask: ", ether.netmask);
   ether.printIp("GW IP: ", ether.gwip);
   ether.printIp("DNS IP: ", ether.dnsip);
 }
