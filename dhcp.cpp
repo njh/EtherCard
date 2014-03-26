@@ -100,6 +100,9 @@ static uint32_t leaseStart;
 static uint32_t leaseTime;
 static byte* bufPtr;
 
+static uint8_t dhcpCustomOptionNum = 0;
+static DhcpOptionCallback dhcpCustomOptionCallback = NULL;
+
 // static uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 static void addToBuf (byte b) {
@@ -196,14 +199,17 @@ static void send_dhcp_message (void) {
     }
 
     // Additional info in parameter list - minimal list for what we need
-    static byte tail[] = { 55, 3, 1, 3, 6, 255 };
-    addBytes(sizeof tail, tail);
-    // addToBuf(55);     // Parameter request list
-    // addToBuf(3);      // Length
-    // addToBuf(1);      // Subnet mask
-    // addToBuf(3);      // Route/Gateway
-    // addToBuf(6);      // DNS Server
-    // addToBuf(255);    // end option
+    byte len = 3;
+    if (dhcpCustomOptionNum)
+        len++;
+    addToBuf(55);     // Parameter request list
+    addToBuf(len);    // Length
+    addToBuf(1);      // Subnet mask
+    addToBuf(3);      // Route/Gateway
+    addToBuf(6);      // DNS Server
+    if (dhcpCustomOptionNum)
+        addToBuf(dhcpCustomOptionNum);  // Custom option
+    addToBuf(255);    // end option
 
     // packet size will be under 300 bytes
     EtherCard::udpTransmit((bufPtr - gPB) - UDP_DATA_P);
@@ -216,27 +222,36 @@ static void process_dhcp_offer (uint16_t len) {
     EtherCard::copyIp(EtherCard::myip, dhcpPtr->yiaddr);
     // Scan through variable length option list identifying options we want
     byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+    bool done = false;
     do {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:  EtherCard::copyIp(EtherCard::netmask, ptr);
-                     break;
-            case 3:  EtherCard::copyIp(EtherCard::gwip, ptr);
-                     break;
-            case 6:  EtherCard::copyIp(EtherCard::dnsip, ptr);
-                     break;
+            case 1:   EtherCard::copyIp(EtherCard::netmask, ptr);
+                      break;
+            case 3:   EtherCard::copyIp(EtherCard::gwip, ptr);
+                      break;
+            case 6:   EtherCard::copyIp(EtherCard::dnsip, ptr);
+                      break;
             case 51:
-            case 58: leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
-                     for (byte i = 0; i<4; i++)
-                         leaseTime = (leaseTime << 8) + ptr[i];
-                     leaseTime *= 1000;      // milliseconds
-                     break;
-            case 54: EtherCard::copyIp(EtherCard::dhcpip, ptr);
-                     break;
+            case 58:  leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
+                      for (byte i = 0; i<4; i++)
+                          leaseTime = (leaseTime << 8) + ptr[i];
+                      leaseTime *= 1000;      // milliseconds
+                      break;
+            case 54:  EtherCard::copyIp(EtherCard::dhcpip, ptr);
+                      break;
+            case 255: done = true;
+                      break;
+            default: {
+                // Is is a custom configured option?
+                if (dhcpCustomOptionCallback && option == dhcpCustomOptionNum) {
+                    dhcpCustomOptionCallback(option, ptr, optionLen);
+                }
+            }
         }
         ptr += optionLen;
-    } while (ptr < gPB + len);
+    } while (!done && ptr < gPB + len);
 }
 
 static bool dhcp_received_message_type (uint16_t len, byte msgType) {
@@ -279,6 +294,12 @@ bool EtherCard::dhcpSetup () {
     }
     updateBroadcastAddress();
     return dhcpState == DHCP_STATE_BOUND ;
+}
+
+void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback)
+{
+    dhcpCustomOptionNum = option;
+    dhcpCustomOptionCallback = callback;
 }
 
 

@@ -45,6 +45,13 @@ typedef void (*UdpServerCallback)(
     const char *data,   ///< UDP payload data
     uint16_t len);        ///< Length of the payload data
 
+/** This type definition defines the structure of a DHCP Option callback funtion */
+typedef void (*DhcpOptionCallback)(
+    uint8_t option,     ///< The option number
+    const byte* data,   ///< DHCP option data
+    uint8_t len);       ///< Length of the DHCP option data
+
+
 /** This structure describes the structure of memory used within the ENC28J60 network interface. */
 typedef struct {
     uint8_t count;     ///< Number of allocated pages
@@ -423,6 +430,12 @@ public:
     *     @note   Blocks until DHCP complete or timeout after 60 seconds
     */
     static bool dhcpSetup ();
+
+    /**   @brief  Register a callback for a specific DHCP option number
+    *     @param  <i>option</i> The option number to request from the DHCP server
+    *     @param  <i>callback</i> The function to be call when the option is received
+    */
+    static void dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback);
 
     // dns.cpp
     /**   @brief  Perform DNS lookup
