@@ -216,27 +216,30 @@ static void process_dhcp_offer (uint16_t len) {
     EtherCard::copyIp(EtherCard::myip, dhcpPtr->yiaddr);
     // Scan through variable length option list identifying options we want
     byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+    bool done = false;
     do {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:  EtherCard::copyIp(EtherCard::netmask, ptr);
-                     break;
-            case 3:  EtherCard::copyIp(EtherCard::gwip, ptr);
-                     break;
-            case 6:  EtherCard::copyIp(EtherCard::dnsip, ptr);
-                     break;
+            case 1:   EtherCard::copyIp(EtherCard::netmask, ptr);
+                      break;
+            case 3:   EtherCard::copyIp(EtherCard::gwip, ptr);
+                      break;
+            case 6:   EtherCard::copyIp(EtherCard::dnsip, ptr);
+                      break;
             case 51:
-            case 58: leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
-                     for (byte i = 0; i<4; i++)
-                         leaseTime = (leaseTime << 8) + ptr[i];
-                     leaseTime *= 1000;      // milliseconds
-                     break;
-            case 54: EtherCard::copyIp(EtherCard::dhcpip, ptr);
-                     break;
+            case 58:  leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
+                      for (byte i = 0; i<4; i++)
+                          leaseTime = (leaseTime << 8) + ptr[i];
+                      leaseTime *= 1000;      // milliseconds
+                      break;
+            case 54:  EtherCard::copyIp(EtherCard::dhcpip, ptr);
+                      break;
+            case 255: done = true;
+                      break;
         }
         ptr += optionLen;
-    } while (ptr < gPB + len);
+    } while (!done && ptr < gPB + len);
 }
 
 static bool dhcp_received_message_type (uint16_t len, byte msgType) {
