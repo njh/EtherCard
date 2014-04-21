@@ -16,6 +16,7 @@
 #include "enc28j60.h"
 
 uint16_t ENC28J60::bufferSize;
+bool ENC28J60::broadcast_enabled = false;
 
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
@@ -502,14 +503,17 @@ void ENC28J60::powerUp() {
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 }
 
-// Functions to enable/disable broadcast filter bits
-// With the bit set, broadcast packets are filtered.
-void ENC28J60::enableBroadcast () {
+void ENC28J60::enableBroadcast (bool temporary) {
     writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_BCEN);
+    if(!temporary)
+        broadcast_enabled = true;
 }
 
-void ENC28J60::disableBroadcast () {
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_BCEN);
+void ENC28J60::disableBroadcast (bool temporary) {
+    if(!temporary)
+        broadcast_enabled = false;
+    if(!broadcast_enabled)
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_BCEN);
 }
 
 void ENC28J60::enableMulticast () {

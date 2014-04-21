@@ -342,7 +342,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
         currentXid = millis();
         memset(myip,0,4); // force ip 0.0.0.0
         send_dhcp_message();
-        enableBroadcast();
+        enableBroadcast(true); //Temporarily enable broadcasts
         dhcpState = DHCP_STATE_SELECTING;
         stateTimer = millis();
         break;
@@ -363,7 +363,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
     case DHCP_STATE_REQUESTING:
     case DHCP_STATE_RENEWING:
         if (dhcp_received_message_type(len, DHCP_ACK)) {
-            disableBroadcast();
+            disableBroadcast(true); //Disable broadcast after temporary enable
             leaseStart = millis();
             if (gwip[0] != 0) setGwIp(gwip); // why is this? because it initiates an arp request
             dhcpState = DHCP_STATE_BOUND;

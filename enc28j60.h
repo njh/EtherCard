@@ -18,6 +18,7 @@ class ENC28J60 {
 public:
     static uint8_t buffer[]; //!< Data buffer (shared by recieve and transmit)
     static uint16_t bufferSize; //!< Size of data buffer
+    static bool broadcast_enabled; //!< True if broadcasts enabled (used to allow temporary disable of broadcast for DHCP or other internal functions)
 
     static uint8_t* tcpOffset () { return buffer + 0x36; } //!< Pointer to the start of TCP payload
 
@@ -80,14 +81,16 @@ public:
     static void powerUp();    // contrib by Alex M.
 
     /**   @brief  Enable reception of broadcast messages
+    *     @param  temporary Set true to temporarily enable broadcast
     *     @note   This will increase load on recieved data handling
     */
-    static void enableBroadcast();
+    static void enableBroadcast(bool temporary = false);
 
     /**   @brief  Disable reception of broadcast messages
+    *     @param  temporary Set true to only disable if temporarily enabled
     *     @note   This will reduce load on recieved data handling
     */
-    static void disableBroadcast();
+    static void disableBroadcast(bool temporary = false);
 
     /**   @brief  Enables reception of mulitcast messages
     *     @note   This will increase load on recieved data handling
