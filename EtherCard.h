@@ -220,11 +220,6 @@ public:
                              const uint8_t* mask = 0);
 
     // tcpip.cpp
-    /**   @brief  Does not seem to be implemented
-    *     @todo   Remove declaration or impelement
-    */
-    static void initIp (uint8_t *myip, uint16_t wwwp);
-
     /**   @brief  Sends a UDP packet to the IP address of last processed recieved packet
     *     @param  data Pointer to data payload
     *     @param  len Size of data payload (max 220)
@@ -258,7 +253,7 @@ public:
     */
     static void httpServerReply_with_flags (uint16_t dlen , uint8_t flags);
 
-    /**   @brief  Aknowledge TCP message
+    /**   @brief  Acknowledge TCP message
     *     @todo   Is this / should this be private?
     */
     static void httpServerReplyAck ();
@@ -277,29 +272,46 @@ public:
     */
     static uint8_t clientWaitingGw ();
 
-    /**   @brief
-    *     @todo   Document clientTcpReq
-    *     @return <i>unit8_t</i>
+    /**   @brief  Prepare a TCP request
+    *     @param  result_cb Pointer to callback function that handles TCP result
+    *     @param  datafill_cb Pointer to callback function that handles TCP data payload
+    *     @param  port Remote TCP/IP port to connect to
+    *     @return <i>unit8_t</i> ID of TCP/IP session (0-7)
+    *     @note   Return value provides id of the request to allow up to 7 concurrent requests
     */
-    static uint8_t clientTcpReq (uint8_t (*r)(uint8_t,uint8_t,uint16_t,uint16_t),
-                                 uint16_t (*d)(uint8_t),uint16_t port);
+    static uint8_t clientTcpReq (uint8_t (*result_cb)(uint8_t,uint8_t,uint16_t,uint16_t),
+                                 uint16_t (*datafill_cb)(uint8_t),uint16_t port);
 
-    /**   @brief
-    *     @todo   Document browseUrl
+    /**   @brief  Prepare HTTP request
+    *     @param  urlbuf Pointer to c-string URL folder
+    *     @param  urlbuf_varpart Pointer to c-string URL file
+    *     @param  hoststr Pointer to c-string hostname
+    *     @param  additionalheaderline Pointer to c-string with additional HTTP header info
+    *     @param  callback Pointer to callback function to handle response
+    *     @note   Request sent in main packetloop
     */
-    static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
-                           prog_char *hoststr, const prog_char *additionalheaderline,
+    static void browseUrl (const char *urlbuf, const char *urlbuf_varpart,
+                           const char *hoststr, const char *additionalheaderline,
                            void (*callback)(uint8_t,uint16_t,uint16_t));
 
-    /**   @brief
-    *     @todo   Document browseUrl
+    /**   @brief  Prepare HTTP request
+    *     @param  urlbuf Pointer to c-string URL folder
+    *     @param  urlbuf_varpart Pointer to c-string URL file
+    *     @param  hoststr Pointer to c-string hostname
+    *     @param  callback Pointer to callback function to handle response
+    *     @note   Request sent in main packetloop
     */
-    static void browseUrl (prog_char *urlbuf, const char *urlbuf_varpart,
-                           prog_char *hoststr,
+    static void browseUrl (const char *urlbuf, const char *urlbuf_varpart,
+                           const char *hoststr,
                            void (*callback)(uint8_t,uint16_t,uint16_t));
 
-    /**   @brief
-    *     @todo   Document httpPost
+    /**   @brief  Prepare HTTP post message
+    *     @param  urlbuf Pointer to c-string URL folder
+    *     @param  hoststr Pointer to c-string hostname
+    *     @param  additionalheaderline Pointer to c-string with additional HTTP header info
+    *     @param  postval Pointer to c-string HTML Post value
+    *     @param  callback Pointer to callback function to handle response
+    *     @note   Request sent in main packetloop
     */
     static void httpPost (prog_char *urlbuf, prog_char *hoststr,
                           prog_char *additionalheaderline, const char *postval,

@@ -26,43 +26,44 @@
 //#undef PSTR
 //#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
 
-static uint8_t tcpclient_src_port_l=1;
+#define TCPCLIENT_SRC_PORT_H 11 //Source port (MSB) for TCP/IP client connections - hardcode all TCP/IP client connection from ports in range 2816-3071
+static uint8_t tcpclient_src_port_l=1; // Source port (LSB) for tcp/ip client connections - increments on each TCP/IP request
 static uint8_t tcp_fd; // a file descriptor, will be encoded into the port
 static uint8_t tcp_client_state; //TCP connection state: 1=Send SYN, 2=SYN sent awaiting SYN+ACK, 3=Established, 4=Not used, 5=Closing, 6=Closed
-static uint8_t tcp_client_port_h;
-static uint8_t tcp_client_port_l;
-static uint8_t (*client_tcp_result_cb)(uint8_t,uint8_t,uint16_t,uint16_t);
-static uint16_t (*client_tcp_datafill_cb)(uint8_t);
-#define TCPCLIENT_SRC_PORT_H 11 //Hardcode all TCP/IP client connection from ports in range 2816-3071
-static uint8_t www_fd;
-static void (*client_browser_cb)(uint8_t,uint16_t,uint16_t);
-static const prog_char *client_additionalheaderline;
+static uint8_t tcp_client_port_h; // Destination port (MSB) of TCP/IP client connection
+static uint8_t tcp_client_port_l; // Destination port (LSB) of TCP/IP client connection
+static uint8_t (*client_tcp_result_cb)(uint8_t,uint8_t,uint16_t,uint16_t); // Pointer to callback function to handle response to current TCP/IP request
+static uint16_t (*client_tcp_datafill_cb)(uint8_t); //Pointer to callback function to handle payload data in response to current TCP/IP request
+static uint8_t www_fd; // ID of current http request (only one http request at a time - one of the 8 possible concurrent TCP/IP connections)
+static void (*client_browser_cb)(uint8_t,uint16_t,uint16_t); // Pointer to callback function to handle result of current HTTP request
+static const prog_char *client_additionalheaderline; // Pointer to c-string additional http request header info
 static const char *client_postval;
-static prog_char *client_urlbuf;
-static const char *client_urlbuf_var;
-static prog_char *client_hoststr;
-static void (*icmp_cb)(uint8_t *ip);
-static int16_t delaycnt=1;
-static uint8_t gwmacaddr[6];
-static uint8_t waitgwmac; // 0=wait, 1=first req no anser, 2=have gwmac, 4=refeshing but have gw mac, 8=accept an arp reply
-#define WGW_INITIAL_ARP 1
-#define WGW_HAVE_GW_MAC 2
-#define WGW_REFRESHING 4
-#define WGW_ACCEPT_ARP_REPLY 8
-static uint16_t info_data_len; // length of TCP/IP payload
-static uint8_t seqnum = 0xa; // my initial tcp sequence number
-static uint8_t result_fd = 123; // session id of last reply
-static const char* result_ptr;
-static unsigned long SEQ;
+static const char *client_urlbuf; // Pointer to c-string path part of HTTP request URL
+static const char *client_urlbuf_var; // Pointer to c-string filename part of HTTP request URL
+static const char *client_hoststr; // Pointer to c-string hostname of current HTTP request
+static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost recieves ping respnse (pong))
+static int16_t delaycnt=1; // Counts number of cycles of packetLoop when no packet recieved - used to trigger periodic gateway ARP request
+static uint8_t gwmacaddr[6]; // Hardware (MAC) address of gateway router
+static uint8_t waitgwmac; // Bitwise flags of gateway router status - see below for states
+//Define gatweay router ARP statuses
+#define WGW_INITIAL_ARP 1 // First reqest, no answer yet
+#define WGW_HAVE_GW_MAC 2 // Have gateway router MAC
+#define WGW_REFRESHING 4 // Refeshing but already have gateway MAC
+#define WGW_ACCEPT_ARP_REPLY 8 // Accept an ARP reply
+
+static uint16_t info_data_len; // Length of TCP/IP payload
+static uint8_t seqnum = 0xa; // My initial tcp sequence number
+static uint8_t result_fd = 123; // Session id of last reply
+static const char* result_ptr; // Pointer to TCP/IP data
+static unsigned long SEQ; // TCP/IP sequence number
 
 #define CLIENTMSS 550
-#define TCP_DATA_START ((uint16_t)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4)
+#define TCP_DATA_START ((uint16_t)TCP_SRC_PORT_H_P+(gPB[TCP_HEADER_LEN_P]>>4)*4) // Get offset of TCP/IP payload data
 
-const unsigned char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 };
-const unsigned char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 };
-const unsigned char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 };
-const uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-const uint8_t ipBroadcast[] = {255, 255, 255, 255};
+const unsigned char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 }; // ARP request header
+const unsigned char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 }; //IP header
+const unsigned char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 }; //NTP request header
+const uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Used for hardware (MAC) and IP broadcast addresses
 
 static void fill_checksum(uint8_t dest, uint8_t off, uint16_t len,uint8_t type) {
     const uint8_t* ptr = gPB + off;
@@ -340,6 +341,7 @@ uint8_t EtherCard::ntpProcessAnswer (uint32_t *time,uint8_t dstport_l) {
 
 void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) {
     setMACandIPs(gwmacaddr, dip);
+    //!@todo Use destination MAC if on local subnet - that means checking address and performing ARP which may bloat software.
     // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
     // multicast or broadcast address, https://github.com/jcw/ethercard/issues/59
     if ((dip[0] & 0xF0) == 0xE0 || *((unsigned long*) dip) == 0xFFFFFFFF)
@@ -378,7 +380,7 @@ void EtherCard::sendUdp (const char *data, uint8_t datalen, uint16_t sport,
 }
 
 void EtherCard::sendWol (uint8_t *wolmac) {
-    setMACandIPs(allOnes, ipBroadcast);
+    setMACandIPs(allOnes, allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
     memcpy_P(gPB + IP_P,iphdr,9);
@@ -482,7 +484,7 @@ uint8_t EtherCard::clientTcpReq (uint8_t (*result_cb)(uint8_t,uint8_t,uint16_t,u
     client_tcp_datafill_cb = datafill_cb;
     tcp_client_port_h = port>>8;
     tcp_client_port_l = port;
-    tcp_client_state = 1; // send a syn
+    tcp_client_state = 1; // Flag to packetloop to initiate a TCP/IP session by send a syn
     tcp_fd = (tcp_fd + 1) & 7;
     return tcp_fd;
 }
@@ -527,11 +529,11 @@ static uint8_t www_client_internal_result_cb(uint8_t fd, uint8_t statuscode, uin
     return 0;
 }
 
-void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr, void (*callback)(uint8_t,uint16_t,uint16_t)) {
+void EtherCard::browseUrl (const char *urlbuf, const char *urlbuf_varpart, const char *hoststr, void (*callback)(uint8_t,uint16_t,uint16_t)) {
     browseUrl(urlbuf, urlbuf_varpart, hoststr, PSTR("Accept: text/html"), callback);
 }
 
-void EtherCard::browseUrl (prog_char *urlbuf, const char *urlbuf_varpart, prog_char *hoststr, const prog_char *additionalheaderline, void (*callback)(uint8_t,uint16_t,uint16_t)) {
+void EtherCard::browseUrl (const char *urlbuf, const char *urlbuf_varpart, const char *hoststr, const char *additionalheaderline, void (*callback)(uint8_t,uint16_t,uint16_t)) {
     client_urlbuf = urlbuf;
     client_urlbuf_var = urlbuf_varpart;
     client_hoststr = hoststr;
@@ -631,9 +633,9 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         //Check every 65536 (no-packet) cycles whether we need to retry ARP request for gateway
         if ((waitgwmac & WGW_INITIAL_ARP || waitgwmac & WGW_REFRESHING) &&
                 delaycnt==0 && isLinkUp())
-            client_arp_whohas(gwip);
+            client_arp_whohas(gwip); //!@todo This causes slow detection of gateway MAC which can cause DNS lookup (and other functions?) to fail
         delaycnt++;
-        //Send TCP syn to gateway if required
+        //Initiate TCP/IP session if pending
         if (tcp_client_state==1 && (waitgwmac & WGW_HAVE_GW_MAC)) { // send a syn
             tcp_client_state = 2;
             tcpclient_src_port_l++; // allocate a new port
