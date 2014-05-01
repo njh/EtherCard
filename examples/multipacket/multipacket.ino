@@ -5,7 +5,7 @@ static byte myip[] = { 192,168,0,66 };
 static byte gwip[] = { 192,168,0,250 };
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x39 };
 byte Ethernet::buffer[900]; // tcp ip send and receive buffer
-char pageA[] PROGMEM =
+const char pageA[] PROGMEM =
 "HTTP/1.0 200 OK\r\n"
 "Content-Type: text/html\r\n"
 "\r\n"
@@ -20,25 +20,25 @@ char pageA[] PROGMEM =
       "the first packet send "
     "</em></p>"
 ;
-char pageB[] PROGMEM =
+const char pageB[] PROGMEM =
     "<h3>packet 2</h3>"
     "<p><em>"
       "if you read this it mean it works"
     "</em></p>"
 ;
-char pageC[] PROGMEM =
+const char pageC[] PROGMEM =
      "<h3>packet 3</h3>"
     "<p><em>"
       "if you read this it mean it works"
     "</em></p>"
 ;
-char pageD[] PROGMEM =
+const char pageD[] PROGMEM =
       "<h3>packet 4</h3>"
     "<p><em>"
       "if you read this it mean it works"
     "</em></p>"
 ;
-char pageE[] PROGMEM =
+const char pageE[] PROGMEM =
       "<h3>packet 5</h3>"
     "<p><em>"
       "this is the last packet"

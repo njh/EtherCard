@@ -30,12 +30,12 @@
 static byte mymac[] = {0xDD,0xDD,0xDD,0x00,0x00,0x01};
 
 // Insert your hostname and authentication string
-char noIP_host[] PROGMEM = "myhost.no-ip.info";
-char noIP_auth[] PROGMEM = "XXXXXXXXXX";
+const char noIP_host[] PROGMEM = "myhost.no-ip.info";
+const char noIP_auth[] PROGMEM = "XXXXXXXXXX";
 
 // Don't change these ones...
-char getIP_web[] PROGMEM = "www.lucadentella.it";
-char noIP_web[] PROGMEM = "dynupdate.no-ip.com";
+const char getIP_web[] PROGMEM = "www.lucadentella.it";
+const char noIP_web[] PROGMEM = "dynupdate.no-ip.com";
 
 // Some global variables
 byte Ethernet::buffer[700];
@@ -66,7 +66,7 @@ void setup () {
     Serial.println("DHCP configuration done");
 
   ether.printIp("IP Address:\t", ether.myip);
-  ether.printIp("Netmask:\t", ether.mymask);
+  ether.printIp("Netmask:\t", ether.netmask);
   ether.printIp("Gateway:\t", ether.gwip);
   Serial.println();
 
