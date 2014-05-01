@@ -313,8 +313,8 @@ public:
     *     @param  callback Pointer to callback function to handle response
     *     @note   Request sent in main packetloop
     */
-    static void httpPost (prog_char *urlbuf, prog_char *hoststr,
-                          prog_char *additionalheaderline, const char *postval,
+    static void httpPost (const char *urlbuf, const char *hoststr,
+                          const char *additionalheaderline, const char *postval,
                           void (*callback)(uint8_t,uint16_t,uint16_t));
 
     /**   @brief  Send NTP request
@@ -456,7 +456,7 @@ public:
     *     @return <i>bool</i> True on success.
     *     @note   Result is stored in <i>hisip</i> member
     */
-    static bool dnsLookup (const prog_char* name, bool fromRam =false);
+    static bool dnsLookup (const char* name, bool fromRam =false);
 
     // webutil.cpp
     /**   @brief  Copies an IP address

@@ -36,7 +36,7 @@ static uint8_t (*client_tcp_result_cb)(uint8_t,uint8_t,uint16_t,uint16_t); // Po
 static uint16_t (*client_tcp_datafill_cb)(uint8_t); //Pointer to callback function to handle payload data in response to current TCP/IP request
 static uint8_t www_fd; // ID of current http request (only one http request at a time - one of the 8 possible concurrent TCP/IP connections)
 static void (*client_browser_cb)(uint8_t,uint16_t,uint16_t); // Pointer to callback function to handle result of current HTTP request
-static const prog_char *client_additionalheaderline; // Pointer to c-string additional http request header info
+static const char *client_additionalheaderline; // Pointer to c-string additional http request header info
 static const char *client_postval;
 static const char *client_urlbuf; // Pointer to c-string path part of HTTP request URL
 static const char *client_urlbuf_var; // Pointer to c-string filename part of HTTP request URL
@@ -500,7 +500,7 @@ static uint16_t www_client_internal_datafill_cb(uint8_t fd) {
                          client_urlbuf_var,
                          client_hoststr, client_additionalheaderline);
         } else {
-            const prog_char* ahl = client_additionalheaderline;
+            const char* ahl = client_additionalheaderline;
             bfill.emit_p(PSTR("POST $F HTTP/1.0\r\n"
                               "Host: $F\r\n"
                               "$F$S"
@@ -543,7 +543,7 @@ void EtherCard::browseUrl (const char *urlbuf, const char *urlbuf_varpart, const
     www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
-void EtherCard::httpPost (prog_char *urlbuf, prog_char *hoststr, prog_char *additionalheaderline,const char *postval,void (*callback)(uint8_t,uint16_t,uint16_t)) {
+void EtherCard::httpPost (const char *urlbuf, const char *hoststr, const char *additionalheaderline, const char *postval, void (*callback)(uint8_t,uint16_t,uint16_t)) {
     client_urlbuf = urlbuf;
     client_hoststr = hoststr;
     client_additionalheaderline = additionalheaderline;

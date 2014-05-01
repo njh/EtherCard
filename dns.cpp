@@ -12,7 +12,7 @@
 static byte dnstid_l; // a counter for transaction ID
 #define DNSCLIENT_SRC_PORT_H 0xE0
 
-static void dnsRequest (const prog_char *progmem_hostname, bool fromRam) {
+static void dnsRequest (const char *hostname, bool fromRam) {
     ++dnstid_l; // increment for next request, finally wrap
     if (ether.dnsip[0] == 0)
         memset(ether.dnsip, 8, 4); // use 8.8.8.8 Google DNS as default
@@ -24,8 +24,8 @@ static void dnsRequest (const prog_char *progmem_hostname, bool fromRam) {
     do {
         byte n = 0;
         for(;;) {
-            c = fromRam ? pgm_read_byte(progmem_hostname) : *progmem_hostname;
-            ++progmem_hostname;
+            c = fromRam ? pgm_read_byte(hostname) : *hostname;
+            ++hostname;
             if (c == '.' || c == 0)
                 break;
             p[++n] = c;
@@ -78,7 +78,7 @@ static void checkForDnsAnswer (uint16_t plen) {
 }
 
 // use during setup, as this discards all incoming requests until it returns
-bool EtherCard::dnsLookup (const prog_char* name, bool fromRam) {
+bool EtherCard::dnsLookup (const char* name, bool fromRam) {
     word start = millis();
     while (!isLinkUp() || clientWaitingGw()) {
         packetLoop(packetReceive());
