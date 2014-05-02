@@ -42,7 +42,6 @@ static const char *client_urlbuf; // Pointer to c-string path part of HTTP reque
 static const char *client_urlbuf_var; // Pointer to c-string filename part of HTTP request URL
 static const char *client_hoststr; // Pointer to c-string hostname of current HTTP request
 static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost recieves ping respnse (pong))
-static int16_t delaycnt=1; // Counts number of cycles of packetLoop when no packet recieved - used to trigger periodic gateway ARP request
 static uint8_t gwmacaddr[6]; // Hardware (MAC) address of gateway router
 static uint8_t waitgwmac; // Bitwise flags of gateway router status - see below for states
 //Define gatweay router ARP statuses
@@ -407,6 +406,7 @@ void EtherCard::sendWol (uint8_t *wolmac) {
 
 // make a arp request
 static void client_arp_whohas(uint8_t *ip_we_search) {
+    EtherCard::printIp("client_arp_whohas: ", ip_we_search);
     setMACs(allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
@@ -436,6 +436,7 @@ static uint8_t client_store_gw_mac() {
 // }
 
 void EtherCard::setGwIp (const uint8_t *gwipaddr) {
+    delaycnt = 0; //request gateway ARP lookup
     waitgwmac = WGW_INITIAL_ARP; // causes an arp request in the packet loop
     copyIp(gwip, gwipaddr);
 }
@@ -633,7 +634,7 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         //Check every 65536 (no-packet) cycles whether we need to retry ARP request for gateway
         if ((waitgwmac & WGW_INITIAL_ARP || waitgwmac & WGW_REFRESHING) &&
                 delaycnt==0 && isLinkUp())
-            client_arp_whohas(gwip); //!@todo This causes slow detection of gateway MAC which can cause DNS lookup (and other functions?) to fail
+            client_arp_whohas(gwip);
         delaycnt++;
         //Initiate TCP/IP session if pending
         if (tcp_client_state==1 && (waitgwmac & WGW_HAVE_GW_MAC)) { // send a syn

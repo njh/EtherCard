@@ -196,6 +196,7 @@ public:
     static uint16_t hisport;  ///< TCP port to connect to (default 80)
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
+    static int16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet recieved - used to trigger periodic gateway ARP request
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface

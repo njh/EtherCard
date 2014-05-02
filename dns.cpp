@@ -48,13 +48,13 @@ static void dnsRequest (const char *hostname, bool fromRam) {
 }
 
 static void checkForDnsAnswer (uint16_t plen) {
-    byte *p = gPB + UDP_DATA_P;
-    if (plen < 70 || gPB[UDP_SRC_PORT_L_P] != 53 ||
-            gPB[UDP_DST_PORT_H_P] != DNSCLIENT_SRC_PORT_H ||
-            gPB[UDP_DST_PORT_L_P] != dnstid_l ||
-            p[1] != dnstid_l ||
-            (p[3] & 0x0F) != 0)
-        return;
+    byte *p = gPB + UDP_DATA_P; //start of UDP payload
+    if (plen < 70 || gPB[UDP_SRC_PORT_L_P] != 53 || //from DNS source port
+            gPB[UDP_DST_PORT_H_P] != DNSCLIENT_SRC_PORT_H || //response to same port as we sent from (MSB)
+            gPB[UDP_DST_PORT_L_P] != dnstid_l || //response to same port as we sent from (LSB)
+            p[1] != dnstid_l || //message id same as we sent
+            (p[3] & 0x0F) != 0) //reply code no error
+        return; //!@todo p[3] only checks for "no error" - should report other responses, e.g. "no name" - this function is used in blocking function
 
     p += *p; // we encoded the query len into tid
     for (;;) {
@@ -92,10 +92,10 @@ bool EtherCard::dnsLookup (const char* name, bool fromRam) {
     start = millis();
     while (hisip[0] == 0) {
         if ((word) (millis() - start) >= 30000)
-            return false;
+            return false; //timout waiting for dns response
         word len = packetReceive();
         if (len > 0 && packetLoop(len) == 0)
-            checkForDnsAnswer(len);
+            checkForDnsAnswer(len); //packet not handled by tcp/ip packet loop
     }
 
     return true;
