@@ -47,14 +47,20 @@ static void dnsRequest (const char *hostname, bool fromRam) {
     ether.udpTransmit(i);
 }
 
-static void checkForDnsAnswer (uint16_t plen) {
+/** @brief  Check if packet is DNS response.
+    @param  plen Size of packet
+    @return <i>bool</i> True if DNS response has error. False if not DNS response or DNS response OK.
+    @note   hisip contains IP address of requested host or 0.0.0.0 on failure
+*/
+static bool checkForDnsAnswer (uint16_t plen) {
     byte *p = gPB + UDP_DATA_P; //start of UDP payload
     if (plen < 70 || gPB[UDP_SRC_PORT_L_P] != 53 || //from DNS source port
             gPB[UDP_DST_PORT_H_P] != DNSCLIENT_SRC_PORT_H || //response to same port as we sent from (MSB)
             gPB[UDP_DST_PORT_L_P] != dnstid_l || //response to same port as we sent from (LSB)
-            p[1] != dnstid_l || //message id same as we sent
-            (p[3] & 0x0F) != 0) //reply code no error
-        return; //!@todo p[3] only checks for "no error" - should report other responses, e.g. "no name" - this function is used in blocking function
+            p[1] != dnstid_l) //message id same as we sent
+        return false; //not our DNS response
+    if((p[3] & 0x0F) != 0)
+        return true; //DNS response recieved with error
 
     p += *p; // we encoded the query len into tid
     for (;;) {
@@ -75,6 +81,7 @@ static void checkForDnsAnswer (uint16_t plen) {
         }
         p += p[9] + 10;
     }
+    return false; //No error
 }
 
 // use during setup, as this discards all incoming requests until it returns
@@ -83,7 +90,7 @@ bool EtherCard::dnsLookup (const char* name, bool fromRam) {
     while (!isLinkUp() || clientWaitingGw()) {
         packetLoop(packetReceive());
         if ((word) (millis() - start) >= 30000)
-            return false;
+            return false; //timeout waiting for gateway ARP
     }
 
     memset(hisip, 0, 4);
@@ -94,8 +101,9 @@ bool EtherCard::dnsLookup (const char* name, bool fromRam) {
         if ((word) (millis() - start) >= 30000)
             return false; //timout waiting for dns response
         word len = packetReceive();
-        if (len > 0 && packetLoop(len) == 0)
-            checkForDnsAnswer(len); //packet not handled by tcp/ip packet loop
+        if (len > 0 && packetLoop(len) == 0) //packet not handled by tcp/ip packet loop
+            if(checkForDnsAnswer(len))
+                return false; //DNS response recieved with error
     }
 
     return true;
