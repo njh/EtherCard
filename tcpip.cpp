@@ -406,7 +406,6 @@ void EtherCard::sendWol (uint8_t *wolmac) {
 
 // make a arp request
 static void client_arp_whohas(uint8_t *ip_we_search) {
-    EtherCard::printIp("client_arp_whohas: ", ip_we_search);
     setMACs(allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
