@@ -293,7 +293,7 @@ bool EtherCard::dhcpSetup () {
         if (isLinkUp()) DhcpStateMachine(packetReceive());
     }
     updateBroadcastAddress();
-    delaycnt = 0; //request gateway ARP lookup
+    delaycnt = 0;
     return dhcpState == DHCP_STATE_BOUND ;
 }
 

@@ -87,7 +87,14 @@ static bool checkForDnsAnswer (uint16_t plen) {
 // use during setup, as this discards all incoming requests until it returns
 bool EtherCard::dnsLookup (const char* name, bool fromRam) {
     word start = millis();
-    while (!isLinkUp() || clientWaitingGw()) {
+
+    while(!isLinkUp())
+    {
+        if ((word) (millis() - start) >= 30000)
+            return false; //timeout waiting for link
+    }
+    while(clientWaitingGw())
+    {
         packetLoop(packetReceive());
         if ((word) (millis() - start) >= 30000)
             return false; //timeout waiting for gateway ARP
