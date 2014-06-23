@@ -195,7 +195,7 @@ static void make_echo_reply_from_request(uint16_t len) {
     EtherCard::packetSend(len);
 }
 
-void EtherCard::makeUdpReply (char *data,uint8_t datalen,uint16_t port) {
+void EtherCard::makeUdpReply (const char *data,uint8_t datalen,uint16_t port) {
     if (datalen>220)
         datalen = 220;
     gPB[IP_TOTLEN_H_P] = (IP_HEADER_LEN+UDP_HEADER_LEN+datalen) >>8;
