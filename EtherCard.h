@@ -224,9 +224,9 @@ public:
     /**   @brief  Sends a UDP packet to the IP address of last processed recieved packet
     *     @param  data Pointer to data payload
     *     @param  len Size of data payload (max 220)
-    *     @param  port Destination IP port
+    *     @param  port Source IP port
     */
-    static void makeUdpReply (char *data, uint8_t len, uint16_t port);
+    static void makeUdpReply (const char *data, uint8_t len, uint16_t port);
 
     /**   @brief  Parse recieved data
     *     @param  plen Size of data to parse (e.g. return value of packetRecieve()).
