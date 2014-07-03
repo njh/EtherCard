@@ -71,7 +71,6 @@ bool ENC28J60::broadcast_enabled = false;
 #define EPKTCNT          (0x19|0x20)
 // Bank 2 registers
 #define MACON1           (0x00|0x40|0x80)
-#define MACON2           (0x01|0x40|0x80)
 #define MACON3           (0x02|0x40|0x80)
 #define MACON4           (0x03|0x40|0x80)
 #define MABBIPG          (0x04|0x40|0x80)
@@ -153,13 +152,6 @@ bool ENC28J60::broadcast_enabled = false;
 #define MACON1_RXPAUS    0x04
 #define MACON1_PASSALL   0x02
 #define MACON1_MARXEN    0x01
-// ENC28J60 MACON2 Register Bit Definitions
-#define MACON2_MARST     0x80
-#define MACON2_RNDRST    0x40
-#define MACON2_MARXRST   0x08
-#define MACON2_RFUNRST   0x04
-#define MACON2_MATXRST   0x02
-#define MACON2_TFUNRST   0x01
 // ENC28J60 MACON3 Register Bit Definitions
 #define MACON3_PADCFG2   0x80
 #define MACON3_PADCFG1   0x40
@@ -383,11 +375,8 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeReg(ERXND, RXSTOP_INIT);
     writeReg(ETXST, TXSTART_INIT);
     writeReg(ETXND, TXSTOP_INIT);
-    enableBroadcast(); // change to add ERXFCON_BCEN recommended by epam
-    writeReg(EPMM0, 0x303f);
-    writeReg(EPMCS, 0xf7f9);
-    writeRegByte(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
-    writeRegByte(MACON2, 0x00);
+    broadcast_enabled = true;
+    writeRegByte(MACON1, MACON1_MARXEN);
     writeOp(ENC28J60_BIT_FIELD_SET, MACON3,
             MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
     writeReg(MAIPG, 0x0C12);
@@ -401,7 +390,6 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeRegByte(MAADR0, macaddr[5]);
     writePhy(PHCON2, PHCON2_HDLDIS);
     SetBank(ECON1);
-    writeOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE|EIE_PKTIE);
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
     byte rev = readRegByte(EREVID);
