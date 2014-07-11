@@ -276,7 +276,7 @@ static bool dhcp_received_message_type (uint16_t len, byte msgType) {
     return false;
 }
 
-bool EtherCard::dhcpSetup (const char *hname) {
+bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
 	 // Use during setup, as this discards all incoming requests until it returns.
 	 // That shouldn't be a problem, because we don't have an IP-address yet.
 	 // Will try 60 secs to obtain DHCP-lease.
@@ -284,7 +284,12 @@ bool EtherCard::dhcpSetup (const char *hname) {
 	 using_dhcp = true;
     
    if(hname != NULL){   
-  	 strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+     if(fromRam){
+    	 strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+     }
+     else{
+       strncpy_P(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+     }
    }
    else{
      // Set a unique hostname, use Arduino-?? with last octet of mac address

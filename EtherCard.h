@@ -442,7 +442,7 @@ public:
     *     @return <i>bool</i> True if DHCP successful
     *     @note   Blocks until DHCP complete or timeout after 60 seconds
     */
-    static bool dhcpSetup (const char *hname = NULL);
+    static bool dhcpSetup (const char *hname = NULL, bool fromRam =false);
 
     /**   @brief  Register a callback for a specific DHCP option number
     *     @param  <i>option</i> The option number to request from the DHCP server
