@@ -276,50 +276,37 @@ static bool dhcp_received_message_type (uint16_t len, byte msgType) {
     return false;
 }
 
-bool EtherCard::dhcpSetup () {
-    // Use during setup, as this discards all incoming requests until it returns.
-    // That shouldn't be a problem, because we don't have an IP-address yet.
-    // Will try 60 secs to obtain DHCP-lease.
+bool EtherCard::dhcpSetup (const char *hname) {
+	 // Use during setup, as this discards all incoming requests until it returns.
+	 // That shouldn't be a problem, because we don't have an IP-address yet.
+	 // Will try 60 secs to obtain DHCP-lease.
 
-    using_dhcp = true;
+	 using_dhcp = true;
+    
+   if(hname != NULL){   
+  	 strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+   }
+   else{
+     // Set a unique hostname, use Arduino-?? with last octet of mac address
+     hostname[8] = '0' + (mymac[5] >> 4);
+     hostname[9] = '0' + (mymac[5] & 0x0F);   
+   }
 
-    // Set a unique hostname, use Arduino-?? with last octet of mac address
-    hostname[8] = '0' + (mymac[5] >> 4);
-    hostname[9] = '0' + (mymac[5] & 0x0F);
+	 dhcpState = DHCP_STATE_INIT;
+	 uint16_t start = millis();	
 
-    dhcpState = DHCP_STATE_INIT;
-    uint16_t start = millis();
-
-    while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
-        if (isLinkUp()) DhcpStateMachine(packetReceive());
-    }
-    updateBroadcastAddress();
-    delaycnt = 0;
-    return dhcpState == DHCP_STATE_BOUND ;
+   while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
+       if (isLinkUp()) DhcpStateMachine(packetReceive());
+   }
+   updateBroadcastAddress();
+   delaycnt = 0;
+   return dhcpState == DHCP_STATE_BOUND ;
 }
 
 void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback)
 {
     dhcpCustomOptionNum = option;
     dhcpCustomOptionCallback = callback;
-}
-
-bool EtherCard::dhcpSetup (const char *hname) {
-	// Use during setup, as this discards all incoming requests until it returns.
-	// That shouldn't be a problem, because we don't have an IP-address yet.
-	// Will try 60 secs to obtain DHCP-lease.
-
-	 using_dhcp = true;
-
-	 strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
-
-	 dhcpState = DHCP_STATE_INIT;
-	 word start = millis();	
-
-	 while (dhcpState != DHCP_STATE_BOUND && (word) (millis() - start) < 60000) {
-	  if (isLinkUp()) DhcpStateMachine(packetReceive());
-    }
-    return dhcpState == DHCP_STATE_BOUND ;
 }
 
 void EtherCard::DhcpStateMachine (uint16_t len) {
