@@ -92,8 +92,10 @@ typedef struct {
 // timeouts im ms
 #define DHCP_REQUEST_TIMEOUT 10000
 
+#define DHCP_HOSTNAME_MAX_LEN 32
+
 static byte dhcpState = DHCP_STATE_INIT;
-static char hostname[] = "Arduino-00";
+static char hostname[DHCP_HOSTNAME_MAX_LEN] = "Arduino-00";
 static uint32_t currentXid;
 static uint32_t stateTimer;
 static uint32_t leaseStart;
@@ -185,7 +187,6 @@ static void send_dhcp_message (void) {
     addToBuf(12);     // Host name Option
     addToBuf(10);
     addBytes(10, (byte*) hostname);
-
 
     if( dhcpState == DHCP_STATE_SELECTING) {
         addToBuf(50); // Request IP address
@@ -303,7 +304,23 @@ void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callbac
     dhcpCustomOptionCallback = callback;
 }
 
+bool EtherCard::dhcpSetup (const char *hname) {
+	// Use during setup, as this discards all incoming requests until it returns.
+	// That shouldn't be a problem, because we don't have an IP-address yet.
+	// Will try 60 secs to obtain DHCP-lease.
 
+	 using_dhcp = true;
+
+	 strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+
+	 dhcpState = DHCP_STATE_INIT;
+	 word start = millis();	
+
+	 while (dhcpState != DHCP_STATE_BOUND && (word) (millis() - start) < 60000) {
+	  if (isLinkUp()) DhcpStateMachine(packetReceive());
+    }
+    return dhcpState == DHCP_STATE_BOUND ;
+}
 
 void EtherCard::DhcpStateMachine (uint16_t len) {
 
