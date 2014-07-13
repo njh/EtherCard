@@ -236,7 +236,7 @@ public:
     static uint16_t hisport;  ///< TCP port to connect to (default 80)
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
-    static int16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet recieved - used to trigger periodic gateway ARP request
+    static int16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface
@@ -261,17 +261,17 @@ public:
                              const uint8_t* mask = 0);
 
     // tcpip.cpp
-    /**   @brief  Sends a UDP packet to the IP address of last processed recieved packet
+    /**   @brief  Sends a UDP packet to the IP address of last processed received packet
     *     @param  data Pointer to data payload
     *     @param  len Size of data payload (max 220)
     *     @param  port Source IP port
     */
     static void makeUdpReply (const char *data, uint8_t len, uint16_t port);
 
-    /**   @brief  Parse recieved data
-    *     @param  plen Size of data to parse (e.g. return value of packetRecieve()).
+    /**   @brief  Parse received data
+    *     @param  plen Size of data to parse (e.g. return value of packetreceive()).
     *     @return <i>uint16_t</i> Offset of TCP payload data in data buffer or zero if packet processed
-    *     @note   Data buffer is shared by recieve and transmit functions
+    *     @note   Data buffer is shared by receive and transmit functions
     *     @note   Only handles ARP and IP
     */
     static uint16_t packetLoop (uint16_t plen);
@@ -283,7 +283,7 @@ public:
     */
     static uint16_t accept (uint16_t port, uint16_t plen);
 
-    /**   @brief  Send a respons to a HTTP request
+    /**   @brief  Send a response to a HTTP request
     *     @param  dlen Size of the HTTP (TCP) payload
     */
     static void httpServerReply (uint16_t dlen);
@@ -459,7 +459,7 @@ public:
 
     // dhcp.cpp
     /**   @brief  Update DHCP state
-    *     @param  len Length of recieved data packet
+    *     @param  len Length of received data packet
     */
     static void DhcpStateMachine(uint16_t len);
 
