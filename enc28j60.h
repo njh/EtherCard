@@ -29,7 +29,7 @@ public:
 
     /**   @brief  Initialise network interface
     *     @param  size Size of data buffer
-    *     @param  macaddr Pointer to 4 byte hardware (MAC) address
+    *     @param  macaddr Pointer to 6 byte hardware (MAC) address
     *     @param  csPin Arduino pin used for chip select (enable network interface SPI bus). Default = 8
     *     @return <i>uint8_t</i> ENC28J60 firmware version or zero on failure.
     */

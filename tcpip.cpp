@@ -45,9 +45,9 @@ static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP EC
 static uint8_t gwmacaddr[6]; // Hardware (MAC) address of gateway router
 static uint8_t waitgwmac; // Bitwise flags of gateway router status - see below for states
 //Define gatweay router ARP statuses
-#define WGW_INITIAL_ARP 1 // First reqest, no answer yet
+#define WGW_INITIAL_ARP 1 // First request, no answer yet
 #define WGW_HAVE_GW_MAC 2 // Have gateway router MAC
-#define WGW_REFRESHING 4 // Refeshing but already have gateway MAC
+#define WGW_REFRESHING 4 // Refreshing but already have gateway MAC
 #define WGW_ACCEPT_ARP_REPLY 8 // Accept an ARP reply
 
 static uint16_t info_data_len; // Length of TCP/IP payload
