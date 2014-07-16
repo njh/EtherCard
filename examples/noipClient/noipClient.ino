@@ -51,19 +51,19 @@ Stash stash;
 void setup () {
 
   Serial.begin(57600);
-  Serial.println("NoIP Client Demo");
+  Serial.println(F("NoIP Client Demo"));
   Serial.println();
 
   if (!ether.begin(sizeof Ethernet::buffer, mymac, 10))
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println(F( "Failed to access Ethernet controller"));
   else
-    Serial.println("Ethernet controller initialized");
+    Serial.println(F("Ethernet controller initialized"));
   Serial.println();
 
   if (!ether.dhcpSetup())
-    Serial.println("Failed to get configuration from DHCP");
+    Serial.println(F("Failed to get configuration from DHCP"));
   else
-    Serial.println("DHCP configuration done");
+    Serial.println(F("DHCP configuration done"));
 
   ether.printIp("IP Address:\t", ether.myip);
   ether.printIp("Netmask:\t", ether.netmask);
@@ -76,7 +76,7 @@ void setup () {
   // Resolve IP for getIP_web and noIP_web 
   // and store them into global variables
   if (!ether.dnsLookup(getIP_web)) {
-    Serial.print("Unable to resolve IP for ");
+    Serial.print(F("Unable to resolve IP for "));
     SerialPrint_P(getIP_web);
     actual_status = STATUS_ERROR;
   } else {
@@ -85,7 +85,7 @@ void setup () {
     ether.printIp(" resolved to:\t", ether.hisip);
   }
   if (!ether.dnsLookup(noIP_web)) {
-    Serial.print("Unable to resolve IP for ");
+    Serial.print(F("Unable to resolve IP for "));
     SerialPrint_P(noIP_web);
     actual_status = STATUS_ERROR;
   } else {
@@ -116,7 +116,7 @@ void checkPublicIP() {
 
   if(millis() > check_ip_timer) {
 
-    Serial.print("Checking public IP... ");
+    Serial.print(F("Checking public IP... "));
 
 	// Create a request for GetIP service,
 	// set destination IP and send request saving session_id
@@ -147,7 +147,7 @@ void checkPublicIPResponse() {
 	// If we can't resolve actual IP for our hostname on NoIP,
 	// return to IDLE state and wait for the next interval
     if(!ether.dnsLookup(noIP_host)) {
-      Serial.print("Unable to resolve actual IP for ");
+      Serial.print(F("Unable to resolve actual IP for "));
       SerialPrint_P(noIP_host);
       Serial.println();
       actual_status = STATUS_IDLE;
@@ -162,19 +162,19 @@ void checkPublicIPResponse() {
         if(i < 3) dnsIp = dnsIp + ".";
       }
       SerialPrint_P(noIP_host);
-      Serial.print(" resolved to ");
+      Serial.print(F(" resolved to "));
       Serial.println(dnsIp);
       
 	  // If they are the same, we can sit down and wait for the next interval
       if(actualIp.compareTo(dnsIp) == 0) {
-        Serial.println("No update needed :)");
+        Serial.println(F("No update needed :)"));
         actual_status = STATUS_IDLE;
         attempt = 0;
         check_ip_timer = millis() + CHECK_IP_INTERVAL;        
       
 	  // Different? We'd better to update NoIP!
 	  } else {
-        Serial.println("Update needed :(");
+        Serial.println(F("Update needed :("));
         actual_status = STATUS_NOIP_NEEDS_UPDATE;
         attempt = 0;
       }
@@ -185,10 +185,10 @@ void checkPublicIPResponse() {
   // and wait for the next interval
   } else {
     if(millis() > request_timer) {
-      Serial.println(" no response :(");    
+      Serial.println(F(" no response :("));    
       actual_status = STATUS_IDLE;
       if(attempt == MAX_ATTEMPTS) {
-        Serial.println("Max number of attempts reached");
+        Serial.println(F("Max number of attempts reached"));
         attempt = 0;
         check_ip_timer = millis() + CHECK_IP_INTERVAL;
       }
@@ -198,7 +198,7 @@ void checkPublicIPResponse() {
 
 void updateNoIP() {
 
-  Serial.print("Updating NoIP...");
+  Serial.print(F("Updating NoIP..."));
 
   // Create a request for updating NoIP using NoIP API,
   // set destination IP and send request saving session_id
@@ -253,9 +253,9 @@ void checkNoIPResponse() {
   } else {
 
     if(millis() > request_timer) {
-      Serial.println("No response from NoIP");
+      Serial.println(F("No response from NoIP"));
       if(attempt == MAX_ATTEMPTS) {
-        Serial.println("Max number of attempts reached");
+        Serial.println(F("Max number of attempts reached"));
         actual_status = STATUS_IDLE;
         attempt = 0;
         check_ip_timer = millis() + CHECK_IP_INTERVAL;

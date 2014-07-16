@@ -12,7 +12,7 @@ BufferFiller bfill;
 
 void setup () {
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println(F("Failed to access Ethernet controller"));
   ether.staticSetup(myip);
 }
 
