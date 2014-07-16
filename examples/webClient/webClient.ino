@@ -21,12 +21,12 @@ static void my_callback (byte status, word off, word len) {
 
 void setup () {
   Serial.begin(57600);
-  Serial.println("\n[webClient]");
+  Serial.println(F("\n[webClient]"));
 
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
-    Serial.println("DHCP failed");
+    Serial.println(F("DHCP failed"));
 
   ether.printIp("IP:  ", ether.myip);
   ether.printIp("GW:  ", ether.gwip);  

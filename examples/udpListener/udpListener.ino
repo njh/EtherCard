@@ -31,15 +31,15 @@ void udpSerialPrint(word port, byte ip[4], const char *data, word len) {
 
 void setup(){
   Serial.begin(57600);
-  Serial.println("\n[backSoon]");
+  Serial.println(F("\n[backSoon]"));
 
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println(F("Failed to access Ethernet controller"));
 #if STATIC
   ether.staticSetup(myip, gwip);
 #else
   if (!ether.dhcpSetup())
-    Serial.println("DHCP failed");
+    Serial.println(F("DHCP failed"));
 #endif
 
   ether.printIp("IP:  ", ether.myip);

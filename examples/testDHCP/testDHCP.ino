@@ -14,7 +14,7 @@ byte Ethernet::buffer[700];
 
 void setup () {
   Serial.begin(57600);
-  Serial.println("\n[testDHCP]");
+  Serial.println(F("\n[testDHCP]"));
 
   Serial.print("MAC: ");
   for (byte i = 0; i < 6; ++i) {
@@ -25,11 +25,11 @@ void setup () {
   Serial.println();
   
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println(F("Failed to access Ethernet controller"));
 
-  Serial.println("Setting up DHCP");
+  Serial.println(F("Setting up DHCP"));
   if (!ether.dhcpSetup())
-    Serial.println( "DHCP failed");
+    Serial.println(F("DHCP failed"));
   
   ether.printIp("My IP: ", ether.myip);
   ether.printIp("Netmask: ", ether.netmask);

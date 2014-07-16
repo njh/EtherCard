@@ -8,7 +8,7 @@
 // ethernet interface mac address
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 // remote website name
-const char website[] = "google.com";
+const char website[] PROGMEM = "google.com";
 
 byte Ethernet::buffer[700];
 static long timer;
@@ -50,6 +50,6 @@ void loop () {
   if (millis() > timer + REQUEST_RATE) {
     timer = millis();
     Serial.println("\n>>> REQ");
-    ether.browseUrl("/foo/", "bar", website, my_result_cb);
+    ether.browseUrl(PSTR("/foo/"), "bar", website, my_result_cb);
   }
 }
