@@ -269,7 +269,7 @@ public:
     static void makeUdpReply (const char *data, uint8_t len, uint16_t port);
 
     /**   @brief  Parse received data
-    *     @param  plen Size of data to parse (e.g. return value of packetreceive()).
+    *     @param  plen Size of data to parse (e.g. return value of packetReceive()).
     *     @return <i>uint16_t</i> Offset of TCP payload data in data buffer or zero if packet processed
     *     @note   Data buffer is shared by receive and transmit functions
     *     @note   Only handles ARP and IP
