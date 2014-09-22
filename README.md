@@ -17,7 +17,7 @@ See the comments in the example sketches for details about how to try them out.
 
 ## Physical Installation
 
-PIN Connections (Using Arduino UNO):
+### PIN Connections (Using Arduino UNO):
 
     VCC -   3.3V
     GND -    GND
@@ -25,6 +25,17 @@ PIN Connections (Using Arduino UNO):
     SO  - Pin 12
     SI  - Pin 11
     CS  - Pin  8 # Selectable with the ether.begin() function
+
+### PIN Connections using an Arduino Mega
+
+    VCC -   3.3V
+    GND -    GND
+    SCK - Pin 52
+    SO  - Pin 50
+    SI  - Pin 51
+    CS  - Pin 53 # Selectable with the ether.begin() function
+    # The default CS pin defaults to 8, so you have to set it on a mega:
+    ether.begin(sizeof Ethernet::buffer, mymac, 53)
 
 ## Support
 
