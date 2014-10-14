@@ -144,7 +144,12 @@ void Stash::prepare (PGM_P fmt, ...) {
     Stash::load(0, 0);
     uint16_t* segs = Stash::bufs[0].words;
     *segs++ = strlen_P(fmt);
+#ifdef __AVR__
     *segs++ = (uint16_t) fmt;
+#else
+    *segs++ = (uint32_t) fmt;
+    *segs++ = (uint32_t) fmt >> 16;
+#endif
     va_list ap;
     va_start(ap, fmt);
     for (;;) {
@@ -152,7 +157,11 @@ void Stash::prepare (PGM_P fmt, ...) {
         if (c == 0)
             break;
         if (c == '$') {
+#ifdef __AVR__
             uint16_t argval = va_arg(ap, uint16_t), arglen = 0;
+#else
+            uint32_t argval = va_arg(ap, int), arglen = 0;
+#endif
             switch (pgm_read_byte(fmt++)) {
             case 'D': {
                 char buf[7];
@@ -179,7 +188,12 @@ void Stash::prepare (PGM_P fmt, ...) {
                 break;
             }
             }
+#ifdef __AVR__
             *segs++ = argval;
+#else
+            *segs++ = argval; 
+            *segs++ = argval >> 16;
+#endif
             Stash::bufs[0].words[0] += arglen - 2;
         }
     }
@@ -194,7 +208,12 @@ uint16_t Stash::length () {
 void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
     Stash::load(0, 0);
     uint16_t* segs = Stash::bufs[0].words;
+#ifdef __AVR__
     PGM_P fmt = (PGM_P) *++segs;
+#else
+    PGM_P fmt = (PGM_P)((segs[2] << 16) | segs[1]);
+    segs += 2;
+#endif
     Stash stash;
     char mode = '@', tmp[7], *ptr = NULL, *out = (char*) buf;
     for (uint16_t i = 0; i < offset + count; ) {
@@ -206,7 +225,12 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
                 return;
             if (c != '$')
                 break;
+#ifdef __AVR__
             uint16_t arg = *++segs;
+#else
+            uint32_t arg = *++segs;
+            arg |= *++segs << 16;
+#endif
             mode = pgm_read_byte(fmt++);
             switch (mode) {
             case 'D':
@@ -252,13 +276,23 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
 void Stash::cleanup () {
     Stash::load(0, 0);
     uint16_t* segs = Stash::bufs[0].words;
+#ifdef __AVR__
     PGM_P fmt = (PGM_P) *++segs;
+#else
+    PGM_P fmt = (PGM_P)((segs[2] << 16) | segs[1]);
+    segs += 2;
+#endif
     for (;;) {
         char c = pgm_read_byte(fmt++);
         if (c == 0)
             break;
         if (c == '$') {
+#ifdef __AVR__
             uint16_t arg = *++segs;
+#else
+            uint32_t arg = *++segs;
+            arg |= *++segs << 16;
+#endif
             if (pgm_read_byte(fmt++) == 'H') {
                 Stash stash (arg);
                 stash.release();
@@ -281,7 +315,11 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         c = pgm_read_byte(fmt++);
         switch (c) {
         case 'D':
+#ifdef __AVR__
             wtoa(va_arg(ap, uint16_t), (char*) ptr);
+#else
+            wtoa(va_arg(ap, int), (char*) ptr);
+#endif
             break;
 #ifdef FLOATEMIT
         case 'T':
@@ -289,7 +327,11 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             break;
 #endif
         case 'H': {
+#ifdef __AVR__
             char p1 =  va_arg(ap, uint16_t);
+#else
+            char p1 =  va_arg(ap, int);
+#endif
             char p2;
             p2 = (p1 >> 4) & 0x0F;
             p1 = p1 & 0x0F;
