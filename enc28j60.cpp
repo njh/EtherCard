@@ -418,10 +418,12 @@ bool ENC28J60::isLinkUp() {
 }
 
 void ENC28J60::packetSend(uint16_t len) {
-    while (readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_TXRTS)
+    // see http://forum.mysensors.org/topic/536/
+    // while (readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_TXRTS)
         if (readRegByte(EIR) & EIR_TXERIF) {
             writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
             writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+            writeOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
         }
     writeReg(EWRPT, TXSTART_INIT);
     writeReg(ETXND, TXSTART_INIT+len);
