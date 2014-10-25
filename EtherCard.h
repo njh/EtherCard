@@ -485,8 +485,8 @@ public:
     static bool dhcpSetup (const char *hname = NULL, bool fromRam =false);
 
     /**   @brief  Register a callback for a specific DHCP option number
-    *     @param  <i>option</i> The option number to request from the DHCP server
-    *     @param  <i>callback</i> The function to be call when the option is received
+    *     @param  option The option number to request from the DHCP server
+    *     @param  callback The function to be call when the option is received
     */
     static void dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback);
 
