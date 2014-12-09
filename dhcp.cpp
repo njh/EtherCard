@@ -228,28 +228,34 @@ static void process_dhcp_offer (uint16_t len) {
         byte option = *ptr++;
         byte optionLen = *ptr++;
         switch (option) {
-            case 1:   EtherCard::copyIp(EtherCard::netmask, ptr);
-                      break;
-            case 3:   EtherCard::copyIp(EtherCard::gwip, ptr);
-                      break;
-            case 6:   EtherCard::copyIp(EtherCard::dnsip, ptr);
-                      break;
-            case 51:
-            case 58:  leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
-                      for (byte i = 0; i<4; i++)
-                          leaseTime = (leaseTime << 8) + ptr[i];
-                      leaseTime *= 1000;      // milliseconds
-                      break;
-            case 54:  EtherCard::copyIp(EtherCard::dhcpip, ptr);
-                      break;
-            case 255: done = true;
-                      break;
-            default: {
-                // Is is a custom configured option?
-                if (dhcpCustomOptionCallback && option == dhcpCustomOptionNum) {
-                    dhcpCustomOptionCallback(option, ptr, optionLen);
-                }
+        case 1:
+            EtherCard::copyIp(EtherCard::netmask, ptr);
+            break;
+        case 3:
+            EtherCard::copyIp(EtherCard::gwip, ptr);
+            break;
+        case 6:
+            EtherCard::copyIp(EtherCard::dnsip, ptr);
+            break;
+        case 51:
+        case 58:
+            leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
+            for (byte i = 0; i<4; i++)
+                leaseTime = (leaseTime << 8) + ptr[i];
+            leaseTime *= 1000;      // milliseconds
+            break;
+        case 54:
+            EtherCard::copyIp(EtherCard::dhcpip, ptr);
+            break;
+        case 255:
+            done = true;
+            break;
+        default: {
+            // Is is a custom configured option?
+            if (dhcpCustomOptionCallback && option == dhcpCustomOptionNum) {
+                dhcpCustomOptionCallback(option, ptr, optionLen);
             }
+        }
         }
         ptr += optionLen;
     } while (!done && ptr < gPB + len);
@@ -277,35 +283,35 @@ static bool dhcp_received_message_type (uint16_t len, byte msgType) {
 }
 
 bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
-	 // Use during setup, as this discards all incoming requests until it returns.
-	 // That shouldn't be a problem, because we don't have an IP-address yet.
-	 // Will try 60 secs to obtain DHCP-lease.
+    // Use during setup, as this discards all incoming requests until it returns.
+    // That shouldn't be a problem, because we don't have an IP-address yet.
+    // Will try 60 secs to obtain DHCP-lease.
 
-	 using_dhcp = true;
-    
-   if(hname != NULL){   
-     if(fromRam){
-    	 strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
-     }
-     else{
-       strncpy_P(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
-     }
-   }
-   else{
-     // Set a unique hostname, use Arduino-?? with last octet of mac address
-     hostname[8] = '0' + (mymac[5] >> 4);
-     hostname[9] = '0' + (mymac[5] & 0x0F);   
-   }
+    using_dhcp = true;
 
-	 dhcpState = DHCP_STATE_INIT;
-	 uint16_t start = millis();	
+    if(hname != NULL) {
+        if(fromRam) {
+            strncpy(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+        }
+        else {
+            strncpy_P(hostname, hname, DHCP_HOSTNAME_MAX_LEN);
+        }
+    }
+    else {
+        // Set a unique hostname, use Arduino-?? with last octet of mac address
+        hostname[8] = '0' + (mymac[5] >> 4);
+        hostname[9] = '0' + (mymac[5] & 0x0F);
+    }
 
-   while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
-       if (isLinkUp()) DhcpStateMachine(packetReceive());
-   }
-   updateBroadcastAddress();
-   delaycnt = 0;
-   return dhcpState == DHCP_STATE_BOUND ;
+    dhcpState = DHCP_STATE_INIT;
+    uint16_t start = millis();
+
+    while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
+        if (isLinkUp()) DhcpStateMachine(packetReceive());
+    }
+    updateBroadcastAddress();
+    delaycnt = 0;
+    return dhcpState == DHCP_STATE_BOUND ;
 }
 
 void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback)

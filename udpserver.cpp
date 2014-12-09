@@ -24,7 +24,9 @@ byte numListeners = 0;
 void EtherCard::udpServerListenOnPort(UdpServerCallback callback, uint16_t port) {
     if(numListeners < UDPSERVER_MAXLISTENERS)
     {
-        listeners[numListeners] = (UdpServerListener){callback, port, true};
+        listeners[numListeners] = (UdpServerListener) {
+            callback, port, true
+        };
         numListeners++;
     }
 }

@@ -191,7 +191,7 @@ void Stash::prepare (PGM_P fmt, ...) {
 #ifdef __AVR__
             *segs++ = argval;
 #else
-            *segs++ = argval; 
+            *segs++ = argval;
             *segs++ = argval >> 16;
 #endif
             Stash::bufs[0].words[0] += arglen - 2;
