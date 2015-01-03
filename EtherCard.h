@@ -313,6 +313,11 @@ public:
     */
     static uint8_t clientWaitingGw ();
 
+    /**   @brief  Check if got gateway DNS address (ARP lookup)
+    *     @return <i>unit8_t</i> True if DNS found
+    */
+    static uint8_t clientWaitingDns ();
+
     /**   @brief  Prepare a TCP request
     *     @param  result_cb Pointer to callback function that handles TCP result
     *     @param  datafill_cb Pointer to callback function that handles TCP data payload

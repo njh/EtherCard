@@ -93,7 +93,7 @@ bool EtherCard::dnsLookup (const char* name, bool fromRam) {
         if ((word) (millis() - start) >= 30000)
             return false; //timeout waiting for link
     }
-    while(clientWaitingGw())
+    while(clientWaitingDns())
     {
         packetLoop(packetReceive());
         if ((word) (millis() - start) >= 30000)

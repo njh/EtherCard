@@ -448,6 +448,12 @@ uint8_t EtherCard::clientWaitingGw () {
     return !(waitgwmac & WGW_HAVE_GW_MAC);
 }
 
+uint8_t EtherCard::clientWaitingDns () {
+    if(is_lan(myip, dnsip))
+        return !has_dns_mac;
+    return !(waitgwmac & WGW_HAVE_GW_MAC);
+}
+
 static uint8_t client_store_mac(uint8_t *source_ip, uint8_t *mac) {
     if (memcmp(gPB + ETH_ARP_SRC_IP_P, source_ip, 4) != 0)
         return 0;
