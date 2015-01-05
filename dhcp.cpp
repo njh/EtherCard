@@ -155,8 +155,10 @@ static void send_dhcp_message (void) {
                           (dhcpState == DHCP_STATE_BOUND ? EtherCard::dhcpip : allOnes),
                           DHCP_SRC_PORT);   // SRC<->DST ??
 
-    if (dhcpState != DHCP_STATE_BOUND)
-        EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes); //force broadcast mac
+    // If we ever don't do this, the DHCP renewal gets sent to whatever random
+    // destmacaddr was used by other code. Rather than cache the MAC address of
+    // the DHCP server, just force a broadcast here in all cases.
+    EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes); //force broadcast mac
 
     // Build DHCP Packet from buf[UDP_DATA_P]
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
