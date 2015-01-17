@@ -94,6 +94,10 @@ typedef struct {
 
 #define DHCP_HOSTNAME_MAX_LEN 32
 
+// RFC 2132 Section 3.3:
+// The time value of 0xffffffff is reserved to represent "infinity".
+#define DHCP_INFINITE_LEASE  0xffffffff
+
 static byte dhcpState = DHCP_STATE_INIT;
 static char hostname[DHCP_HOSTNAME_MAX_LEN] = "Arduino-00";
 static uint32_t currentXid;
@@ -244,7 +248,9 @@ static void process_dhcp_offer (uint16_t len) {
             leaseTime = 0; // option 58 = Renewal Time, 51 = Lease Time
             for (byte i = 0; i<4; i++)
                 leaseTime = (leaseTime << 8) + ptr[i];
-            leaseTime *= 1000;      // milliseconds
+            if (leaseTime != DHCP_INFINITE_LEASE) {
+                leaseTime *= 1000;      // milliseconds
+            }
             break;
         case 54:
             EtherCard::copyIp(EtherCard::dhcpip, ptr);
@@ -349,7 +355,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
 
     case DHCP_STATE_BOUND:
         //!@todo Due to millis() 49 day wrap-around, DHCP renewal may not work as expected
-        if (millis() >= leaseStart + leaseTime) {
+        if (leaseTime != DHCP_INFINITE_LEASE && millis() >= leaseStart + leaseTime) {
             send_dhcp_message();
             dhcpState = DHCP_STATE_RENEWING;
             stateTimer = millis();
