@@ -38,6 +38,8 @@
 #include "enc28j60.h"
 #include "net.h"
 
+const uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Used for hardware (MAC) and IP broadcast addresses
+
 /** This type definition defines the structure of a UDP server event handler callback funtion */
 typedef void (*UdpServerCallback)(
     uint16_t dest_port,    ///< Port the packet was sent to
