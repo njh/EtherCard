@@ -369,6 +369,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
         }
         ptr += strlen((char*) ptr);
     }
+    *ptr = '\0'; // ensure string is terminated
     va_end(ap);
 }
 
