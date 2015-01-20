@@ -357,11 +357,15 @@ public:
     *     @param  additionalheaderline Pointer to c-string with additional HTTP header info
     *     @param  postval Pointer to c-string HTML Post value
     *     @param  callback Pointer to callback function to handle response
+    *     @param  content_type PROGMEM string specifying request content mime type or NULL for default
+    *     @param  accept_type PROGMEM string specifying response accepted mime type(s) or NULL for default
     *     @note   Request sent in main packetloop
     */
     static void httpPost (const char *urlbuf, const char *hoststr,
                           const char *additionalheaderline, const char *postval,
-                          void (*callback)(uint8_t,uint16_t,uint16_t));
+                          void (*callback)(uint8_t,uint16_t,uint16_t),
+                          const char *content_type = NULL,
+                          const char *accept_type = NULL);
 
     /**   @brief  Send NTP request
     *     @param  ntpip IP address of NTP server
