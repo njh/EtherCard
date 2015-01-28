@@ -86,8 +86,8 @@ typedef struct {
     // options
 } DHCPdata;
 
-#define DHCP_SRC_PORT 67
-#define DHCP_DEST_PORT 68
+#define DHCP_SERVER_PORT 67
+#define DHCP_CLIENT_PORT 68
 
 // timeouts im ms
 #define DHCP_REQUEST_TIMEOUT 10000
@@ -155,9 +155,9 @@ static void send_dhcp_message (void) {
 
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
 
-    EtherCard::udpPrepare(DHCP_DEST_PORT,
+    EtherCard::udpPrepare(DHCP_CLIENT_PORT,
                           (dhcpState == DHCP_STATE_BOUND ? EtherCard::dhcpip : allOnes),
-                          DHCP_SRC_PORT);   // SRC<->DST ??
+                          DHCP_SERVER_PORT);
 
     // If we ever don't do this, the DHCP renewal gets sent to whatever random
     // destmacaddr was used by other code. Rather than cache the MAC address of
@@ -273,7 +273,7 @@ static bool dhcp_received_message_type (uint16_t len, byte msgType) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
 
-    if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SRC_PORT &&
+    if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SERVER_PORT &&
             dhcpPtr->xid == currentXid ) {
 
         byte *ptr = (byte*) (dhcpPtr + 1) + 4;
