@@ -149,7 +149,7 @@ static void addBytes (byte len, const byte* data) {
 // 61  Client-identifier
 // 255 End
 
-static void send_dhcp_message (void) {
+static void send_dhcp_message(uint8_t *requestip) {
 
     uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
@@ -194,13 +194,12 @@ static void send_dhcp_message (void) {
     addToBuf(10);
     addBytes(10, (byte*) hostname);
 
-    if( dhcpState == DHCP_STATE_SELECTING) {
+    if (requestip != NULL) {
         addToBuf(50); // Request IP address
         addToBuf(4);
-        addBytes(4, EtherCard::myip);
+        addBytes(4, requestip);
 
-        // Request using server ip address
-        addToBuf(54); // Server IP address
+        addToBuf(54); // DHCP Server IP address
         addToBuf(4);
         addBytes(4, EtherCard::dhcpip);
     }
@@ -222,11 +221,33 @@ static void send_dhcp_message (void) {
     EtherCard::udpTransmit((bufPtr - gPB) - UDP_DATA_P);
 }
 
-static void process_dhcp_offer (uint16_t len) {
+static void process_dhcp_offer(uint16_t len, uint8_t *offeredip) {
     // Map struct onto payload
     DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+
     // Offered IP address is in yiaddr
+    EtherCard::copyIp(offeredip, dhcpPtr->yiaddr);
+
+    // Search for the 
+    byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+    do {
+        byte option = *ptr++;
+        byte optionLen = *ptr++;
+        if (option == 54) {
+            EtherCard::copyIp(EtherCard::dhcpip, ptr);
+            break;
+        }
+        ptr += optionLen;
+    } while (ptr < gPB + len);
+}
+
+static void process_dhcp_ack(uint16_t len) {
+    // Map struct onto payload
+    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+
+    // Allocated IP address is in yiaddr
     EtherCard::copyIp(EtherCard::myip, dhcpPtr->yiaddr);
+
     // Scan through variable length option list identifying options we want
     byte *ptr = (byte*) (dhcpPtr + 1) + 4;
     bool done = false;
@@ -251,9 +272,6 @@ static void process_dhcp_offer (uint16_t len) {
             if (leaseTime != DHCP_INFINITE_LEASE) {
                 leaseTime *= 1000;      // milliseconds
             }
-            break;
-        case 54:
-            EtherCard::copyIp(EtherCard::dhcpip, ptr);
             break;
         case 255:
             done = true;
@@ -334,7 +352,8 @@ void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callbac
     dhcpCustomOptionCallback = callback;
 }
 
-void EtherCard::DhcpStateMachine (uint16_t len) {
+void EtherCard::DhcpStateMachine (uint16_t len)
+{
 
 #ifdef DHCPDEBUG
     if (dhcpState != DHCP_STATE_BOUND) {
@@ -362,7 +381,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
     case DHCP_STATE_BOUND:
         //!@todo Due to millis() 49 day wrap-around, DHCP renewal may not work as expected
         if (leaseTime != DHCP_INFINITE_LEASE && millis() >= leaseStart + leaseTime) {
-            send_dhcp_message();
+            send_dhcp_message(myip);
             dhcpState = DHCP_STATE_RENEWING;
             stateTimer = millis();
         }
@@ -371,7 +390,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
     case DHCP_STATE_INIT:
         currentXid = millis();
         memset(myip,0,4); // force ip 0.0.0.0
-        send_dhcp_message();
+        send_dhcp_message(NULL);
         enableBroadcast(true); //Temporarily enable broadcasts
         dhcpState = DHCP_STATE_SELECTING;
         stateTimer = millis();
@@ -379,8 +398,9 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
 
     case DHCP_STATE_SELECTING:
         if (dhcp_received_message_type(len, DHCP_OFFER)) {
-            process_dhcp_offer(len);
-            send_dhcp_message();
+            uint8_t offeredip[4];
+            process_dhcp_offer(len, offeredip);
+            send_dhcp_message(offeredip);
             dhcpState = DHCP_STATE_REQUESTING;
             stateTimer = millis();
         } else {
@@ -394,6 +414,7 @@ void EtherCard::DhcpStateMachine (uint16_t len) {
     case DHCP_STATE_RENEWING:
         if (dhcp_received_message_type(len, DHCP_ACK)) {
             disableBroadcast(true); //Disable broadcast after temporary enable
+            process_dhcp_ack(len);
             leaseStart = millis();
             if (gwip[0] != 0) setGwIp(gwip); // why is this? because it initiates an arp request
             dhcpState = DHCP_STATE_BOUND;
