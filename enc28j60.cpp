@@ -17,6 +17,7 @@
 
 uint16_t ENC28J60::bufferSize;
 bool ENC28J60::broadcast_enabled = false;
+bool ENC28J60::promiscuous_enabled = false;
 
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
@@ -524,6 +525,34 @@ void ENC28J60::enableMulticast () {
 
 void ENC28J60::disableMulticast () {
     writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MCEN);
+}
+
+void ENC28J60::enablePromiscuous (bool temporary) {
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_UCEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_ANDOR);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_CRCEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_PMEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MPEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_HTEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MCEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_BCEN);
+    if(!temporary)
+        promiscuous_enabled = true;
+}
+
+void ENC28J60::disablePromiscuous (bool temporary) {
+    if(!temporary)
+        promiscuous_enabled = false;
+    if(!promiscuous_enabled) {
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_UCEN);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_ANDOR);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_CRCEN);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_PMEN);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MPEN);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_HTEN);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MCEN);
+        writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_BCEN);
+    }
 }
 
 uint8_t ENC28J60::doBIST ( byte csPin) {
