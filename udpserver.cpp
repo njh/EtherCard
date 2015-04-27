@@ -63,6 +63,7 @@ bool EtherCard::udpServerHasProcessedPacket(uint16_t plen) {
             listeners[i].callback(
                 listeners[i].port,
                 gPB + IP_SRC_P,
+                (gPB[UDP_SRC_PORT_H_P] << 8) | gPB[UDP_SRC_PORT_L_P],
                 (const char *) (gPB + UDP_DATA_P),
                 datalen);
             packetProcessed = true;
