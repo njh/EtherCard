@@ -251,7 +251,6 @@ bool ENC28J60::broadcast_enabled = false;
 #define FULL_SPEED  1   // switch to full-speed SPI for bulk transfers
 
 static byte Enc28j60Bank;
-static int gNextPacketPtr;
 static byte selectPin;
 
 void ENC28J60::initSPI () {
@@ -377,7 +376,6 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY)
         ;
 
-    gNextPacketPtr = RXSTART_INIT;
     writeReg(ERXST, RXSTART_INIT);
     writeReg(ERXRDPT, RXSTART_INIT);
     writeReg(ERXND, RXSTOP_INIT);
@@ -433,6 +431,7 @@ void ENC28J60::packetSend(uint16_t len) {
 }
 
 uint16_t ENC28J60::packetReceive() {
+    static uint16_t gNextPacketPtr = RXSTART_INIT;
     uint16_t len = 0;
     if (readRegByte(EPKTCNT) > 0) {
         writeReg(ERDPT, gNextPacketPtr);
@@ -454,7 +453,7 @@ uint16_t ENC28J60::packetReceive() {
         else
             readBuf(len, buffer);
         buffer[len] = 0;
-        if (gNextPacketPtr - 1 > RXSTOP_INIT)
+        if (gNextPacketPtr == 0) 
             writeReg(ERXRDPT, RXSTOP_INIT);
         else
             writeReg(ERXRDPT, gNextPacketPtr - 1);
