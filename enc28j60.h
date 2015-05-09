@@ -9,6 +9,7 @@
 // chip, using an SPI interface to the host processor.
 //
 // 2010-05-20 <jc@wippler.nl>
+/** @file */
 
 #ifndef ENC28J60_H
 #define ENC28J60_H
@@ -127,4 +128,22 @@ public:
 
 typedef ENC28J60 Ethernet; //!< Define alias Ethernet for ENC28J60
 
+
+/** Workaround for Errata 13.
+*   The transmission hardware may drop some packets because it thinks a late collision
+*   occurred (which should never happen if all cable length etc. are ok). If setting
+*   this to 1 these packages will be retried a fixed number of times. Costs about 150bytes
+*   of flash.
+*/
+#define ETHERCARD_RETRY_LATECOLLISIONS 0
+
+/** Enable pipelining of packet transmissions.
+*   If enabled the packetSend function will not block/wait until the packet is actually
+*   transmitted; but instead this wait is shifted to the next time that packetSend is
+*   called. This gives higher performance; however in combination with 
+*   ETHERCARD_RETRY_LATECOLLISIONS this may lead to problems because a packet whose
+*   transmission fails because the ENC-chip thinks that it is a late collision will
+*   not be retried until the next call to packetSend.
+*/
+#define ETHERCARD_SEND_PIPELINING 0
 #endif
