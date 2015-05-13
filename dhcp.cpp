@@ -109,7 +109,7 @@ static byte* bufPtr;
 static uint8_t dhcpCustomOptionNum = 0;
 static DhcpOptionCallback dhcpCustomOptionCallback = NULL;
 
-// static uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+extern uint8_t allOnes[];// = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 static void addToBuf (byte b) {
     *bufPtr++ = b;
@@ -150,8 +150,6 @@ static void addBytes (byte len, const byte* data) {
 // 255 End
 
 static void send_dhcp_message(uint8_t *requestip) {
-
-    uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
 
@@ -379,7 +377,7 @@ void EtherCard::DhcpStateMachine (uint16_t len)
     switch (dhcpState) {
 
     case DHCP_STATE_BOUND:
-        //!@todo Due to millis() 49 day wrap-around, DHCP renewal may not work as expected
+        //!@todo Due to millis() wrap-around, DHCP renewal may not work if leaseTime is larger than 49days
         if (leaseTime != DHCP_INFINITE_LEASE && millis() - leaseStart >= leaseTime) {
             send_dhcp_message(myip);
             dhcpState = DHCP_STATE_RENEWING;
