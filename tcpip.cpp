@@ -726,8 +726,8 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         if(ether.udpServerHasProcessedPacket(plen))
             return 0; //An UDP server handler (callback) has processed this packet
     }
-    if (plen<54 && gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
-        return 0; //Packet flagged as TCP but shorter than minimum TCP packet length
+    if (plen<54 || gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
+        return 0; //from here on we are only interested in TCP-packets; these are longer than 54 bytes
     if (gPB[TCP_DST_PORT_H_P]==TCPCLIENT_SRC_PORT_H)
     {   //Source port is in range reserved (by EtherCard) for client TCP/IP connections
         if (check_ip_message_is_from(hisip)==0)
