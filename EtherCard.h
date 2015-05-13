@@ -18,11 +18,12 @@
 //   SI  - Pin 11
 //   CS  - Pin  8
 //
-#define __PROG_TYPES_COMPAT__
 
 #ifndef EtherCard_h
 #define EtherCard_h
-
+#ifndef __PROG_TYPES_COMPAT__
+  #define __PROG_TYPES_COMPAT__
+#endif
 
 #if ARDUINO >= 100
 #include <Arduino.h> // Arduino 1.0
@@ -237,7 +238,7 @@ public:
     static uint16_t hisport;  ///< TCP port to connect to (default 80)
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
-    static int16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
+    static uint16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface
