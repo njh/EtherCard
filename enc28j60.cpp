@@ -304,20 +304,42 @@ static void writeOp (byte op, byte address, byte data) {
 }
 
 static void readBuf(uint16_t len, byte* data) {
+    uint8_t nextbyte;
+
     enableChip();
-    xferSPI(ENC28J60_READ_BUF_MEM);
-    while (len--) {
-        xferSPI(0x00);
-        *data++ = SPDR;
+    if (len != 0) {    
+        xferSPI(ENC28J60_READ_BUF_MEM);
+          
+        SPDR = 0x00; 
+        while (--len) {
+            while (!(SPSR & (1<<SPIF)))
+                ;
+            nextbyte = SPDR;
+            SPDR = 0x00;
+            *data++ = nextbyte;     
+        }
+        while (!(SPSR & (1<<SPIF)))
+            ;
+        *data++ = SPDR;    
     }
-    disableChip();
+    disableChip(); 
 }
 
 static void writeBuf(uint16_t len, const byte* data) {
     enableChip();
-    xferSPI(ENC28J60_WRITE_BUF_MEM);
-    while (len--)
-        xferSPI(*data++);
+    if (len != 0) {
+        xferSPI(ENC28J60_WRITE_BUF_MEM);
+           
+        SPDR = *data++;    
+        while (--len) {
+            uint8_t nextbyte = *data++;
+        	while (!(SPSR & (1<<SPIF)))
+                ;
+            SPDR = nextbyte;
+     	};  
+        while (!(SPSR & (1<<SPIF)))
+            ;
+    }
     disableChip();
 }
 
