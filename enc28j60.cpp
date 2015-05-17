@@ -382,7 +382,8 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeReg(ERXND, RXSTOP_INIT);
     writeReg(ETXST, TXSTART_INIT);
     writeReg(ETXND, TXSTOP_INIT);
-    enableBroadcast(); // change to add ERXFCON_BCEN recommended by epam
+
+    writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN|ERXFCON_BCEN);
     writeReg(EPMM0, 0x303f);
     writeReg(EPMCS, 0xf7f9);
     writeRegByte(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
@@ -623,14 +624,7 @@ void ENC28J60::disableMulticast () {
 }
 
 void ENC28J60::enablePromiscuous (bool temporary) {
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_UCEN);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_ANDOR);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_CRCEN);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_PMEN);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MPEN);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_HTEN);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MCEN);
-    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_BCEN);
+    writeRegByte(ERXFCON, readRegByte(ERXFCON) & ERXFCON_CRCEN);
     if(!temporary)
         promiscuous_enabled = true;
 }
@@ -639,22 +633,15 @@ void ENC28J60::disablePromiscuous (bool temporary) {
     if(!temporary)
         promiscuous_enabled = false;
     if(!promiscuous_enabled) {
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_UCEN);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_ANDOR);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_CRCEN);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_PMEN);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MPEN);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_HTEN);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) & ~ERXFCON_MCEN);
-        writeRegByte(ERXFCON, readRegByte(ERXFCON) | ERXFCON_BCEN);
+        writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN|ERXFCON_BCEN);
     }
 }
 
 uint8_t ENC28J60::doBIST ( byte csPin) {
-#define RANDOM_FILL        0b0000
+#define RANDOM_FILL     0b0000
 #define ADDRESS_FILL    0b0100
-#define PATTERN_SHIFT    0b1000
-#define RANDOM_RACE        0b1100
+#define PATTERN_SHIFT   0b1000
+#define RANDOM_RACE     0b1100
 
 // init
     if (bitRead(SPCR, SPE) == 0)

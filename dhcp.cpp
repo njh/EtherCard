@@ -109,7 +109,7 @@ static byte* bufPtr;
 static uint8_t dhcpCustomOptionNum = 0;
 static DhcpOptionCallback dhcpCustomOptionCallback = NULL;
 
-// static uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+extern uint8_t allOnes[];// = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 static void addToBuf (byte b) {
     *bufPtr++ = b;
@@ -150,8 +150,6 @@ static void addBytes (byte len, const byte* data) {
 // 255 End
 
 static void send_dhcp_message(uint8_t *requestip) {
-
-    uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
     memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
 
@@ -338,7 +336,7 @@ bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
     dhcpState = DHCP_STATE_INIT;
     uint16_t start = millis();
 
-    while (dhcpState != DHCP_STATE_BOUND && (uint16_t) (millis() - start) < 60000) {
+    while (dhcpState != DHCP_STATE_BOUND && uint16_t(millis()) - start < 60000) {
         if (isLinkUp()) DhcpStateMachine(packetReceive());
     }
     updateBroadcastAddress();
@@ -379,8 +377,8 @@ void EtherCard::DhcpStateMachine (uint16_t len)
     switch (dhcpState) {
 
     case DHCP_STATE_BOUND:
-        //!@todo Due to millis() 49 day wrap-around, DHCP renewal may not work as expected
-        if (leaseTime != DHCP_INFINITE_LEASE && millis() >= leaseStart + leaseTime) {
+        //!@todo Due to millis() wrap-around, DHCP renewal may not work if leaseTime is larger than 49days
+        if (leaseTime != DHCP_INFINITE_LEASE && millis() - leaseStart >= leaseTime) {
             send_dhcp_message(myip);
             dhcpState = DHCP_STATE_RENEWING;
             stateTimer = millis();
@@ -404,7 +402,7 @@ void EtherCard::DhcpStateMachine (uint16_t len)
             dhcpState = DHCP_STATE_REQUESTING;
             stateTimer = millis();
         } else {
-            if (millis() > stateTimer + DHCP_REQUEST_TIMEOUT) {
+            if (millis() - stateTimer > DHCP_REQUEST_TIMEOUT) {
                 dhcpState = DHCP_STATE_INIT;
             }
         }
@@ -419,7 +417,7 @@ void EtherCard::DhcpStateMachine (uint16_t len)
             if (gwip[0] != 0) setGwIp(gwip); // why is this? because it initiates an arp request
             dhcpState = DHCP_STATE_BOUND;
         } else {
-            if (millis() > stateTimer + DHCP_REQUEST_TIMEOUT) {
+            if (millis() - stateTimer > DHCP_REQUEST_TIMEOUT) {
                 dhcpState = DHCP_STATE_INIT;
             }
         }

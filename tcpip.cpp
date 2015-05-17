@@ -67,7 +67,7 @@ static unsigned long SEQ; // TCP/IP sequence number
 const unsigned char arpreqhdr[] PROGMEM = { 0,1,8,0,6,4,0,1 }; // ARP request header
 const unsigned char iphdr[] PROGMEM = { 0x45,0,0,0x82,0,0,0x40,0,0x20 }; //IP header
 const unsigned char ntpreqhdr[] PROGMEM = { 0xE3,0,4,0xFA,0,1,0,0,0,1 }; //NTP request header
-const uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Used for hardware (MAC) and IP broadcast addresses
+extern const uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Used for hardware (MAC) and IP broadcast addresses
 
 static void fill_checksum(uint8_t dest, uint8_t off, uint16_t len,uint8_t type) {
     const uint8_t* ptr = gPB + off;
@@ -726,8 +726,8 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         if(ether.udpServerHasProcessedPacket(plen))
             return 0; //An UDP server handler (callback) has processed this packet
     }
-    if (plen<54 && gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
-        return 0; //Packet flagged as TCP but shorter than minimum TCP packet length
+    if (plen<54 || gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
+        return 0; //from here on we are only interested in TCP-packets; these are longer than 54 bytes
     if (gPB[TCP_DST_PORT_H_P]==TCPCLIENT_SRC_PORT_H)
     {   //Source port is in range reserved (by EtherCard) for client TCP/IP connections
         if (check_ip_message_is_from(hisip)==0)
