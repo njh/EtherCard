@@ -660,9 +660,12 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
 
 uint16_t EtherCard::packetLoop (uint16_t plen) {
     uint16_t len;
+
+#if ETHERCARD_DHCP
     if(using_dhcp) {
         ether.DhcpStateMachine(plen);
     }
+#endif
 
     if (plen==0) {
         //Check every 65536 (no-packet) cycles whether we need to retry ARP request for gateway
@@ -672,17 +675,22 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
             waitgwmac |= WGW_ACCEPT_ARP_REPLY;
         }
         delaycnt++;
+
+#if ETHERCARD_TCPCLIENT
         //Initiate TCP/IP session if pending
         if (tcp_client_state==1 && (waitgwmac & WGW_HAVE_GW_MAC)) { // send a syn
             tcp_client_state = 2;
             tcpclient_src_port_l++; // allocate a new port
             client_syn(((tcp_fd<<5) | (0x1f & tcpclient_src_port_l)),tcp_client_port_h,tcp_client_port_l);
         }
+#endif
+
         //!@todo this is trying to find mac only once. Need some timeout to make another call if first one doesn't succeed.
         if(is_lan(myip, dnsip) && !has_dns_mac && !waiting_for_dns_mac) {
             client_arp_whohas(dnsip);
             waiting_for_dns_mac = true;
         }
+
         //!@todo this is trying to find mac only once. Need some timeout to make another call if first one doesn't succeed.
         if(is_lan(myip, hisip) && !has_dest_mac && !waiting_for_dest_mac) {
             client_arp_whohas(hisip);
@@ -714,6 +722,8 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         //!@todo Add other protocols (and make each optional at compile time)
         return 0;
     }
+
+#if ETHERCARD_ICMP
     if (gPB[IP_PROTO_P]==IP_PROTO_ICMP_V && gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREQUEST_V)
     {   //Service ICMP echo request (ping)
         if (icmp_cb)
@@ -721,13 +731,19 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         make_echo_reply_from_request(plen);
         return 0;
     }
+#endif
+#if ETHERCARD_UDPSERVER
     if (ether.udpServerListening() && gPB[IP_PROTO_P]==IP_PROTO_UDP_V)
     {   //Call UDP server handler (callback) if one is defined for this packet
         if(ether.udpServerHasProcessedPacket(plen))
             return 0; //An UDP server handler (callback) has processed this packet
     }
+#endif
+
     if (plen<54 || gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
         return 0; //from here on we are only interested in TCP-packets; these are longer than 54 bytes
+
+#if ETHERCARD_TCPCLIENT
     if (gPB[TCP_DST_PORT_H_P]==TCPCLIENT_SRC_PORT_H)
     {   //Source port is in range reserved (by EtherCard) for client TCP/IP connections
         if (check_ip_message_is_from(hisip)==0)
@@ -800,9 +816,12 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         }
         return 0;
     }
+#endif
 
-    //If we are here then this is a TCP/IP packet targetted at us and not related to out client connection so accept
+#if ETHERCARD_TCPSERVER
+    //If we are here then this is a TCP/IP packet targetted at us and not related to our client connection so accept
     return accept(hisport, plen);
+#endif
 }
 
 void EtherCard::persistTcpConnection(bool persist) {
