@@ -71,10 +71,10 @@ class Stash : public /*Stream*/ Print, private StashHeader {
             uint8_t bytes[64];
             uint16_t words[32];
             struct {
-                StashHeader head;
+                StashHeader head; // StashHeader is only stored in first block 
                 uint8_t filler[59];
-                uint8_t tail;
-                uint8_t next;
+                uint8_t tail;     // only meaningful if bnum==last; number of bytes in last block 
+                uint8_t next;     // pointer to next block 
             };
         };
         uint8_t bnum;
@@ -85,10 +85,10 @@ class Stash : public /*Stream*/ Print, private StashHeader {
     static uint8_t fetchByte (uint8_t blk, uint8_t off);
 
     static Block bufs[2];
-    static uint8_t map[256/8];
+    static uint8_t map[SCRATCH_MAP_SIZE];
 
 public:
-    static void initMap (uint8_t last);
+    static void initMap (uint8_t last=SCRATCH_PAGE_NUM);
     static void load (uint8_t idx, uint8_t blk);
     static uint8_t freeCount ();
 
