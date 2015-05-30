@@ -1,56 +1,59 @@
-// Twitter client sketch for ENC28J60 based Ethernet Shield. Uses supertweet.net
-// as an OAuth authentication proxy. Step by step instructions:
+// Twitter client sketch for ENC28J60 based Ethernet Shield. Uses 
+// arduino-tweet.appspot.com as a OAuth gateway.
+// Step by step instructions:
 // 
-//  1. Create an account on www.supertweet.net by logging with your twitter
-//     credentials.
-//  2. You'll be redirected to twitter to allow supertweet to post for you
-//     on twitter.
-//  3. Back on supertweet, set a password (different than your twitter one) and
-//     activate your account clicking on "Make Active" link in from the table.
-//  4. Wait for supertweet email to confirm your email address - won't work
-//     otherwise.
-//  5. Encode "un:pw" in base64: "un" being your twitter username and "pw" the
-//     password you just set for supertweet.net. You can use this tool:
-//        http://tuxgraphics.org/~guido/javascript/base64-javascript.html
-//  6. Paste the result as the KEY string in the code bellow.
+//  1. Get a oauth token:
+//     http://arduino-tweet.appspot.com/oauth/twitter/login
+//  2. Put the token value in the TOKEN define below
+//  3. Run the sketch!
 //
-// Contributed by Inouk Bourgon <contact@inouk.imap.cc>
-//     http://opensource.org/licenses/mit-license.php
- 
+//  WARNING: Don't send more than 1 tweet per minute!
+//  NOTE: Twitter rejects tweets with identical content as dupes (returns 403)
+
 #include <EtherCard.h>
 
-// supertweet.net username:password in base64
-#define KEY   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-#define API_URL "/1.1/statuses/update.json"
+// OAUTH key from http://arduino-tweet.appspot.com/
+#define TOKEN   "Insert-your-token-here"
 
 // ethernet interface mac address, must be unique on the LAN
 byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-const char website[] PROGMEM = "api.supertweet.net";
+const char website[] PROGMEM = "arduino-tweet.appspot.com";
 
+static byte session;
 
 byte Ethernet::buffer[700];
 Stash stash;
-uint8_t runTime;
 
 static void sendToTwitter () {
-	// generate two fake values as payload - by using a separate stash,
-	// we can determine the size of the generated message ahead of time
-	byte sd = stash.create();
-	stash.println("status=@inoukb my #Arduino tweets :-)");
-	stash.save();
-	  
-	// generate the header with payload - note that the stash size is used,
-	// and that a "stash descriptor" is passed in as argument using "$H"
-	Stash::prepare(PSTR(API_URL),website, PSTR(KEY), stash.size(), sd);
-	
-	// send the packet - this also releases all stash buffers once done
-	ether.tcpSend();
+  Serial.println("Sending tweet...");
+  byte sd = stash.create();
+
+  const char tweet[] = "@solarkennedy the test Twitter sketch works!";
+  stash.print("token=");
+  stash.print(TOKEN);
+  stash.print("&status=");
+  stash.println(tweet);
+  stash.save();
+  int stash_size = stash.size();
+
+  // Compose the http POST request, taking the headers below and appending
+  // previously created stash in the sd holder.
+  Stash::prepare(PSTR("POST http://$F/update HTTP/1.0" "\r\n"
+    "Host: $F" "\r\n"
+    "Content-Length: $D" "\r\n"
+    "\r\n"
+    "$H"),
+  website, website, stash_size, sd);
+
+  // send the packet - this also releases all stash buffers once done
+  // Save the session ID so we can watch for it in the main loop.
+  session = ether.tcpSend();
 }
 
 void setup () {
   Serial.begin(57600);
-  Serial.println("\n[webClient]");
+  Serial.println("\n[Twitter Client]");
 
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
     Serial.println(F("Failed to access Ethernet controller"));
@@ -63,7 +66,7 @@ void setup () {
 
   if (!ether.dnsLookup(website))
     Serial.println(F("DNS failed"));
-    
+
   ether.printIp("SRV: ", ether.hisip);
 
   sendToTwitter();
@@ -71,4 +74,11 @@ void setup () {
 
 void loop () {
   ether.packetLoop(ether.packetReceive());
+
+  const char* reply = ether.tcpReply(session);
+  if (reply != 0) {
+    Serial.println("Got a response!");
+    Serial.println(reply);
+  }
 }
+

@@ -9,6 +9,7 @@
 // chip, using an SPI interface to the host processor.
 //
 // 2010-05-20 <jc@wippler.nl>
+/** @file */
 
 #ifndef ENC28J60_H
 #define ENC28J60_H
@@ -19,6 +20,7 @@ public:
     static uint8_t buffer[]; //!< Data buffer (shared by recieve and transmit)
     static uint16_t bufferSize; //!< Size of data buffer
     static bool broadcast_enabled; //!< True if broadcasts enabled (used to allow temporary disable of broadcast for DHCP or other internal functions)
+    static bool promiscuous_enabled; //!< True if promiscuous mode enabled (used to allow temporary disable of promiscuous mode)
 
     static uint8_t* tcpOffset () { return buffer + 0x36; } //!< Pointer to the start of TCP payload
 
@@ -96,6 +98,21 @@ public:
     *     @note   This will increase load on recieved data handling
     */
     static void enableMulticast ();
+    
+    /**   @brief  Enables reception of all messages
+    *     @param  temporary Set true to temporarily enable promiscuous
+    *     @note   This will increase load significantly on recieved data handling
+    *     @note   All messages will be accepted, even messages with destination MAC other than own
+    *     @note   Messages with invalid CRC checksum will still be rejected
+    */
+    static void enablePromiscuous (bool temporary = false);
+    
+    /**   @brief  Disable reception of all messages and go back to default mode
+    *     @param  temporary Set true to only disable if temporarily enabled
+    *     @note   This will reduce load on recieved data handling
+    *     @note   In this mode only unicast and broadcast messages will be received
+    */
+    static void disablePromiscuous(bool temporary = false);
 
     /**   @brief  Disable reception of mulitcast messages
     *     @note   This will reduce load on recieved data handling
@@ -111,4 +128,22 @@ public:
 
 typedef ENC28J60 Ethernet; //!< Define alias Ethernet for ENC28J60
 
+
+/** Workaround for Errata 13.
+*   The transmission hardware may drop some packets because it thinks a late collision
+*   occurred (which should never happen if all cable length etc. are ok). If setting
+*   this to 1 these packages will be retried a fixed number of times. Costs about 150bytes
+*   of flash.
+*/
+#define ETHERCARD_RETRY_LATECOLLISIONS 0
+
+/** Enable pipelining of packet transmissions.
+*   If enabled the packetSend function will not block/wait until the packet is actually
+*   transmitted; but instead this wait is shifted to the next time that packetSend is
+*   called. This gives higher performance; however in combination with 
+*   ETHERCARD_RETRY_LATECOLLISIONS this may lead to problems because a packet whose
+*   transmission fails because the ENC-chip thinks that it is a late collision will
+*   not be retried until the next call to packetSend.
+*/
+#define ETHERCARD_SEND_PIPELINING 0
 #endif

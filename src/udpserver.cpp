@@ -24,7 +24,9 @@ byte numListeners = 0;
 void EtherCard::udpServerListenOnPort(UdpServerCallback callback, uint16_t port) {
     if(numListeners < UDPSERVER_MAXLISTENERS)
     {
-        listeners[numListeners] = (UdpServerListener){callback, port, true};
+        listeners[numListeners] = (UdpServerListener) {
+            callback, port, true
+        };
         numListeners++;
     }
 }
@@ -61,6 +63,7 @@ bool EtherCard::udpServerHasProcessedPacket(uint16_t plen) {
             listeners[i].callback(
                 listeners[i].port,
                 gPB + IP_SRC_P,
+                (gPB[UDP_SRC_PORT_H_P] << 8) | gPB[UDP_SRC_PORT_L_P],
                 (const char *) (gPB + UDP_DATA_P),
                 datalen);
             packetProcessed = true;

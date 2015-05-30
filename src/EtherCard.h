@@ -18,11 +18,12 @@
 //   SI  - Pin 11
 //   CS  - Pin  8
 //
-#define __PROG_TYPES_COMPAT__
 
 #ifndef EtherCard_h
 #define EtherCard_h
-
+#ifndef __PROG_TYPES_COMPAT__
+  #define __PROG_TYPES_COMPAT__
+#endif
 
 #if ARDUINO >= 100
 #include <Arduino.h> // Arduino 1.0
@@ -42,6 +43,7 @@
 typedef void (*UdpServerCallback)(
     uint16_t dest_port,    ///< Port the packet was sent to
     uint8_t src_ip[4],    ///< IP address of the sender
+    uint16_t src_port,    ///< Port the packet was sent from
     const char *data,   ///< UDP payload data
     uint16_t len);        ///< Length of the payload data
 
@@ -133,7 +135,7 @@ public:
 /** This class populates network send and receive buffers.
 *
 *   This class provides formatted printing into memory. Users can use it to write into send buffers.
-*  
+*
 *   Nota: PGM_P: is a pointer to a string in program space (defined in the source code)
 *
 *   # Format string
@@ -164,12 +166,12 @@ public:
 *     sss[1] = 'P';
 *     sss[2] = 'L';
 *     sss[3] = 0;
-*     buf.emit_p( PSTR("ddd=$D\n"), ddd );	// "ddd=123\n"
-*     buf.emit_p( PSTR("ttt=$T\n"), ttt );	// "ttt=1.23\n" **TO CHECK**
-*     buf.emit_p( PSTR("hhh=$H\n"), hhh );	// "hhh=a4\n"
-*     buf.emit_p( PSTR("lll=$L\n"), lll );	// "lll=123456789\n"
-*     buf.emit_p( PSTR("sss=$S\n"), sss );	// "sss=GPL\n"
-*     buf.emit_p( PSTR("fff=$F\n"), fff );	// "fff=MyMemory\n"
+*     buf.emit_p( PSTR("ddd=$D\n"), ddd );  // "ddd=123\n"
+*     buf.emit_p( PSTR("ttt=$T\n"), ttt );  // "ttt=1.23\n" **TO CHECK**
+*     buf.emit_p( PSTR("hhh=$H\n"), hhh );  // "hhh=a4\n"
+*     buf.emit_p( PSTR("lll=$L\n"), lll );  // "lll=123456789\n"
+*     buf.emit_p( PSTR("sss=$S\n"), sss );  // "sss=GPL\n"
+*     buf.emit_p( PSTR("fff=$F\n"), fff );  // "fff=MyMemory\n"
 *   ~~~~~~~~~~~~~
 *
 */
@@ -236,7 +238,7 @@ public:
     static uint16_t hisport;  ///< TCP port to connect to (default 80)
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
-    static int16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
+    static uint16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface
@@ -269,7 +271,7 @@ public:
     static void makeUdpReply (const char *data, uint8_t len, uint16_t port);
 
     /**   @brief  Parse received data
-    *     @param  plen Size of data to parse (e.g. return value of packetreceive()).
+    *     @param  plen Size of data to parse (e.g. return value of packetReceive()).
     *     @return <i>uint16_t</i> Offset of TCP payload data in data buffer or zero if packet processed
     *     @note   Data buffer is shared by receive and transmit functions
     *     @note   Only handles ARP and IP
@@ -312,6 +314,11 @@ public:
     *     @return <i>unit8_t</i> True if gateway found
     */
     static uint8_t clientWaitingGw ();
+
+    /**   @brief  Check if got gateway DNS address (ARP lookup)
+    *     @return <i>unit8_t</i> True if DNS found
+    */
+    static uint8_t clientWaitingDns ();
 
     /**   @brief  Prepare a TCP request
     *     @param  result_cb Pointer to callback function that handles TCP result
@@ -485,8 +492,8 @@ public:
     static bool dhcpSetup (const char *hname = NULL, bool fromRam =false);
 
     /**   @brief  Register a callback for a specific DHCP option number
-    *     @param  <i>option</i> The option number to request from the DHCP server
-    *     @param  <i>callback</i> The function to be call when the option is received
+    *     @param  option The option number to request from the DHCP server
+    *     @param  callback The function to be call when the option is received
     */
     static void dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback);
 
