@@ -18,6 +18,7 @@
 //   SI  - Pin 11
 //   CS  - Pin  8
 //
+/** @file */ 
 
 #ifndef EtherCard_h
 #define EtherCard_h
@@ -38,6 +39,50 @@
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 #include "net.h"
+
+/** Enable DHCP.
+*   Setting this to zero disables the use of DHCP; if a program uses DHCP it will
+*   still compile but the program will not work. Saves about 60 bytes SRAM and
+*   1550 bytes flash.
+*/
+#define ETHERCARD_DHCP 1
+
+/** Enable client connections.
+* Setting this to zero means that the program cannot issue TCP client requests
+* anymore. Compilation will still work but the request will never be
+* issued. Saves 4 bytes SRAM and 550 byte flash.
+*/
+#define ETHERCARD_TCPCLIENT 1
+
+/** Enable TCP server functionality. 
+*   Setting this to zero means that the program will not accept TCP client
+*   requests. Saves 2 bytes SRAM and 250 bytes flash.
+*/
+#define ETHERCARD_TCPSERVER 1
+
+/** Enable UDP server functionality. 
+*   If zero UDP server is disabled. It is
+*   still possible to register callbacks but these will never be called. Saves
+*   about 40 bytes SRAM and 200 bytes flash. If building with -flto this does not
+*   seem to save anything; maybe the linker is then smart enough to optimize the
+*   call away.
+*/
+#define ETHERCARD_UDPSERVER 1
+
+/** Enable automatic reply to pings.
+*   Setting to zero means that the program will not automatically answer to
+*   PINGs anymore. Also the callback that can be registered to answer incoming
+*   pings will not be called. Saves 2 bytes SRAM and 230 bytes flash.
+*/
+#define ETHERCARD_ICMP 1
+
+/** Enable use of stash.
+*   Setting this to zero means that the stash mechanism cannot be used. Again
+*   compilation will still work but the program may behave very unexpectedly.
+*   Saves 30 bytes SRAM and 80 bytes flash.
+*/
+#define ETHERCARD_STASH 1
+
 
 /** This type definition defines the structure of a UDP server event handler callback funtion */
 typedef void (*UdpServerCallback)(
@@ -71,10 +116,10 @@ class Stash : public /*Stream*/ Print, private StashHeader {
             uint8_t bytes[64];
             uint16_t words[32];
             struct {
-                StashHeader head;
+                StashHeader head; // StashHeader is only stored in first block 
                 uint8_t filler[59];
-                uint8_t tail;
-                uint8_t next;
+                uint8_t tail;     // only meaningful if bnum==last; number of bytes in last block 
+                uint8_t next;     // pointer to next block 
             };
         };
         uint8_t bnum;
@@ -85,10 +130,10 @@ class Stash : public /*Stream*/ Print, private StashHeader {
     static uint8_t fetchByte (uint8_t blk, uint8_t off);
 
     static Block bufs[2];
-    static uint8_t map[256/8];
+    static uint8_t map[SCRATCH_MAP_SIZE];
 
 public:
-    static void initMap (uint8_t last);
+    static void initMap (uint8_t last=SCRATCH_PAGE_NUM);
     static void load (uint8_t idx, uint8_t blk);
     static uint8_t freeCount ();
 

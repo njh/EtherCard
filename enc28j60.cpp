@@ -230,22 +230,7 @@ bool ENC28J60::promiscuous_enabled = false;
 #define ENC28J60_BIT_FIELD_CLR       0xA0
 #define ENC28J60_SOFT_RESET          0xFF
 
-// The RXSTART_INIT must be zero. See Rev. B4 Silicon Errata point 5.
-// Buffer boundaries applied to internal 8K ram
-// the entire available packet buffer space is allocated
-
-#define RXSTART_INIT        0x0000  // start of RX buffer, room for 2 packets
-#define RXSTOP_INIT         0x0BFF  // end of RX buffer
-
-#define TXSTART_INIT        0x0C00  // start of TX buffer, room for 1 packet
-#define TXSTOP_INIT         0x11FF  // end of TX buffer
-
-#define SCRATCH_START       0x1200  // start of scratch area
-#define SCRATCH_LIMIT       0x2000  // past end of area, i.e. 3.5 Kb
-#define SCRATCH_PAGE_SHIFT  6       // addressing is in pages of 64 bytes
-#define SCRATCH_PAGE_SIZE   (1 << SCRATCH_PAGE_SHIFT)
-
-// max frame length which the conroller will accept:
+// max frame length which the controller will accept:
 // (note: maximum ethernet frame length would be 1518)
 #define MAX_FRAMELEN      1500
 
@@ -304,20 +289,42 @@ static void writeOp (byte op, byte address, byte data) {
 }
 
 static void readBuf(uint16_t len, byte* data) {
+    uint8_t nextbyte;
+
     enableChip();
-    xferSPI(ENC28J60_READ_BUF_MEM);
-    while (len--) {
-        xferSPI(0x00);
-        *data++ = SPDR;
+    if (len != 0) {    
+        xferSPI(ENC28J60_READ_BUF_MEM);
+          
+        SPDR = 0x00; 
+        while (--len) {
+            while (!(SPSR & (1<<SPIF)))
+                ;
+            nextbyte = SPDR;
+            SPDR = 0x00;
+            *data++ = nextbyte;     
+        }
+        while (!(SPSR & (1<<SPIF)))
+            ;
+        *data++ = SPDR;    
     }
-    disableChip();
+    disableChip(); 
 }
 
 static void writeBuf(uint16_t len, const byte* data) {
     enableChip();
-    xferSPI(ENC28J60_WRITE_BUF_MEM);
-    while (len--)
-        xferSPI(*data++);
+    if (len != 0) {
+        xferSPI(ENC28J60_WRITE_BUF_MEM);
+           
+        SPDR = *data++;    
+        while (--len) {
+            uint8_t nextbyte = *data++;
+        	while (!(SPSR & (1<<SPIF)))
+                ;
+            SPDR = nextbyte;
+     	};  
+        while (!(SPSR & (1<<SPIF)))
+            ;
+    }
     disableChip();
 }
 
