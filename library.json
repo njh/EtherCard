@@ -1,0 +1,32 @@
+{
+  "name": "EtherCard",
+  "keywords": "http, web, server, client, ethernet",
+  "description": "Driver for the ENC28J60 chip",
+  "authors":
+  [
+    {
+      "name": "Jean-Claude Wippler",
+      "email": "jc@wippler.nl",
+      "url": "http://jeelabs.org/",
+      "maintainer": true
+    },
+    {
+      "name": "Pascal Stang"
+    },   
+    {
+      "name": "Guido Socher"
+    }    
+  ],
+  "include": [
+    "examples",
+    "*.cpp",
+    "*.h"
+  ],
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/jcw/ethercard.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "atmelavr"
+}
