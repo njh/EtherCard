@@ -648,7 +648,8 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
             if (info_data_len > 0)
             {   //Got some data
                 pos = TCP_DATA_START; // TCP_DATA_START is a formula
-                if (pos <= plen - 8)
+                //!@todo no idea what this check pos<=plen-8 does; changed this to pos<=plen as otw. perfectly valid tcp packets are ignored; still if anybody has any idea please leave a comment
+                if (pos <= plen) 
                     return pos;
             }
             else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)
