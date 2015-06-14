@@ -727,3 +727,26 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
     return macResult == bitsResult;
 }
 
+
+void ENC28J60::memcpy_to_enc(uint16_t dest, void* source, int16_t num) {
+    writeReg(EWRPT, dest);
+    writeBuf(num, (uint8_t*) source);
+}
+
+void ENC28J60::memcpy_from_enc(void* dest, uint16_t source, int16_t num) {
+    writeReg(ERDPT, source);
+    readBuf(num, (uint8_t*) dest);
+}
+
+static uint16_t endRam = ENC_HEAP_END; 
+uint16_t ENC28J60::enc_malloc(uint16_t size) {
+    if (endRam-size >= ENC_HEAP_START) {
+        endRam -= size;
+        return endRam;
+    }
+    return 0;
+}
+
+uint16_t ENC28J60::enc_free() {
+    return endRam-ENC_HEAP_START;
+}
