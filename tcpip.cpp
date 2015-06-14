@@ -236,7 +236,7 @@ static void make_tcp_synack_from_syn() {
     EtherCard::packetSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4+ETH_HEADER_LEN);
 }
 
-static uint16_t get_tcp_data_len() {
+uint16_t EtherCard::getTcpPayloadLength() {
     int16_t i = (((int16_t)gPB[IP_TOTLEN_H_P])<<8)|gPB[IP_TOTLEN_L_P];
     i -= IP_HEADER_LEN;
     i -= (gPB[TCP_HEADER_LEN_P]>>4)*4; // generate len in bytes;
@@ -277,24 +277,28 @@ void EtherCard::httpServerReply (uint16_t dlen) {
     make_tcp_ack_with_data_noflags(dlen); // send data
 }
 
-static void get_seq() { //get the sequence number of packets after an ack from GET
-    SEQ =(((unsigned long)gPB[TCP_SEQ_H_P]*256+gPB[TCP_SEQ_H_P+1])*256+gPB[TCP_SEQ_H_P+2])*256+gPB[TCP_SEQ_H_P+3];
+static uint32_t getBigEndianLong(byte offs) { //get the sequence number of packets after an ack from GET
+    return (((unsigned long)gPB[offs]*256+gPB[offs+1])*256+gPB[offs+2])*256+gPB[offs+3];
 } //thanks to mstuetz for the missing (unsigned long)
 
-static void set_seq() { //set the correct sequence number and calculate the next with the lenght of current packet
-    gPB[TCP_SEQ_H_P]= (SEQ & 0xff000000 ) >> 24;
-    gPB[TCP_SEQ_H_P+1]= (SEQ & 0xff0000 ) >> 16;
-    gPB[TCP_SEQ_H_P+2]= (SEQ & 0xff00 ) >> 8;
-    gPB[TCP_SEQ_H_P+3]= (SEQ & 0xff );
+static void setSequenceNumber(uint32_t seq) { 
+    gPB[TCP_SEQ_H_P]   = (seq & 0xff000000 ) >> 24;
+    gPB[TCP_SEQ_H_P+1] = (seq & 0xff0000 ) >> 16;
+    gPB[TCP_SEQ_H_P+2] = (seq & 0xff00 ) >> 8;
+    gPB[TCP_SEQ_H_P+3] = (seq & 0xff );
+}
+
+uint32_t EtherCard::getSequenceNumber() {
+    return getBigEndianLong(TCP_SEQ_H_P);
 }
 
 void EtherCard::httpServerReplyAck () {
-    make_tcp_ack_from_any(info_data_len,0); // send ack for http get
-    get_seq(); //get the sequence number of packets after an ack from GET
+    make_tcp_ack_from_any(getTcpPayloadLength(),0); // send ack for http request
+    SEQ = getSequenceNumber(); //get the sequence number of packets after an ack from GET
 }
 
 void EtherCard::httpServerReply_with_flags (uint16_t dlen , uint8_t flags) {
-    set_seq();
+    setSequenceNumber(SEQ);
     gPB[TCP_FLAGS_P] = flags; // final packet
     make_tcp_ack_with_data_noflags(dlen); // send data
     SEQ=SEQ+dlen;
@@ -644,7 +648,7 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
             make_tcp_synack_from_syn(); //send SYN+ACK
         else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V)
         {   //This is an acknowledgement to our SYN+ACK so let's start processing that payload
-            info_data_len = get_tcp_data_len();
+            info_data_len = getTcpPayloadLength();
             if (info_data_len > 0)
             {   //Got some data
                 pos = TCP_DATA_START; // TCP_DATA_START is a formula
@@ -756,7 +760,7 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
             tcp_client_state = 5;
             return 0;
         }
-        len = get_tcp_data_len();
+        len = getTcpPayloadLength();
         if (tcp_client_state==2)
         {   //Waiting for SYN-ACK
             if ((gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) && (gPB[TCP_FLAGS_P] &TCP_FLAGS_ACK_V))

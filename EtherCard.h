@@ -627,6 +627,14 @@ public:
     */
     static void makeNetStr(char *resultstr,uint8_t *bytestr,uint8_t len,
                            char separator,uint8_t base);
+
+    /**   @brief  Return the sequence number of the current TCP package
+    */
+    static uint32_t getSequenceNumber();
+
+    /**   @brief  Return the payload length of the current Tcp package
+    */
+    static uint16_t getTcpPayloadLength(); 
 };
 
 extern EtherCard ether; //!< Global presentation of EtherCard class
