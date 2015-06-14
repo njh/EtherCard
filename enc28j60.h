@@ -146,6 +146,15 @@ public:
     */
     static uint8_t doBIST(uint8_t csPin = 8);
 
+    /**   @brief  Copies a slice from the current packet to RAM
+    *     @param  dest pointer in RAM where the data is copied to
+    *     @param  maxlength how many bytes to copy; 
+    *     @param  packetOffset where within the packet to start; if less than maxlength bytes are available only the remaining bytes are copied.
+    *     @return <i>uint16_t</i> the number of bytes that have been read
+    *     @note   At the destination at least maxlength+1 bytes should be reserved because the copied content will be 0-terminated.
+    */                   
+    static uint16_t readPacketSlice(char* dest, int16_t maxlength, int16_t packetOffset);
+
     /** @brief  reserves a block of RAM in the memory of the enc chip
      *  @param  size number of bytes to reserve
      *  @return <i>uint16_t</i> start address of the block within the enc memory. 0 if the remaining memory for malloc operation is less than size.   

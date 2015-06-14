@@ -537,7 +537,16 @@ void ENC28J60::packetSend(uint16_t len) {
 
 uint16_t ENC28J60::packetReceive() {
     static uint16_t gNextPacketPtr = RXSTART_INIT;
+    static bool     unreleasedPacket = false;
     uint16_t len = 0;
+
+    if (unreleasedPacket) {
+        if (gNextPacketPtr == 0) 
+            writeReg(ERXRDPT, RXSTOP_INIT);
+        else
+            writeReg(ERXRDPT, gNextPacketPtr - 1);
+    }
+
     if (readRegByte(EPKTCNT) > 0) {
         writeReg(ERDPT, gNextPacketPtr);
 
@@ -558,10 +567,8 @@ uint16_t ENC28J60::packetReceive() {
         else
             readBuf(len, buffer);
         buffer[len] = 0;
-        if (gNextPacketPtr == 0) 
-            writeReg(ERXRDPT, RXSTOP_INIT);
-        else
-            writeReg(ERXRDPT, gNextPacketPtr - 1);
+        unreleasedPacket = true;
+
         writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
     }
     return len;
@@ -747,6 +754,24 @@ uint16_t ENC28J60::enc_malloc(uint16_t size) {
     return 0;
 }
 
-uint16_t ENC28J60::enc_free() {
+uint16_t ENC28J60::enc_freemem() {
     return endRam-ENC_HEAP_START;
+}
+
+uint16_t ENC28J60::readPacketSlice(char* dest, int16_t maxlength, int16_t packetOffset) {
+    uint16_t erxrdpt = readReg(ERXRDPT);
+    int16_t packetLength;
+
+    memcpy_from_enc((char*) &packetLength, (erxrdpt+3)%(RXSTOP_INIT+1), 2);
+    packetLength -= 4; // remove crc
+    
+    int16_t bytesToCopy = packetLength - packetOffset;
+    if (bytesToCopy > maxlength) bytesToCopy = maxlength;
+    if (bytesToCopy <= 0) bytesToCopy = 0;
+
+    int16_t startofSlice = (erxrdpt+7+packetOffset)%(RXSTOP_INIT+1); 
+    memcpy_from_enc(dest, startofSlice, bytesToCopy);
+    dest[bytesToCopy] = 0;
+
+    return bytesToCopy;
 }
