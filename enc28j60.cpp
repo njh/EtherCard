@@ -545,6 +545,7 @@ uint16_t ENC28J60::packetReceive() {
             writeReg(ERXRDPT, RXSTOP_INIT);
         else
             writeReg(ERXRDPT, gNextPacketPtr - 1);
+        unreleasedPacket = false;
     }
 
     if (readRegByte(EPKTCNT) > 0) {
