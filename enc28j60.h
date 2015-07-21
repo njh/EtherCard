@@ -30,6 +30,10 @@
 #define SCRATCH_PAGE_NUM    ((SCRATCH_LIMIT-SCRATCH_START) >> SCRATCH_PAGE_SHIFT)
 #define SCRATCH_MAP_SIZE    (((SCRATCH_PAGE_NUM % 8) == 0) ? (SCRATCH_PAGE_NUM / 8) : (SCRATCH_PAGE_NUM/8+1))
 
+// area in the enc memory that can be used via enc_malloc; by default 0 bytes; decrease SCRATCH_LIMIT in order
+// to use this functionality
+#define ENC_HEAP_START      SCRATCH_LIMIT
+#define ENC_HEAP_END        0x2000
 
 /** This class provide low-level interfacing with the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class ENC28J60 {
@@ -126,7 +130,7 @@ public:
     
     /**   @brief  Disable reception of all messages and go back to default mode
     *     @param  temporary Set true to only disable if temporarily enabled
-    *     @note   This will reduce load on recieved data handling
+    *     @note   This will reduce load on received data handling
     *     @note   In this mode only unicast and broadcast messages will be received
     */
     static void disablePromiscuous(bool temporary = false);
@@ -141,6 +145,43 @@ public:
     *     @return <i>uint8_t</i> 0 on failure
     */
     static uint8_t doBIST(uint8_t csPin = 8);
+
+    /**   @brief  Copies a slice from the current packet to RAM
+    *     @param  dest pointer in RAM where the data is copied to
+    *     @param  maxlength how many bytes to copy; 
+    *     @param  packetOffset where within the packet to start; if less than maxlength bytes are available only the remaining bytes are copied.
+    *     @return <i>uint16_t</i> the number of bytes that have been read
+    *     @note   At the destination at least maxlength+1 bytes should be reserved because the copied content will be 0-terminated.
+    */                   
+    static uint16_t readPacketSlice(char* dest, int16_t maxlength, int16_t packetOffset);
+
+    /** @brief  reserves a block of RAM in the memory of the enc chip
+     *  @param  size number of bytes to reserve
+     *  @return <i>uint16_t</i> start address of the block within the enc memory. 0 if the remaining memory for malloc operation is less than size.   
+     *  @note  There is no enc_free(), i.e., reserved blocks stay reserved for the duration of the program. 
+     *  @note  The total memory available for malloc-operations is determined by ENC_HEAP_END-ENC_HEAP_START, defined in enc28j60.h; by default this is 0, i.e., you have to change these values in order to use enc_malloc().  
+     */
+    static uint16_t enc_malloc(uint16_t size);
+
+    /** @brief  returns the amount of memory within the enc28j60 chip that is still available for malloc.
+     *  @return <i>uint16_t</i> the amount of memory in bytes.
+     */
+    static uint16_t enc_freemem();
+
+    /** @brief copies a block of data from SRAM to the enc memory
+        @param dest destination address within enc memory
+        @param source source pointer to a block of SRAM in the arduino
+        @param num number of bytes to copy
+        @note  There is no sanity check. Handle with care 
+     */
+    static void memcpy_to_enc(uint16_t dest, void* source, int16_t num);
+
+     /** @brief copies a block of data from the enc memory to SRAM
+        @param dest destination address within SRAM
+        @param source source address within enc memory
+        @param num number of bytes to copy
+     */
+    static void memcpy_from_enc(void* dest, uint16_t source, int16_t num);
 };
 
 typedef ENC28J60 Ethernet; //!< Define alias Ethernet for ENC28J60
