@@ -1,7 +1,6 @@
-[![Build Status](https://travis-ci.org/jcw/ethercard.svg)](https://travis-ci.org/jcw/ethercard)
-__________
-
 # EtherCard
+
+[![Travis Status][S]][T]
 
 **EtherCard** is a driver for the ENC28J60 chip, compatible with Arduino IDE.
 Adapted and extended from code written by Guido Socher and Pascal Stang.
@@ -47,3 +46,5 @@ The issue tracker has been moved back to [Github][I] again.
 
 [F]: http://jeenet.net/projects/cafe/boards
 [I]: https://github.com/jcw/ethercard/issues
+[S]: https://travis-ci.org/jcw/ethercard.svg
+[T]: https://travis-ci.org/jcw/ethercard
