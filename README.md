@@ -44,7 +44,7 @@ See the comments in the example sketches for details about how to try them out.
 For questions and help, see the [forums][F] (at JeeLabs.net).
 The issue tracker has been moved back to [Github][I] again.
 
-[F]: http://jeenet.net/projects/cafe/boards
+[F]: http://jeelabs.net/projects/cafe/boards
 [I]: https://github.com/jcw/ethercard/issues
 [S]: https://travis-ci.org/jcw/ethercard.svg
 [T]: https://travis-ci.org/jcw/ethercard
