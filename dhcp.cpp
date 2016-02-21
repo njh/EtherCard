@@ -189,8 +189,8 @@ static void send_dhcp_message(uint8_t *requestip) {
     addBytes(6, EtherCard::mymac);
 
     addToBuf(12);     // Host name Option
-    addToBuf(10);
-    addBytes(10, (byte*) hostname);
+    addToBuf(DHCP_HOSTNAME_MAX_LEN);
+    addBytes(DHCP_HOSTNAME_MAX_LEN, (byte*) hostname);
 
     if (requestip != NULL) {
         addToBuf(50); // Request IP address
