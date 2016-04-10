@@ -19,6 +19,7 @@ env:
     - PLATFORMIO_CI_SRC=examples/multipacketSD/multipacketSD.ino
     - PLATFORMIO_CI_SRC=examples/nanether/nanether.ino
     - PLATFORMIO_CI_SRC=examples/noipClient/noipClient.ino
+    - PLATFORMIO_CI_SRC=examples/notifyMyAndroid/notifyMyAndroid.ino
     - PLATFORMIO_CI_SRC=examples/pings/pings.ino
     - PLATFORMIO_CI_SRC=examples/rbbb_server/rbbb_server.ino
     - PLATFORMIO_CI_SRC=examples/SSDP/SSDP.ino
