@@ -305,7 +305,7 @@ void loop (){
 #if SERIAL
       Serial.println(" -> ack");
 #endif
-      rf12_sendStart(RF12_ACK_REPLY, 0, 0);
+      rf12_sendStart(RF12_ACK_REPLY);
     }
     
     forwardToUDP();
@@ -313,7 +313,8 @@ void loop (){
   
   // send a data packet out if requested
   if (outCount >= 0 && rf12_canSend()) {
-    rf12_sendStart(outDest, outBuf, outCount, 1);
+    rf12_sendStart(outDest, outBuf, outCount);
+    rf12_sendWait(1);
     outCount = -1;
   }
 }
