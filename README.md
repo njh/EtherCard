@@ -48,3 +48,13 @@ The issue tracker has been moved back to [Github][I] again.
 [I]: https://github.com/jcw/ethercard/issues
 [S]: https://travis-ci.org/jcw/ethercard.svg
 [T]: https://travis-ci.org/jcw/ethercard
+
+## Related Work
+
+There are other Arduino libraries for the ENC28J60 that are worth mentioning:
+
+* [UIPEthernet](https://github.com/ntruchsess/arduino_uip) (Drop in replacement for stock Arduino Ethernet library)
+* [EtherShield](https://github.com/thiseldo/EtherShield) (no longer maintained, predecessor to Ethercard)
+* [ETHER_28J60](https://github.com/muanis/arduino-projects/tree/master/libraries/ETHER_28J60) (no longer maintained, very low footprint and simple)
+
+Read more about the differences at [this blog post](http://www.tweaking4all.com/hardware/arduino/arduino-enc28j60-ethernet/).
