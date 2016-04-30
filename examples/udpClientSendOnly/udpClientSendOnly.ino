@@ -4,7 +4,7 @@ static byte mymac[] = { 0x1A,0x2B,0x3C,0x4D,0x5E,0x6F };
 byte Ethernet::buffer[700];
 static uint32_t timer;
 
-char website[] PROGMEM = "server.example.net";
+const char website[] PROGMEM = "server.example.net";
 const int dstPort PROGMEM = 1234;
 
 const int srcPort PROGMEM = 4321;
