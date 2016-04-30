@@ -8,6 +8,8 @@
 //  3. Run the sketch!
 //
 //  WARNING: Don't send more than 1 tweet per minute!
+//  WARNING: This example uses insecure HTTP and not HTTPS.
+//  The API key will be sent over the wire in plain text.
 //  NOTE: Twitter rejects tweets with identical content as dupes (returns 403)
 
 #include <EtherCard.h>

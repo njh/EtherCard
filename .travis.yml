@@ -19,14 +19,16 @@ env:
     - PLATFORMIO_CI_SRC=examples/multipacketSD/multipacketSD.ino
     - PLATFORMIO_CI_SRC=examples/nanether/nanether.ino
     - PLATFORMIO_CI_SRC=examples/noipClient/noipClient.ino
+    - PLATFORMIO_CI_SRC=examples/notifyMyAndroid/notifyMyAndroid.ino
     - PLATFORMIO_CI_SRC=examples/pings/pings.ino
     - PLATFORMIO_CI_SRC=examples/rbbb_server/rbbb_server.ino
     - PLATFORMIO_CI_SRC=examples/SSDP/SSDP.ino
     - PLATFORMIO_CI_SRC=examples/stashTest/stashTest.ino
     - PLATFORMIO_CI_SRC=examples/testDHCP/testDHCP.ino
+    - PLATFORMIO_CI_SRC=examples/thingspeak/thingspeak.ino
     - PLATFORMIO_CI_SRC=examples/twitter/twitter.ino
     - PLATFORMIO_CI_SRC=examples/udpClientSendOnly/udpClientSendOnly.ino
-    - PLATFORMIO_CI_SRC=examples/udpListener/udpListener.ino
+#    - PLATFORMIO_CI_SRC=examples/udpListener/udpListener.ino
     - PLATFORMIO_CI_SRC=examples/webClient/webClient.ino
     - PLATFORMIO_CI_SRC=examples/xively/xively.ino
 

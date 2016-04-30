@@ -31,7 +31,7 @@ void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[4], uint16_t src_port, co
   
   
   Serial.print("src_port: ");
-  ether.printIp("",src_ip);
+  ether.printIp(src_ip);
   Serial.println("data: ");
   Serial.println(data);
 }
