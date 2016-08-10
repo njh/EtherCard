@@ -99,7 +99,7 @@ typedef struct {
 #define DHCP_INFINITE_LEASE  0xffffffff
 
 static byte dhcpState = DHCP_STATE_INIT;
-static char hostname[DHCP_HOSTNAME_MAX_LEN] = "Arduino-00";
+static char hostname[DHCP_HOSTNAME_MAX_LEN] = "Arduino-ENC28j60-00";   // Last two characters will be filled by last 2 MAC digits ;
 static uint32_t currentXid;
 static uint32_t stateTimer;
 static uint32_t leaseStart;
@@ -329,8 +329,8 @@ bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
     }
     else {
         // Set a unique hostname, use Arduino-?? with last octet of mac address
-        hostname[8] = toAsciiHex(mymac[5] >> 4);
-        hostname[9] = toAsciiHex(mymac[5]);
+        hostname[strlen(hostname) - 2] = toAsciiHex(mymac[5] >> 4);   // Appends mac to last 2 digits of the hostname
+        hostname[strlen(hostname) - 1] = toAsciiHex(mymac[5]);   // Even if it's smaller than the maximum <thus, strlen(hostname)>
     }
 
     dhcpState = DHCP_STATE_INIT;
