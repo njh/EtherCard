@@ -168,7 +168,7 @@ public:
     //   offs = 63;
     // }
 
-    static void prepare (PGM_P fmt, ...);
+    static void prepare (const char* fmt PROGMEM, ...);
     static uint16_t length ();
     static void extract (uint16_t offset, uint16_t count, void* buf);
     static void cleanup ();
@@ -181,7 +181,7 @@ public:
 *
 *   This class provides formatted printing into memory. Users can use it to write into send buffers.
 *
-*   Nota: PGM_P: is a pointer to a string in program space (defined in the source code)
+*   Nota: PGM_P: is a pointer to a string in program space (defined in the source code, updated to PROGMEM)
 *
 *   # Format string
 *
@@ -237,7 +237,7 @@ public:
     *   @param  fmt Format string (see Class description)
     *   @param  ... parameters for format string
     */
-    void emit_p (PGM_P fmt, ...);
+    void emit_p (const char* fmt PROGMEM, ...);
 
     /** @brief  Add data to buffer from main memory
     *   @param  s Pointer to data
@@ -249,7 +249,7 @@ public:
     *   @param  p Program space string pointer
     *   @param  n Number of characters to copy
     */
-    void emit_raw_p (PGM_P p, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
+    void emit_raw_p (const char* p PROGMEM, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
 
     /** @brief  Get pointer to start of buffer
     *   @return <i>uint8_t*</i> Pointer to start of buffer
