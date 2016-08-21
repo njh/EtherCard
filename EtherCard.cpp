@@ -154,7 +154,7 @@ static char* wtoa (uint16_t value, char* ptr) {
 
 // write information about the fmt string and the arguments into special page/block 0    
 // block 0 is initially marked as allocated and never returned by allocateBlock 
-void Stash::prepare (PGM_P fmt, ...) {
+void Stash::prepare (const char* fmt PROGMEM, ...) {
     Stash::load(WRITEBUF, 0);
     uint16_t* segs = Stash::bufs[WRITEBUF].words;
     *segs++ = strlen_P(fmt);
@@ -187,7 +187,7 @@ void Stash::prepare (PGM_P fmt, ...) {
                 arglen = strlen((const char*) argval);
                 break;
             case 'F':
-                arglen = strlen_P((PGM_P) argval);
+                arglen = strlen_P((const char*) argval);
                 break;
             case 'E': {
                 byte* s = (byte*) argval;
@@ -223,9 +223,9 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
     Stash::load(WRITEBUF, 0);
     uint16_t* segs = Stash::bufs[WRITEBUF].words;
 #ifdef __AVR__
-    PGM_P fmt = (PGM_P) *++segs;
+    const char* fmt PROGMEM = (const char*) *++segs;
 #else
-    PGM_P fmt = (PGM_P)((segs[2] << 16) | segs[1]);
+    const char* fmt PROGMEM = (const char*)((segs[2] << 16) | segs[1]);
     segs += 2;
 #endif
     Stash stash;
@@ -291,9 +291,9 @@ void Stash::cleanup () {
     Stash::load(WRITEBUF, 0);
     uint16_t* segs = Stash::bufs[WRITEBUF].words;
 #ifdef __AVR__
-    PGM_P fmt = (PGM_P) *++segs;
+    const char* fmt PROGMEM = (const char*) *++segs;
 #else
-    PGM_P fmt = (PGM_P)((segs[2] << 16) | segs[1]);
+    const char* fmt PROGMEM = (const char*)((segs[2] << 16) | segs[1]);
     segs += 2;
 #endif
     for (;;) {
@@ -315,7 +315,7 @@ void Stash::cleanup () {
     }
 }
 
-void BufferFiller::emit_p(PGM_P fmt, ...) {
+void BufferFiller::emit_p(const char* fmt PROGMEM, ...) {
     va_list ap;
     va_start(ap, fmt);
     for (;;) {
@@ -364,7 +364,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             strcpy((char*) ptr, va_arg(ap, const char*));
             break;
         case 'F': {
-            PGM_P s = va_arg(ap, PGM_P);
+            const char* s PROGMEM = va_arg(ap, const char*);
             char d;
             while ((d = pgm_read_byte(s++)) != 0)
                 *ptr++ = d;

@@ -274,6 +274,6 @@ void checkNoIPResponse() {
     }
 }
 
-void SerialPrint_P(PGM_P str) {
+void SerialPrint_P(const char* str PROGMEM) {
     for (uint8_t c; (c = pgm_read_byte(str)); str++) Serial.write(c);
 }
