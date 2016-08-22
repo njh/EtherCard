@@ -188,9 +188,12 @@ static void send_dhcp_message(uint8_t *requestip) {
     addToBuf(0x01);   // Ethernet
     addBytes(6, EtherCard::mymac);
 
-    addToBuf(12);     // Host name Option
-    addToBuf(DHCP_HOSTNAME_MAX_LEN);
-    addBytes(DHCP_HOSTNAME_MAX_LEN, (byte*) hostname);
+    if (hostname[0]) {
+        byte hostnamelen = strlen(hostname);
+        addToBuf(12);     // Host name Option
+        addToBuf(hostnamelen);
+        addBytes(hostnamelen, (byte*) hostname);
+    }
 
     if (requestip != NULL) {
         addToBuf(50); // Request IP address
