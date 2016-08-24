@@ -13,6 +13,11 @@
 #ifndef NET_H
 #define NET_H
 
+// ******* SERVICE PORTS *******
+#define HTTP_PORT 80
+#define DNS_PORT  53
+#define NTP_PORT  123
+
 // ******* ETH *******
 #define ETH_HEADER_LEN    14
 #define ETH_LEN 6
