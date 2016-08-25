@@ -30,7 +30,7 @@ void setup() {
     file.setSSpin(4);
   res=file.initFAT(0); 
   if (res==NO_ERROR)    Serial.println("SD started");
-  ether.begin(sizeof Ethernet::buffer, mymac , 10); //53 on mega ethernet shield 10 on others
+  ether.begin(sizeof Ethernet::buffer, mymac , SS); //SS = 53 on mega ethernet shield 10 on others
   ether.staticSetup(myip, gwip);
   Serial.println("ETH started");
 }  

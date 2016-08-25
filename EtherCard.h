@@ -87,7 +87,7 @@
 /** This type definition defines the structure of a UDP server event handler callback funtion */
 typedef void (*UdpServerCallback)(
     uint16_t dest_port,    ///< Port the packet was sent to
-    uint8_t src_ip[4],    ///< IP address of the sender
+    uint8_t src_ip[IP_LEN],    ///< IP address of the sender
     uint16_t src_port,    ///< Port the packet was sent from
     const char *data,   ///< UDP payload data
     uint16_t len);        ///< Length of the payload data
@@ -272,14 +272,14 @@ public:
 */
 class EtherCard : public Ethernet {
 public:
-    static uint8_t mymac[6];  ///< MAC address
-    static uint8_t myip[4];   ///< IP address
-    static uint8_t netmask[4]; ///< Netmask
-    static uint8_t broadcastip[4]; ///< Subnet broadcast address
-    static uint8_t gwip[4];   ///< Gateway
-    static uint8_t dhcpip[4]; ///< DHCP server IP address
-    static uint8_t dnsip[4];  ///< DNS server IP address
-    static uint8_t hisip[4];  ///< DNS lookup result
+    static uint8_t mymac[ETH_LEN];  ///< MAC address
+    static uint8_t myip[IP_LEN];    ///< IP address
+    static uint8_t netmask[IP_LEN]; ///< Netmask
+    static uint8_t broadcastip[IP_LEN]; ///< Subnet broadcast address
+    static uint8_t gwip[IP_LEN];   ///< Gateway
+    static uint8_t dhcpip[IP_LEN]; ///< DHCP server IP address
+    static uint8_t dnsip[IP_LEN];  ///< DNS server IP address
+    static uint8_t hisip[IP_LEN];  ///< DNS lookup result
     static uint16_t hisport;  ///< TCP port to connect to (default 80)
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received

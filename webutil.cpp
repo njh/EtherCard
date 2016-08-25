@@ -7,11 +7,11 @@
 #include "EtherCard.h"
 
 void EtherCard::copyIp (uint8_t *dst, const uint8_t *src) {
-    memcpy(dst, src, 4);
+    memcpy(dst, src, IP_LEN);
 }
 
 void EtherCard::copyMac (uint8_t *dst, const uint8_t *src) {
-    memcpy(dst, src, 6);
+    memcpy(dst, src, ETH_LEN);
 }
 
 void EtherCard::printIp (const char* msg, const uint8_t *buf) {
@@ -27,7 +27,7 @@ void EtherCard::printIp (const __FlashStringHelper *ifsh, const uint8_t *buf) {
 }
 
 void EtherCard::printIp (const uint8_t *buf) {
-    for (uint8_t i = 0; i < 4; ++i) {
+    for (uint8_t i = 0; i < IP_LEN; ++i) {
         Serial.print( buf[i], DEC );
         if (i < 3)
             Serial.print('.');
@@ -42,18 +42,18 @@ void EtherCard::printIp (const uint8_t *buf) {
 // I.e the value it is declated with: strbuf[5]-> maxlen=5
 uint8_t EtherCard::findKeyVal (const char *str,char *strbuf, uint8_t maxlen,const char *key)
 {
-    uint8_t found=0;
+    byte found = false;
     uint8_t i=0;
     const char *kp;
     kp=key;
-    while(*str &&  *str!=' ' && *str!='\n' && found==0) {
+    while(*str &&  *str!=' ' && *str!='\n' && !found) {
         if (*str == *kp) {
             kp++;
             if (*kp == '\0') {
                 str++;
                 kp=key;
                 if (*str == '=') {
-                    found=1;
+                    found = true;
                 }
             }
         } else {
@@ -61,7 +61,7 @@ uint8_t EtherCard::findKeyVal (const char *str,char *strbuf, uint8_t maxlen,cons
         }
         str++;
     }
-    if (found==1) {
+    if (found) {
         // copy the value to a buffer and terminate it with '\0'
         while(*str &&  *str!=' ' && *str!='\n' && *str!='&' && i<maxlen-1) {
             *strbuf=*str;
@@ -78,13 +78,13 @@ uint8_t EtherCard::findKeyVal (const char *str,char *strbuf, uint8_t maxlen,cons
 // convert a single hex digit character to its integer value
 unsigned char h2int(char c)
 {
-    if (c >= '0' && c <='9') {
+    if (isdigit(c)) {
         return((unsigned char)c - '0');
     }
-    if (c >= 'a' && c <='f') {
+    else if (islower(c)) {
         return((unsigned char)c - 'a' + 10);
     }
-    if (c >= 'A' && c <='F') {
+    else if (isupper(c)) {
         return((unsigned char)c - 'A' + 10);
     }
     return(0);
@@ -154,12 +154,12 @@ uint8_t EtherCard::parseIp (uint8_t *bytestr,char *str)
     char *sptr;
     uint8_t i=0;
     sptr=NULL;
-    while(i<4) {
+    while(i<IP_LEN) {
         bytestr[i]=0;
         i++;
     }
     i=0;
-    while(*str && i<4) {
+    while(*str && i<IP_LEN) {
         // if a number then start
         if (sptr==NULL && isdigit(*str)) {
             sptr=str;
@@ -173,14 +173,14 @@ uint8_t EtherCard::parseIp (uint8_t *bytestr,char *str)
         str++;
     }
     *str ='\0';
-    if (i==3) {
+    if (i==IP_LEN-1) {
         bytestr[i]=(atoi(sptr)&0xff);
         return(0);
     }
     return(1);
 }
 
-// take a byte string and convert it to a human readable display string  (base is 10 for ip and 16 for mac addr), len is 4 for IP addr and 6 for mac.
+// take a byte string and convert it to a human readable display string  (base is 10 for ip and 16 for mac addr), len is 4[IP_LEN] for IP addr and 6[ETHER_LEN] for mac.
 void EtherCard::makeNetStr (char *resultstr,uint8_t *bytestr,uint8_t len,char separator,uint8_t base)
 {
     uint8_t i=0;

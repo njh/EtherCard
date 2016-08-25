@@ -15,11 +15,12 @@
 
 #define WRITEBUF  0
 #define READBUF   1
+#define BUFCOUNT  2
 
 //#define FLOATEMIT // uncomment line to enable $T in emit_P for float emitting
 
 byte Stash::map[SCRATCH_MAP_SIZE];
-Stash::Block Stash::bufs[2];
+Stash::Block Stash::bufs[BUFCOUNT];
 
 uint8_t Stash::allocBlock () {
     for (uint8_t i = 0; i < sizeof map; ++i)
@@ -388,15 +389,15 @@ void BufferFiller::emit_p(const char* fmt PROGMEM, ...) {
 
 EtherCard ether;
 
-uint8_t EtherCard::mymac[6];  // my MAC address
-uint8_t EtherCard::myip[4];   // my ip address
-uint8_t EtherCard::netmask[4]; // subnet mask
-uint8_t EtherCard::broadcastip[4]; // broadcast address
-uint8_t EtherCard::gwip[4];   // gateway
-uint8_t EtherCard::dhcpip[4]; // dhcp server
-uint8_t EtherCard::dnsip[4];  // dns server
-uint8_t EtherCard::hisip[4];  // ip address of remote host
-uint16_t EtherCard::hisport = 80; // tcp port to browse to
+uint8_t EtherCard::mymac[ETH_LEN];  // my MAC address
+uint8_t EtherCard::myip[IP_LEN];   // my ip address
+uint8_t EtherCard::netmask[IP_LEN]; // subnet mask
+uint8_t EtherCard::broadcastip[IP_LEN]; // broadcast address
+uint8_t EtherCard::gwip[IP_LEN];   // gateway
+uint8_t EtherCard::dhcpip[IP_LEN]; // dhcp server
+uint8_t EtherCard::dnsip[IP_LEN];  // dns server
+uint8_t EtherCard::hisip[IP_LEN];  // ip address of remote host
+uint16_t EtherCard::hisport = HTTP_PORT; // tcp port to browse to
 bool EtherCard::using_dhcp = false;
 bool EtherCard::persist_tcp_connection = false;
 uint16_t EtherCard::delaycnt = 0; //request gateway ARP lookup

@@ -78,7 +78,7 @@ To send a UDP packet use EtherCard::sendUdp
 char payload[] = "My UDP message";
 uint8_t nSourcePort = 1234;
 uint8_t nDestinationPort = 5678;
-uint8_t ipDestinationAddress[4];
+uint8_t ipDestinationAddress[IP_LEN];
 ether.parseIp(ipDestinationAddress, "192.168.0.200");
 
 ether.sendUdp(payload, sizeof(payload), nSourcePort, ipDestinationAddress, nDestinationPort);

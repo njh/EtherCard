@@ -53,7 +53,7 @@ const char pageD[] PROGMEM =
 ;
 
 void setup(){
-  ether.begin(sizeof Ethernet::buffer, mymac , 10);// 53 for the mega ethernet shield and  10 for normal ethernet shield
+  ether.begin(sizeof Ethernet::buffer, mymac , SS);// SS = 53 for the mega ethernet shield and  10 for normal ethernet shield
   ether.staticSetup(myip, gwip);
   ENC28J60::disableMulticast(); //disable multicast filter means enable multicast reception
   Serial.begin(115200);
@@ -94,9 +94,9 @@ wait:
   }
 }
 void ssdpresp() { //response to m-search 
-  byte ip_dst[4];
+  byte ip_dst[IP_LEN];
   unsigned int port_dst=Ethernet::buffer[34]*256+Ethernet::buffer[35];//extract source port of request
-  for(  int i=0; i<4;i++) { //extract source IP of request
+  for(  int i=0; i<IP_LEN;i++) { //extract source IP of request
     ip_dst[i]=Ethernet::buffer[i+26];
   }
   int udppos = UDP_DATA_P;
@@ -117,7 +117,7 @@ addip(udppos);
 
 void addip(int udppos) { // add current ip to the request and send it
   int adr;
-  for(int i=0;i<4;i++) { // extract the current ip of arduino
+  for(int i=0;i<IP_LEN;i++) { // extract the current ip of arduino
     adr = ether.myip[i]/100;
     if (adr)  {
       Ethernet::buffer[udppos]=adr+48;
