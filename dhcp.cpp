@@ -188,7 +188,8 @@ static void send_dhcp_message(uint8_t *requestip) {
     bufPtr = gPB + UDP_DATA_P + sizeof( DHCPdata );
     // DHCP magic cookie
     static const byte cookie[] PROGMEM = { 0x63,0x82,0x53,0x63 };
-    addBytes(sizeof cookie, cookie);
+    for (byte i = 0; i < sizeof(cookie); i++)
+        addToBuf(pgm_read_byte(&cookie[i]));
     addToBuf(DHCP_OPT_MESSAGE_TYPE); // DHCP_STATE_SELECTING, DHCP_STATE_REQUESTING
     addToBuf(1);   // Length
     addToBuf(dhcpState == DHCP_STATE_INIT ? DHCP_DISCOVER : DHCP_REQUEST);
