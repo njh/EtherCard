@@ -13,8 +13,14 @@
 #ifndef NET_H
 #define NET_H
 
+// ******* SERVICE PORTS *******
+#define HTTP_PORT 80
+#define DNS_PORT  53
+#define NTP_PORT  123
+
 // ******* ETH *******
 #define ETH_HEADER_LEN    14
+#define ETH_LEN 6
 // values of certain bytes:
 #define ETHTYPE_ARP_H_V 0x08
 #define ETHTYPE_ARP_L_V 0x06
@@ -52,6 +58,7 @@
 
 // ******* IP *******
 #define IP_HEADER_LEN    20
+#define IP_LEN 4
 // ip.src
 #define IP_SRC_P 0x1a
 #define IP_DST_P 0x1e

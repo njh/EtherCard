@@ -1,0 +1,45 @@
+language: python
+python:
+    - "2.7"
+
+# Cache PlatformIO packages using Travis CI container-based infrastructure
+sudo: false
+cache:
+    directories:
+        - "~/.platformio"
+
+env:
+    - PLATFORMIO_CI_SRC=examples/backSoon/backSoon.ino
+    - PLATFORMIO_CI_SRC=examples/etherNode/etherNode.ino
+    - PLATFORMIO_CI_SRC=examples/getDHCPandDNS/getDHCPandDNS.ino
+    - PLATFORMIO_CI_SRC=examples/getStaticIP/getStaticIP.ino
+    - PLATFORMIO_CI_SRC=examples/getViaDNS/getViaDNS.ino
+    - PLATFORMIO_CI_SRC=examples/JeeUdp/JeeUdp.ino
+    - PLATFORMIO_CI_SRC=examples/multipacket/multipacket.ino
+    - PLATFORMIO_CI_SRC=examples/multipacketSD/multipacketSD.ino
+    - PLATFORMIO_CI_SRC=examples/nanether/nanether.ino
+    - PLATFORMIO_CI_SRC=examples/noipClient/noipClient.ino
+    - PLATFORMIO_CI_SRC=examples/notifyMyAndroid/notifyMyAndroid.ino
+    - PLATFORMIO_CI_SRC=examples/pings/pings.ino
+    - PLATFORMIO_CI_SRC=examples/rbbb_server/rbbb_server.ino
+    - PLATFORMIO_CI_SRC=examples/SSDP/SSDP.ino
+    - PLATFORMIO_CI_SRC=examples/stashTest/stashTest.ino
+    - PLATFORMIO_CI_SRC=examples/testDHCP/testDHCP.ino
+    - PLATFORMIO_CI_SRC=examples/thingspeak/thingspeak.ino
+    - PLATFORMIO_CI_SRC=examples/twitter/twitter.ino
+    - PLATFORMIO_CI_SRC=examples/udpClientSendOnly/udpClientSendOnly.ino
+#    - PLATFORMIO_CI_SRC=examples/udpListener/udpListener.ino
+    - PLATFORMIO_CI_SRC=examples/webClient/webClient.ino
+    - PLATFORMIO_CI_SRC=examples/xively/xively.ino
+
+install:
+    - pip install -U platformio
+
+    - wget https://github.com/jcw/jeelib/archive/master.zip -O /tmp/jeelib.zip
+    - unzip /tmp/jeelib.zip -d /tmp
+
+    - wget https://github.com/Rodot/Gamebuino/archive/master.zip  -O /tmp/gamebuino.zip
+    - unzip /tmp/gamebuino.zip -d /tmp
+
+script:
+    - platformio ci --lib="." --lib="/tmp/jeelib-master" --lib="/tmp/Gamebuino-master/libraries/tinyFAT" --board=uno --board=megaatmega2560

@@ -18,6 +18,7 @@
 //   SI  - Pin 11
 //   CS  - Pin  8
 //
+/** @file */ 
 
 #ifndef EtherCard_h
 #define EtherCard_h
@@ -39,10 +40,54 @@
 #include "enc28j60.h"
 #include "net.h"
 
+/** Enable DHCP.
+*   Setting this to zero disables the use of DHCP; if a program uses DHCP it will
+*   still compile but the program will not work. Saves about 60 bytes SRAM and
+*   1550 bytes flash.
+*/
+#define ETHERCARD_DHCP 1
+
+/** Enable client connections.
+* Setting this to zero means that the program cannot issue TCP client requests
+* anymore. Compilation will still work but the request will never be
+* issued. Saves 4 bytes SRAM and 550 byte flash.
+*/
+#define ETHERCARD_TCPCLIENT 1
+
+/** Enable TCP server functionality. 
+*   Setting this to zero means that the program will not accept TCP client
+*   requests. Saves 2 bytes SRAM and 250 bytes flash.
+*/
+#define ETHERCARD_TCPSERVER 1
+
+/** Enable UDP server functionality. 
+*   If zero UDP server is disabled. It is
+*   still possible to register callbacks but these will never be called. Saves
+*   about 40 bytes SRAM and 200 bytes flash. If building with -flto this does not
+*   seem to save anything; maybe the linker is then smart enough to optimize the
+*   call away.
+*/
+#define ETHERCARD_UDPSERVER 1
+
+/** Enable automatic reply to pings.
+*   Setting to zero means that the program will not automatically answer to
+*   PINGs anymore. Also the callback that can be registered to answer incoming
+*   pings will not be called. Saves 2 bytes SRAM and 230 bytes flash.
+*/
+#define ETHERCARD_ICMP 1
+
+/** Enable use of stash.
+*   Setting this to zero means that the stash mechanism cannot be used. Again
+*   compilation will still work but the program may behave very unexpectedly.
+*   Saves 30 bytes SRAM and 80 bytes flash.
+*/
+#define ETHERCARD_STASH 1
+
+
 /** This type definition defines the structure of a UDP server event handler callback funtion */
 typedef void (*UdpServerCallback)(
     uint16_t dest_port,    ///< Port the packet was sent to
-    uint8_t src_ip[4],    ///< IP address of the sender
+    uint8_t src_ip[IP_LEN],    ///< IP address of the sender
     uint16_t src_port,    ///< Port the packet was sent from
     const char *data,   ///< UDP payload data
     uint16_t len);        ///< Length of the payload data
@@ -71,10 +116,10 @@ class Stash : public /*Stream*/ Print, private StashHeader {
             uint8_t bytes[64];
             uint16_t words[32];
             struct {
-                StashHeader head;
+                StashHeader head; // StashHeader is only stored in first block 
                 uint8_t filler[59];
-                uint8_t tail;
-                uint8_t next;
+                uint8_t tail;     // only meaningful if bnum==last; number of bytes in last block 
+                uint8_t next;     // pointer to next block 
             };
         };
         uint8_t bnum;
@@ -85,10 +130,10 @@ class Stash : public /*Stream*/ Print, private StashHeader {
     static uint8_t fetchByte (uint8_t blk, uint8_t off);
 
     static Block bufs[2];
-    static uint8_t map[256/8];
+    static uint8_t map[SCRATCH_MAP_SIZE];
 
 public:
-    static void initMap (uint8_t last);
+    static void initMap (uint8_t last=SCRATCH_PAGE_NUM);
     static void load (uint8_t idx, uint8_t blk);
     static uint8_t freeCount ();
 
@@ -123,7 +168,7 @@ public:
     //   offs = 63;
     // }
 
-    static void prepare (PGM_P fmt, ...);
+    static void prepare (const char* fmt PROGMEM, ...);
     static uint16_t length ();
     static void extract (uint16_t offset, uint16_t count, void* buf);
     static void cleanup ();
@@ -136,7 +181,7 @@ public:
 *
 *   This class provides formatted printing into memory. Users can use it to write into send buffers.
 *
-*   Nota: PGM_P: is a pointer to a string in program space (defined in the source code)
+*   Nota: PGM_P: is a pointer to a string in program space (defined in the source code, updated to PROGMEM)
 *
 *   # Format string
 *
@@ -192,7 +237,7 @@ public:
     *   @param  fmt Format string (see Class description)
     *   @param  ... parameters for format string
     */
-    void emit_p (PGM_P fmt, ...);
+    void emit_p (const char* fmt PROGMEM, ...);
 
     /** @brief  Add data to buffer from main memory
     *   @param  s Pointer to data
@@ -204,7 +249,7 @@ public:
     *   @param  p Program space string pointer
     *   @param  n Number of characters to copy
     */
-    void emit_raw_p (PGM_P p, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
+    void emit_raw_p (const char* p PROGMEM, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
 
     /** @brief  Get pointer to start of buffer
     *   @return <i>uint8_t*</i> Pointer to start of buffer
@@ -227,14 +272,14 @@ public:
 */
 class EtherCard : public Ethernet {
 public:
-    static uint8_t mymac[6];  ///< MAC address
-    static uint8_t myip[4];   ///< IP address
-    static uint8_t netmask[4]; ///< Netmask
-    static uint8_t broadcastip[4]; ///< Subnet broadcast address
-    static uint8_t gwip[4];   ///< Gateway
-    static uint8_t dhcpip[4]; ///< DHCP server IP address
-    static uint8_t dnsip[4];  ///< DNS server IP address
-    static uint8_t hisip[4];  ///< DNS lookup result
+    static uint8_t mymac[ETH_LEN];  ///< MAC address
+    static uint8_t myip[IP_LEN];    ///< IP address
+    static uint8_t netmask[IP_LEN]; ///< Netmask
+    static uint8_t broadcastip[IP_LEN]; ///< Subnet broadcast address
+    static uint8_t gwip[IP_LEN];   ///< Gateway
+    static uint8_t dhcpip[IP_LEN]; ///< DHCP server IP address
+    static uint8_t dnsip[IP_LEN];  ///< DNS server IP address
+    static uint8_t hisip[IP_LEN];  ///< DNS lookup result
     static uint16_t hisport;  ///< TCP port to connect to (default 80)
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
@@ -248,7 +293,7 @@ public:
     *     @return <i>uint8_t</i> Firmware version or zero on failure.
     */
     static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
-                          uint8_t csPin =8);
+                          uint8_t csPin = SS);
 
     /**   @brief  Configure network interface with static IP
     *     @param  my_ip IP address (4 bytes). 0 for no change.
@@ -582,6 +627,14 @@ public:
     */
     static void makeNetStr(char *resultstr,uint8_t *bytestr,uint8_t len,
                            char separator,uint8_t base);
+
+    /**   @brief  Return the sequence number of the current TCP package
+    */
+    static uint32_t getSequenceNumber();
+
+    /**   @brief  Return the payload length of the current Tcp package
+    */
+    static uint16_t getTcpPayloadLength(); 
 };
 
 extern EtherCard ether; //!< Global presentation of EtherCard class

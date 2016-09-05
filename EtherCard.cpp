@@ -13,10 +13,14 @@
 #include <stdarg.h>
 #include <avr/eeprom.h>
 
+#define WRITEBUF  0
+#define READBUF   1
+#define BUFCOUNT  2
+
 //#define FLOATEMIT // uncomment line to enable $T in emit_P for float emitting
 
-byte Stash::map[256/8];
-Stash::Block Stash::bufs[2];
+byte Stash::map[SCRATCH_MAP_SIZE];
+Stash::Block Stash::bufs[BUFCOUNT];
 
 uint8_t Stash::allocBlock () {
     for (uint8_t i = 0; i < sizeof map; ++i)
@@ -34,25 +38,29 @@ void Stash::freeBlock (uint8_t block) {
 }
 
 uint8_t Stash::fetchByte (uint8_t blk, uint8_t off) {
-    return blk == bufs[0].bnum ? bufs[0].bytes[off] :
-           blk == bufs[1].bnum ? bufs[1].bytes[off] :
+    return blk == bufs[WRITEBUF].bnum ? bufs[WRITEBUF].bytes[off] :
+           blk == bufs[READBUF].bnum ? bufs[READBUF].bytes[off] :
            ether.peekin(blk, off);
 }
 
-void Stash::initMap (uint8_t last) {
+
+// block 0 is special since always occupied
+void Stash::initMap (uint8_t last /*=SCRATCH_PAGE_NUM*/) {
+    last = SCRATCH_PAGE_NUM;
     while (--last > 0)
         freeBlock(last);
 }
 
+// load a page/block either into the write or into the readbuffer
 void Stash::load (uint8_t idx, uint8_t blk) {
     if (blk != bufs[idx].bnum) {
-        if (idx == 0) {
+        if (idx == WRITEBUF) {
             ether.copyout(bufs[idx].bnum, bufs[idx].bytes);
-            if (blk == bufs[1].bnum)
-                bufs[1].bnum = 255; // forget read page if same
-        } else if (blk == bufs[0].bnum) {
+            if (blk == bufs[READBUF].bnum)
+                bufs[READBUF].bnum = 255; // forget read page if same
+        } else if (blk == bufs[WRITEBUF].bnum) {
             // special case: read page is same as write buffer
-            memcpy(&bufs[1], &bufs[0], sizeof bufs[0]);
+            memcpy(&bufs[READBUF], &bufs[WRITEBUF], sizeof bufs[0]);
             return;
         }
         bufs[idx].bnum = blk;
@@ -62,38 +70,42 @@ void Stash::load (uint8_t idx, uint8_t blk) {
 
 uint8_t Stash::freeCount () {
     uint8_t count = 0;
-    for (uint8_t i = 0; i < 256/8; ++i)
+    for (uint8_t i = 0; i < sizeof map; ++i)
         for (uint8_t m = 0x80; m != 0; m >>= 1)
             if (map[i] & m)
                 ++count;
     return count;
 }
 
+// create a new stash; make it the active stash; return the first block as a handle 
 uint8_t Stash::create () {
     uint8_t blk = allocBlock();
-    load(0, blk);
-    bufs[0].head.count = 0;
-    bufs[0].head.first = bufs[0].head.last = blk;
-    bufs[0].tail = sizeof (StashHeader);
-    bufs[0].next = 0;
-    return open(blk);
+    load(WRITEBUF, blk);
+    bufs[WRITEBUF].head.count = 0;
+    bufs[WRITEBUF].head.first = bufs[0].head.last = blk;
+    bufs[WRITEBUF].tail = sizeof (StashHeader);
+    bufs[WRITEBUF].next = 0;
+    return open(blk); // you are now the active stash 
 }
 
+// the stashheader part only contains reasonable data if we are the first block
 uint8_t Stash::open (uint8_t blk) {
     curr = blk;
-    offs = sizeof (StashHeader);
-    load(1, curr);
-    memcpy((StashHeader*) this, bufs[1].bytes, sizeof (StashHeader));
+    offs = sizeof (StashHeader); // goto first byte
+    load(READBUF, curr);
+    memcpy((StashHeader*) this, bufs[READBUF].bytes, sizeof (StashHeader));
     return curr;
 }
 
+// save the metadata of current block into the first block
 void Stash::save () {
-    load(0, first);
-    memcpy(bufs[0].bytes, (StashHeader*) this, sizeof (StashHeader));
-    if (bufs[1].bnum == first)
-        load(1, 0); // invalidates original in case it was the same block
+    load(WRITEBUF, first);
+    memcpy(bufs[WRITEBUF].bytes, (StashHeader*) this, sizeof (StashHeader));
+    if (bufs[READBUF].bnum == first)
+        load(READBUF, 0); // invalidates original in case it was the same block
 }
 
+// follow the linked list of blocks and free every block
 void Stash::release () {
     while (first > 0) {
         freeBlock(first);
@@ -102,32 +114,33 @@ void Stash::release () {
 }
 
 void Stash::put (char c) {
-    load(0, last);
-    uint8_t t = bufs[0].tail;
-    bufs[0].bytes[t++] = c;
+    load(WRITEBUF, last);
+    uint8_t t = bufs[WRITEBUF].tail;
+    bufs[WRITEBUF].bytes[t++] = c;
     if (t <= 62)
-        bufs[0].tail = t;
+        bufs[WRITEBUF].tail = t;
     else {
-        bufs[0].next = allocBlock();
-        last = bufs[0].next;
-        load(0, last);
-        bufs[0].tail = bufs[0].next = 0;
+        bufs[WRITEBUF].next = allocBlock();
+        last = bufs[WRITEBUF].next;
+        load(WRITEBUF, last);
+        bufs[WRITEBUF].tail = bufs[WRITEBUF].next = 0;
         ++count;
     }
 }
 
 char Stash::get () {
-    load(1, curr);
-    if (curr == last && offs >= bufs[1].tail)
+    load(READBUF, curr);
+    if (curr == last && offs >= bufs[READBUF].tail)
         return 0;
-    uint8_t b = bufs[1].bytes[offs];
+    uint8_t b = bufs[READBUF].bytes[offs];
     if (++offs >= 63 && curr != last) {
-        curr = bufs[1].next;
+        curr = bufs[READBUF].next;
         offs = 0;
     }
     return b;
 }
 
+// fetchbyte(last, 62) is tail, i.e., number of characters in last block 
 uint16_t Stash::size () {
     return 63 * count + fetchByte(last, 62) - sizeof (StashHeader);
 }
@@ -140,9 +153,11 @@ static char* wtoa (uint16_t value, char* ptr) {
     return ptr;
 }
 
-void Stash::prepare (PGM_P fmt, ...) {
-    Stash::load(0, 0);
-    uint16_t* segs = Stash::bufs[0].words;
+// write information about the fmt string and the arguments into special page/block 0    
+// block 0 is initially marked as allocated and never returned by allocateBlock 
+void Stash::prepare (const char* fmt PROGMEM, ...) {
+    Stash::load(WRITEBUF, 0);
+    uint16_t* segs = Stash::bufs[WRITEBUF].words;
     *segs++ = strlen_P(fmt);
 #ifdef __AVR__
     *segs++ = (uint16_t) fmt;
@@ -173,7 +188,7 @@ void Stash::prepare (PGM_P fmt, ...) {
                 arglen = strlen((const char*) argval);
                 break;
             case 'F':
-                arglen = strlen_P((PGM_P) argval);
+                arglen = strlen_P((const char*) argval);
                 break;
             case 'E': {
                 byte* s = (byte*) argval;
@@ -194,24 +209,24 @@ void Stash::prepare (PGM_P fmt, ...) {
             *segs++ = argval;
             *segs++ = argval >> 16;
 #endif
-            Stash::bufs[0].words[0] += arglen - 2;
+            Stash::bufs[WRITEBUF].words[0] += arglen - 2;
         }
     }
     va_end(ap);
 }
 
 uint16_t Stash::length () {
-    Stash::load(0, 0);
-    return Stash::bufs[0].words[0];
+    Stash::load(WRITEBUF, 0);
+    return Stash::bufs[WRITEBUF].words[0];
 }
 
 void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
-    Stash::load(0, 0);
-    uint16_t* segs = Stash::bufs[0].words;
+    Stash::load(WRITEBUF, 0);
+    uint16_t* segs = Stash::bufs[WRITEBUF].words;
 #ifdef __AVR__
-    PGM_P fmt = (PGM_P) *++segs;
+    const char* fmt PROGMEM = (const char*) *++segs;
 #else
-    PGM_P fmt = (PGM_P)((segs[2] << 16) | segs[1]);
+    const char* fmt PROGMEM = (const char*)((segs[2] << 16) | segs[1]);
     segs += 2;
 #endif
     Stash stash;
@@ -274,12 +289,12 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
 }
 
 void Stash::cleanup () {
-    Stash::load(0, 0);
-    uint16_t* segs = Stash::bufs[0].words;
+    Stash::load(WRITEBUF, 0);
+    uint16_t* segs = Stash::bufs[WRITEBUF].words;
 #ifdef __AVR__
-    PGM_P fmt = (PGM_P) *++segs;
+    const char* fmt PROGMEM = (const char*) *++segs;
 #else
-    PGM_P fmt = (PGM_P)((segs[2] << 16) | segs[1]);
+    const char* fmt PROGMEM = (const char*)((segs[2] << 16) | segs[1]);
     segs += 2;
 #endif
     for (;;) {
@@ -301,7 +316,7 @@ void Stash::cleanup () {
     }
 }
 
-void BufferFiller::emit_p(PGM_P fmt, ...) {
+void BufferFiller::emit_p(const char* fmt PROGMEM, ...) {
     va_list ap;
     va_start(ap, fmt);
     for (;;) {
@@ -350,7 +365,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             strcpy((char*) ptr, va_arg(ap, const char*));
             break;
         case 'F': {
-            PGM_P s = va_arg(ap, PGM_P);
+            const char* s PROGMEM = va_arg(ap, const char*);
             char d;
             while ((d = pgm_read_byte(s++)) != 0)
                 *ptr++ = d;
@@ -374,15 +389,15 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
 
 EtherCard ether;
 
-uint8_t EtherCard::mymac[6];  // my MAC address
-uint8_t EtherCard::myip[4];   // my ip address
-uint8_t EtherCard::netmask[4]; // subnet mask
-uint8_t EtherCard::broadcastip[4]; // broadcast address
-uint8_t EtherCard::gwip[4];   // gateway
-uint8_t EtherCard::dhcpip[4]; // dhcp server
-uint8_t EtherCard::dnsip[4];  // dns server
-uint8_t EtherCard::hisip[4];  // ip address of remote host
-uint16_t EtherCard::hisport = 80; // tcp port to browse to
+uint8_t EtherCard::mymac[ETH_LEN];  // my MAC address
+uint8_t EtherCard::myip[IP_LEN];   // my ip address
+uint8_t EtherCard::netmask[IP_LEN]; // subnet mask
+uint8_t EtherCard::broadcastip[IP_LEN]; // broadcast address
+uint8_t EtherCard::gwip[IP_LEN];   // gateway
+uint8_t EtherCard::dhcpip[IP_LEN]; // dhcp server
+uint8_t EtherCard::dnsip[IP_LEN];  // dns server
+uint8_t EtherCard::hisip[IP_LEN];  // ip address of remote host
+uint16_t EtherCard::hisport = HTTP_PORT; // tcp port to browse to
 bool EtherCard::using_dhcp = false;
 bool EtherCard::persist_tcp_connection = false;
 uint16_t EtherCard::delaycnt = 0; //request gateway ARP lookup
@@ -391,7 +406,9 @@ uint8_t EtherCard::begin (const uint16_t size,
                           const uint8_t* macaddr,
                           uint8_t csPin) {
     using_dhcp = false;
-    Stash::initMap(56);
+#if ETHERCARD_STASH
+    Stash::initMap();
+#endif
     copyMac(mymac, macaddr);
     return initialize(size, mymac, csPin);
 }

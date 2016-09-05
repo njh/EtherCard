@@ -26,6 +26,13 @@
 //#undef PSTR
 //#define PSTR(s) (__extension__({static prog_char c[] PROGMEM = (s); &c[0];}))
 
+#define TCP_STATE_SENDSYN       1
+#define TCP_STATE_SYNSENT       2
+#define TCP_STATE_ESTABLISHED   3
+#define TCP_STATE_NOTUSED       4
+#define TCP_STATE_CLOSING       5
+#define TCP_STATE_CLOSED        6
+
 #define TCPCLIENT_SRC_PORT_H 11 //Source port (MSB) for TCP/IP client connections - hardcode all TCP/IP client connection from ports in range 2816-3071
 static uint8_t tcpclient_src_port_l=1; // Source port (LSB) for tcp/ip client connections - increments on each TCP/IP request
 static uint8_t tcp_fd; // a file descriptor, will be encoded into the port
@@ -42,12 +49,12 @@ static const char *client_urlbuf; // Pointer to c-string path part of HTTP reque
 static const char *client_urlbuf_var; // Pointer to c-string filename part of HTTP request URL
 static const char *client_hoststr; // Pointer to c-string hostname of current HTTP request
 static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost recieves ping respnse (pong))
-static uint8_t destmacaddr[6]; // storing both dns server and destination mac addresses, but at different times because both are never needed at same time.
+static uint8_t destmacaddr[ETH_LEN]; // storing both dns server and destination mac addresses, but at different times because both are never needed at same time.
 static boolean waiting_for_dns_mac = false; //might be better to use bit flags and bitmask operations for these conditions
 static boolean has_dns_mac = false;
 static boolean waiting_for_dest_mac = false;
 static boolean has_dest_mac = false;
-static uint8_t gwmacaddr[6]; // Hardware (MAC) address of gateway router
+static uint8_t gwmacaddr[ETH_LEN]; // Hardware (MAC) address of gateway router
 static uint8_t waitgwmac; // Bitwise flags of gateway router status - see below for states
 //Define gatweay router ARP statuses
 #define WGW_INITIAL_ARP 1 // First request, no answer yet
@@ -99,14 +106,14 @@ static void setMACandIPs (const uint8_t *mac, const uint8_t *dst) {
 }
 
 static uint8_t check_ip_message_is_from(const uint8_t *ip) {
-    return memcmp(gPB + IP_SRC_P, ip, 4) == 0;
+    return memcmp(gPB + IP_SRC_P, ip, IP_LEN) == 0;
 }
 
-static boolean is_lan(const uint8_t source[4], const uint8_t destination[4]) {
+static boolean is_lan(const uint8_t source[IP_LEN], const uint8_t destination[IP_LEN]) {
     if(source[0] == 0 || destination[0] == 0) {
         return false;
     }
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < IP_LEN; i++)
         if((source[i] & EtherCard::netmask[i]) != (destination[i] & EtherCard::netmask[i])) {
             return false;
         }
@@ -116,16 +123,16 @@ static boolean is_lan(const uint8_t source[4], const uint8_t destination[4]) {
 static uint8_t eth_type_is_arp_and_my_ip(uint16_t len) {
     return len >= 41 && gPB[ETH_TYPE_H_P] == ETHTYPE_ARP_H_V &&
            gPB[ETH_TYPE_L_P] == ETHTYPE_ARP_L_V &&
-           memcmp(gPB + ETH_ARP_DST_IP_P, EtherCard::myip, 4) == 0;
+           memcmp(gPB + ETH_ARP_DST_IP_P, EtherCard::myip, IP_LEN) == 0;
 }
 
 static uint8_t eth_type_is_ip_and_my_ip(uint16_t len) {
     return len >= 42 && gPB[ETH_TYPE_H_P] == ETHTYPE_IP_H_V &&
            gPB[ETH_TYPE_L_P] == ETHTYPE_IP_L_V &&
            gPB[IP_HEADER_LEN_VER_P] == 0x45 &&
-           (memcmp(gPB + IP_DST_P, EtherCard::myip, 4) == 0  //not my IP
-            || (memcmp(gPB + IP_DST_P, EtherCard::broadcastip, 4) == 0) //not subnet broadcast
-            || (memcmp(gPB + IP_DST_P, allOnes, 4) == 0)); //not global broadcasts
+           (memcmp(gPB + IP_DST_P, EtherCard::myip, IP_LEN) == 0  //not my IP
+            || (memcmp(gPB + IP_DST_P, EtherCard::broadcastip, IP_LEN) == 0) //not subnet broadcast
+            || (memcmp(gPB + IP_DST_P, allOnes, IP_LEN) == 0)); //not global broadcasts
     //!@todo Handle multicast
 }
 
@@ -236,7 +243,7 @@ static void make_tcp_synack_from_syn() {
     EtherCard::packetSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4+ETH_HEADER_LEN);
 }
 
-static uint16_t get_tcp_data_len() {
+uint16_t EtherCard::getTcpPayloadLength() {
     int16_t i = (((int16_t)gPB[IP_TOTLEN_H_P])<<8)|gPB[IP_TOTLEN_L_P];
     i -= IP_HEADER_LEN;
     i -= (gPB[TCP_HEADER_LEN_P]>>4)*4; // generate len in bytes;
@@ -277,24 +284,28 @@ void EtherCard::httpServerReply (uint16_t dlen) {
     make_tcp_ack_with_data_noflags(dlen); // send data
 }
 
-static void get_seq() { //get the sequence number of packets after an ack from GET
-    SEQ =(((unsigned long)gPB[TCP_SEQ_H_P]*256+gPB[TCP_SEQ_H_P+1])*256+gPB[TCP_SEQ_H_P+2])*256+gPB[TCP_SEQ_H_P+3];
+static uint32_t getBigEndianLong(byte offs) { //get the sequence number of packets after an ack from GET
+    return (((unsigned long)gPB[offs]*256+gPB[offs+1])*256+gPB[offs+2])*256+gPB[offs+3];
 } //thanks to mstuetz for the missing (unsigned long)
 
-static void set_seq() { //set the correct sequence number and calculate the next with the lenght of current packet
-    gPB[TCP_SEQ_H_P]= (SEQ & 0xff000000 ) >> 24;
-    gPB[TCP_SEQ_H_P+1]= (SEQ & 0xff0000 ) >> 16;
-    gPB[TCP_SEQ_H_P+2]= (SEQ & 0xff00 ) >> 8;
-    gPB[TCP_SEQ_H_P+3]= (SEQ & 0xff );
+static void setSequenceNumber(uint32_t seq) { 
+    gPB[TCP_SEQ_H_P]   = (seq & 0xff000000 ) >> 24;
+    gPB[TCP_SEQ_H_P+1] = (seq & 0xff0000 ) >> 16;
+    gPB[TCP_SEQ_H_P+2] = (seq & 0xff00 ) >> 8;
+    gPB[TCP_SEQ_H_P+3] = (seq & 0xff );
+}
+
+uint32_t EtherCard::getSequenceNumber() {
+    return getBigEndianLong(TCP_SEQ_H_P);
 }
 
 void EtherCard::httpServerReplyAck () {
-    make_tcp_ack_from_any(info_data_len,0); // send ack for http get
-    get_seq(); //get the sequence number of packets after an ack from GET
+    make_tcp_ack_from_any(getTcpPayloadLength(),0); // send ack for http request
+    SEQ = getSequenceNumber(); //get the sequence number of packets after an ack from GET
 }
 
 void EtherCard::httpServerReply_with_flags (uint16_t dlen , uint8_t flags) {
-    set_seq();
+    setSequenceNumber(SEQ);
     gPB[TCP_FLAGS_P] = flags; // final packet
     make_tcp_ack_with_data_noflags(dlen); // send data
     SEQ=SEQ+dlen;
@@ -308,7 +319,7 @@ void EtherCard::clientIcmpRequest(const uint8_t *destip) {
     }
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-    memcpy_P(gPB + IP_P,iphdr,9);
+    memcpy_P(gPB + IP_P,iphdr,sizeof iphdr);
     gPB[IP_TOTLEN_L_P] = 0x54;
     gPB[IP_PROTO_P] = IP_PROTO_ICMP_V;
     fill_ip_hdr_checksum();
@@ -333,12 +344,12 @@ void EtherCard::ntpRequest (uint8_t *ntpip,uint8_t srcport) {
     }
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-    memcpy_P(gPB + IP_P,iphdr,9);
+    memcpy_P(gPB + IP_P,iphdr,sizeof iphdr);
     gPB[IP_TOTLEN_L_P] = 0x4c;
     gPB[IP_PROTO_P] = IP_PROTO_UDP_V;
     fill_ip_hdr_checksum();
     gPB[UDP_DST_PORT_H_P] = 0;
-    gPB[UDP_DST_PORT_L_P] = 0x7b; // ntp = 123
+    gPB[UDP_DST_PORT_L_P] = NTP_PORT; // ntp = 123
     gPB[UDP_SRC_PORT_H_P] = 10;
     gPB[UDP_SRC_PORT_L_P] = srcport; // lower 8 bit of src port
     gPB[UDP_LEN_H_P] = 0;
@@ -370,11 +381,11 @@ void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) 
     }
     // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
     // multicast or broadcast address, https://github.com/jcw/ethercard/issues/59
-    if ((dip[0] & 0xF0) == 0xE0 || *((unsigned long*) dip) == 0xFFFFFFFF || !memcmp(broadcastip,dip,4))
+    if ((dip[0] & 0xF0) == 0xE0 || *((unsigned long*) dip) == 0xFFFFFFFF || !memcmp(broadcastip,dip,IP_LEN))
         EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-    memcpy_P(gPB + IP_P,iphdr,9);
+    memcpy_P(gPB + IP_P,iphdr,sizeof iphdr);
     gPB[IP_TOTLEN_H_P] = 0;
     gPB[IP_PROTO_P] = IP_PROTO_UDP_V;
     gPB[UDP_DST_PORT_H_P] = (dport>>8);
@@ -436,8 +447,8 @@ static void client_arp_whohas(uint8_t *ip_we_search) {
     setMACs(allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
-    memcpy_P(gPB + ETH_ARP_P,arpreqhdr,8);
-    memset(gPB + ETH_ARP_DST_MAC_P, 0, 6);
+    memcpy_P(gPB + ETH_ARP_P, arpreqhdr, sizeof arpreqhdr);
+    memset(gPB + ETH_ARP_DST_MAC_P, 0, ETH_LEN);
     EtherCard::copyMac(gPB + ETH_ARP_SRC_MAC_P, EtherCard::mymac);
     EtherCard::copyIp(gPB + ETH_ARP_DST_IP_P, ip_we_search);
     EtherCard::copyIp(gPB + ETH_ARP_SRC_IP_P, EtherCard::myip);
@@ -455,7 +466,7 @@ uint8_t EtherCard::clientWaitingDns () {
 }
 
 static uint8_t client_store_mac(uint8_t *source_ip, uint8_t *mac) {
-    if (memcmp(gPB + ETH_ARP_SRC_IP_P, source_ip, 4) != 0)
+    if (memcmp(gPB + ETH_ARP_SRC_IP_P, source_ip, IP_LEN) != 0)
         return 0;
     EtherCard::copyMac(mac, gPB + ETH_ARP_SRC_MAC_P);
     return 1;
@@ -474,7 +485,7 @@ void EtherCard::setGwIp (const uint8_t *gwipaddr) {
 
 void EtherCard::updateBroadcastAddress()
 {
-    for(uint8_t i=0; i<4; i++)
+    for(uint8_t i=0; i<IP_LEN; i++)
         broadcastip[i] = myip[i] | ~netmask[i];
 }
 
@@ -486,7 +497,7 @@ static void client_syn(uint8_t srcport,uint8_t dstport_h,uint8_t dstport_l) {
     }
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
     gPB[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-    memcpy_P(gPB + IP_P,iphdr,9);
+    memcpy_P(gPB + IP_P,iphdr,sizeof iphdr);
     gPB[IP_TOTLEN_L_P] = 44; // good for syn
     gPB[IP_PROTO_P] = IP_PROTO_TCP_V;
     fill_ip_hdr_checksum();
@@ -520,7 +531,7 @@ uint8_t EtherCard::clientTcpReq (uint8_t (*result_cb)(uint8_t,uint8_t,uint16_t,u
     client_tcp_datafill_cb = datafill_cb;
     tcp_client_port_h = port>>8;
     tcp_client_port_l = port;
-    tcp_client_state = 1; // Flag to packetloop to initiate a TCP/IP session by send a syn
+    tcp_client_state = TCP_STATE_SENDSYN; // Flag to packetloop to initiate a TCP/IP session by send a syn
     tcp_fd = (tcp_fd + 1) & 7;
     return tcp_fd;
 }
@@ -644,11 +655,12 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
             make_tcp_synack_from_syn(); //send SYN+ACK
         else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V)
         {   //This is an acknowledgement to our SYN+ACK so let's start processing that payload
-            info_data_len = get_tcp_data_len();
+            info_data_len = getTcpPayloadLength();
             if (info_data_len > 0)
             {   //Got some data
                 pos = TCP_DATA_START; // TCP_DATA_START is a formula
-                if (pos <= plen - 8)
+                //!@todo no idea what this check pos<=plen-8 does; changed this to pos<=plen as otw. perfectly valid tcp packets are ignored; still if anybody has any idea please leave a comment
+                if (pos <= plen) 
                     return pos;
             }
             else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)
@@ -660,9 +672,12 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
 
 uint16_t EtherCard::packetLoop (uint16_t plen) {
     uint16_t len;
+
+#if ETHERCARD_DHCP
     if(using_dhcp) {
         ether.DhcpStateMachine(plen);
     }
+#endif
 
     if (plen==0) {
         //Check every 65536 (no-packet) cycles whether we need to retry ARP request for gateway
@@ -672,17 +687,22 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
             waitgwmac |= WGW_ACCEPT_ARP_REPLY;
         }
         delaycnt++;
+
+#if ETHERCARD_TCPCLIENT
         //Initiate TCP/IP session if pending
-        if (tcp_client_state==1 && (waitgwmac & WGW_HAVE_GW_MAC)) { // send a syn
-            tcp_client_state = 2;
+        if (tcp_client_state==TCP_STATE_SENDSYN && (waitgwmac & WGW_HAVE_GW_MAC)) { // send a syn
+            tcp_client_state = TCP_STATE_SYNSENT;
             tcpclient_src_port_l++; // allocate a new port
             client_syn(((tcp_fd<<5) | (0x1f & tcpclient_src_port_l)),tcp_client_port_h,tcp_client_port_l);
         }
+#endif
+
         //!@todo this is trying to find mac only once. Need some timeout to make another call if first one doesn't succeed.
         if(is_lan(myip, dnsip) && !has_dns_mac && !waiting_for_dns_mac) {
             client_arp_whohas(dnsip);
             waiting_for_dns_mac = true;
         }
+
         //!@todo this is trying to find mac only once. Need some timeout to make another call if first one doesn't succeed.
         if(is_lan(myip, hisip) && !has_dest_mac && !waiting_for_dest_mac) {
             client_arp_whohas(hisip);
@@ -714,6 +734,8 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         //!@todo Add other protocols (and make each optional at compile time)
         return 0;
     }
+
+#if ETHERCARD_ICMP
     if (gPB[IP_PROTO_P]==IP_PROTO_ICMP_V && gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREQUEST_V)
     {   //Service ICMP echo request (ping)
         if (icmp_cb)
@@ -721,13 +743,19 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         make_echo_reply_from_request(plen);
         return 0;
     }
+#endif
+#if ETHERCARD_UDPSERVER
     if (ether.udpServerListening() && gPB[IP_PROTO_P]==IP_PROTO_UDP_V)
     {   //Call UDP server handler (callback) if one is defined for this packet
         if(ether.udpServerHasProcessedPacket(plen))
             return 0; //An UDP server handler (callback) has processed this packet
     }
+#endif
+
     if (plen<54 || gPB[IP_PROTO_P]!=IP_PROTO_TCP_V )
         return 0; //from here on we are only interested in TCP-packets; these are longer than 54 bytes
+
+#if ETHERCARD_TCPCLIENT
     if (gPB[TCP_DST_PORT_H_P]==TCPCLIENT_SRC_PORT_H)
     {   //Source port is in range reserved (by EtherCard) for client TCP/IP connections
         if (check_ip_message_is_from(hisip)==0)
@@ -736,11 +764,11 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         {   //TCP reset flagged
             if (client_tcp_result_cb)
                 (*client_tcp_result_cb)((gPB[TCP_DST_PORT_L_P]>>5)&0x7,3,0,0);
-            tcp_client_state = 5;
+            tcp_client_state = TCP_STATE_CLOSING;
             return 0;
         }
-        len = get_tcp_data_len();
-        if (tcp_client_state==2)
+        len = getTcpPayloadLength();
+        if (tcp_client_state==TCP_STATE_SYNSENT)
         {   //Waiting for SYN-ACK
             if ((gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) && (gPB[TCP_FLAGS_P] &TCP_FLAGS_ACK_V))
             {   //SYN and ACK flags set so this is an acknowledgement to our SYN
@@ -750,12 +778,12 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
                     len = (*client_tcp_datafill_cb)((gPB[TCP_SRC_PORT_L_P]>>5)&0x7);
                 else
                     len = 0;
-                tcp_client_state = 3;
+                tcp_client_state = TCP_STATE_ESTABLISHED;
                 make_tcp_ack_with_data_noflags(len);
             }
             else
             {   //Expecting SYN+ACK so reset and resend SYN
-                tcp_client_state = 1; // retry
+                tcp_client_state = TCP_STATE_SENDSYN; // retry
                 len++;
                 if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V)
                     len = 0;
@@ -763,7 +791,7 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
             }
             return 0;
         }
-        if (tcp_client_state==3 && len>0)
+        if (tcp_client_state==TCP_STATE_ESTABLISHED && len>0)
         {   //TCP connection established so read data
             if (client_tcp_result_cb) {
                 uint16_t tcpstart = TCP_DATA_START; // TCP_DATA_START is a formula
@@ -781,28 +809,31 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
                 else
                 {   //Close connection
                     make_tcp_ack_from_any(len,TCP_FLAGS_PUSH_V|TCP_FLAGS_FIN_V);
-                    tcp_client_state = 6;
+                    tcp_client_state = TCP_STATE_CLOSED;
                 }
                 return 0;
             }
         }
-        if (tcp_client_state != 5)
+        if (tcp_client_state != TCP_STATE_CLOSING)
         {   //
             if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V) {
-                if(tcp_client_state == 3) {
+                if(tcp_client_state == TCP_STATE_ESTABLISHED) {
                     return 0; // In some instances FIN is received *before* DATA.  If that is the case, we just return here and keep looking for the data packet
                 }
                 make_tcp_ack_from_any(len+1,TCP_FLAGS_PUSH_V|TCP_FLAGS_FIN_V);
-                tcp_client_state = 6; // connection terminated
+                tcp_client_state = TCP_STATE_CLOSED; // connection terminated
             } else if (len>0) {
                 make_tcp_ack_from_any(len,0);
             }
         }
         return 0;
     }
+#endif
 
-    //If we are here then this is a TCP/IP packet targetted at us and not related to out client connection so accept
+#if ETHERCARD_TCPSERVER
+    //If we are here then this is a TCP/IP packet targetted at us and not related to our client connection so accept
     return accept(hisport, plen);
+#endif
 }
 
 void EtherCard::persistTcpConnection(bool persist) {

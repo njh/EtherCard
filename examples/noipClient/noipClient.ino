@@ -39,8 +39,8 @@ const char noIP_web[] PROGMEM = "dynupdate.no-ip.com";
 
 // Some global variables
 byte Ethernet::buffer[700];
-byte getIP_address[4];
-byte noIP_address[4];
+byte getIP_address[IP_LEN];
+byte noIP_address[IP_LEN];
 byte actual_status;
 static byte session_id;
 static uint32_t check_ip_timer;
@@ -54,7 +54,7 @@ void setup () {
     Serial.println(F("NoIP Client Demo"));
     Serial.println();
 
-    if (!ether.begin(sizeof Ethernet::buffer, mymac, 10))
+    if (!ether.begin(sizeof Ethernet::buffer, mymac, SS))
         Serial.println(F( "Failed to access Ethernet controller"));
     else
         Serial.println(F("Ethernet controller initialized"));
@@ -274,6 +274,6 @@ void checkNoIPResponse() {
     }
 }
 
-void SerialPrint_P(PGM_P str) {
+void SerialPrint_P(const char* str PROGMEM) {
     for (uint8_t c; (c = pgm_read_byte(str)); str++) Serial.write(c);
 }

@@ -230,22 +230,7 @@ bool ENC28J60::promiscuous_enabled = false;
 #define ENC28J60_BIT_FIELD_CLR       0xA0
 #define ENC28J60_SOFT_RESET          0xFF
 
-// The RXSTART_INIT must be zero. See Rev. B4 Silicon Errata point 5.
-// Buffer boundaries applied to internal 8K ram
-// the entire available packet buffer space is allocated
-
-#define RXSTART_INIT        0x0000  // start of RX buffer, room for 2 packets
-#define RXSTOP_INIT         0x0BFF  // end of RX buffer
-
-#define TXSTART_INIT        0x0C00  // start of TX buffer, room for 1 packet
-#define TXSTOP_INIT         0x11FF  // end of TX buffer
-
-#define SCRATCH_START       0x1200  // start of scratch area
-#define SCRATCH_LIMIT       0x2000  // past end of area, i.e. 3.5 Kb
-#define SCRATCH_PAGE_SHIFT  6       // addressing is in pages of 64 bytes
-#define SCRATCH_PAGE_SIZE   (1 << SCRATCH_PAGE_SHIFT)
-
-// max frame length which the conroller will accept:
+// max frame length which the controller will accept:
 // (note: maximum ethernet frame length would be 1518)
 #define MAX_FRAMELEN      1500
 
@@ -304,20 +289,42 @@ static void writeOp (byte op, byte address, byte data) {
 }
 
 static void readBuf(uint16_t len, byte* data) {
+    uint8_t nextbyte;
+
     enableChip();
-    xferSPI(ENC28J60_READ_BUF_MEM);
-    while (len--) {
-        xferSPI(0x00);
-        *data++ = SPDR;
+    if (len != 0) {    
+        xferSPI(ENC28J60_READ_BUF_MEM);
+          
+        SPDR = 0x00; 
+        while (--len) {
+            while (!(SPSR & (1<<SPIF)))
+                ;
+            nextbyte = SPDR;
+            SPDR = 0x00;
+            *data++ = nextbyte;     
+        }
+        while (!(SPSR & (1<<SPIF)))
+            ;
+        *data++ = SPDR;    
     }
-    disableChip();
+    disableChip(); 
 }
 
 static void writeBuf(uint16_t len, const byte* data) {
     enableChip();
-    xferSPI(ENC28J60_WRITE_BUF_MEM);
-    while (len--)
-        xferSPI(*data++);
+    if (len != 0) {
+        xferSPI(ENC28J60_WRITE_BUF_MEM);
+           
+        SPDR = *data++;    
+        while (--len) {
+            uint8_t nextbyte = *data++;
+        	while (!(SPSR & (1<<SPIF)))
+                ;
+            SPDR = nextbyte;
+     	};  
+        while (!(SPSR & (1<<SPIF)))
+            ;
+    }
     disableChip();
 }
 
@@ -530,7 +537,17 @@ void ENC28J60::packetSend(uint16_t len) {
 
 uint16_t ENC28J60::packetReceive() {
     static uint16_t gNextPacketPtr = RXSTART_INIT;
+    static bool     unreleasedPacket = false;
     uint16_t len = 0;
+
+    if (unreleasedPacket) {
+        if (gNextPacketPtr == 0) 
+            writeReg(ERXRDPT, RXSTOP_INIT);
+        else
+            writeReg(ERXRDPT, gNextPacketPtr - 1);
+        unreleasedPacket = false;
+    }
+
     if (readRegByte(EPKTCNT) > 0) {
         writeReg(ERDPT, gNextPacketPtr);
 
@@ -551,10 +568,8 @@ uint16_t ENC28J60::packetReceive() {
         else
             readBuf(len, buffer);
         buffer[len] = 0;
-        if (gNextPacketPtr == 0) 
-            writeReg(ERXRDPT, RXSTOP_INIT);
-        else
-            writeReg(ERXRDPT, gNextPacketPtr - 1);
+        unreleasedPacket = true;
+
         writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
     }
     return len;
@@ -720,3 +735,44 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
     return macResult == bitsResult;
 }
 
+
+void ENC28J60::memcpy_to_enc(uint16_t dest, void* source, int16_t num) {
+    writeReg(EWRPT, dest);
+    writeBuf(num, (uint8_t*) source);
+}
+
+void ENC28J60::memcpy_from_enc(void* dest, uint16_t source, int16_t num) {
+    writeReg(ERDPT, source);
+    readBuf(num, (uint8_t*) dest);
+}
+
+static uint16_t endRam = ENC_HEAP_END; 
+uint16_t ENC28J60::enc_malloc(uint16_t size) {
+    if (endRam-size >= ENC_HEAP_START) {
+        endRam -= size;
+        return endRam;
+    }
+    return 0;
+}
+
+uint16_t ENC28J60::enc_freemem() {
+    return endRam-ENC_HEAP_START;
+}
+
+uint16_t ENC28J60::readPacketSlice(char* dest, int16_t maxlength, int16_t packetOffset) {
+    uint16_t erxrdpt = readReg(ERXRDPT);
+    int16_t packetLength;
+
+    memcpy_from_enc((char*) &packetLength, (erxrdpt+3)%(RXSTOP_INIT+1), 2);
+    packetLength -= 4; // remove crc
+    
+    int16_t bytesToCopy = packetLength - packetOffset;
+    if (bytesToCopy > maxlength) bytesToCopy = maxlength;
+    if (bytesToCopy <= 0) bytesToCopy = 0;
+
+    int16_t startofSlice = (erxrdpt+7+packetOffset)%(RXSTOP_INIT+1); 
+    memcpy_from_enc(dest, startofSlice, bytesToCopy);
+    dest[bytesToCopy] = 0;
+
+    return bytesToCopy;
+}
