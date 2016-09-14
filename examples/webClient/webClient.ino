@@ -42,7 +42,7 @@ void setup () {
   char websiteIP[] = "192.168.1.1";
   ether.parseIp(ether.hisip, websiteIP);
 #else
-  // or provite a numeric IP address instead of a string
+  // or provide a numeric IP address instead of a string
   byte hisip[] = { 192,168,1,1 };
   ether.copyIp(ether.hisip, hisip);
 #endif
