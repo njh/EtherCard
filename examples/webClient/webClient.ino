@@ -32,8 +32,20 @@ void setup () {
   ether.printIp("GW:  ", ether.gwip);  
   ether.printIp("DNS: ", ether.dnsip);  
 
+#if 1
+  // use DNS to resolve the website's IP address
   if (!ether.dnsLookup(website))
     Serial.println("DNS failed");
+#elif 2
+  // if website is a string containing an IP address instead of a domain name,
+  // then use it directly. Note: the string can not be in PROGMEM.
+  char websiteIP[] = "192.168.1.1";
+  ether.parseIp(ether.hisip, websiteIP);
+#else
+  // or provide a numeric IP address instead of a string
+  byte hisip[] = { 192,168,1,1 };
+  ether.copyIp(ether.hisip, hisip);
+#endif
     
   ether.printIp("SRV: ", ether.hisip);
 }

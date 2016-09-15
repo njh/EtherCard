@@ -531,6 +531,8 @@ public:
     static bool dhcpLease ();
 
     /**   @brief  Configure network interface with DHCP
+    *     @param  hname The hostname to pass to the DHCP server
+    *     @param  fromRam Set true to indicate whether hname is in RAM or in program space. Default = false
     *     @return <i>bool</i> True if DHCP successful
     *     @note   Blocks until DHCP complete or timeout after 60 seconds
     */
@@ -545,7 +547,7 @@ public:
     // dns.cpp
     /**   @brief  Perform DNS lookup
     *     @param  name Host name to lookup
-    *     @param  fromRam Set true to look up cached name. Default = false
+    *     @param  fromRam Set true to indicate whether name is in RAM or in program space. Default = false
     *     @return <i>bool</i> True on success.
     *     @note   Result is stored in <i>hisip</i> member
     */
