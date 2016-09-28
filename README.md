@@ -26,7 +26,7 @@ See the comments in the example sketches for details about how to try them out.
     SCK - Pin 13
     SO  - Pin 12
     SI  - Pin 11
-    CS  - Pin  8 # Selectable with the ether.begin() function
+    CS  - Pin 10 # Selectable with the ether.begin() function
 
 ### PIN Connections using an Arduino Mega
 
