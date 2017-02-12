@@ -31,8 +31,9 @@ The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/.
 ## Library Installation
 
 1. Download the ZIP file from https://github.com/jcw/ethercard/archive/master.zip
-2. From the Arduino IDE: Sketch -> Include Library... -> Add .ZIP Library...
-3. Restart the Arduino IDE to see the new "EtherCard" library with examples
+2. Rename the downloaded file to `ethercard.zip`
+3. From the Arduino IDE: Sketch -> Include Library... -> Add .ZIP Library...
+4. Restart the Arduino IDE to see the new "EtherCard" library with examples
 
 See the comments in the example sketches for details about how to try them out.
 
