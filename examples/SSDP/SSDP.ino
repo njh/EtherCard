@@ -125,7 +125,7 @@ void addip(int udppos) { // add current ip to the request and send it
       udppos++;
     }
     adr=(ether.myip[i]%100)/10;
-    if (adr)  {
+    if (adr||(ether.myip[i]/100)  {
       Ethernet::buffer[udppos]=adr+48;
       udppos++;
     }
