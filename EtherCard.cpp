@@ -402,7 +402,7 @@ bool EtherCard::using_dhcp = false;
 bool EtherCard::persist_tcp_connection = false;
 uint16_t EtherCard::delaycnt = 0; //request gateway ARP lookup
 uint8_t EtherCard::ntpip[IP_LEN]; // ip address of NTP server
-long EtherCard::time_offset = 0; // time offset from UTC
+int32_t EtherCard::time_offset = 0; // time offset from UTC
 
 uint8_t EtherCard::begin (const uint16_t size,
                           const uint8_t* macaddr,

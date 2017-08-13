@@ -285,7 +285,7 @@ public:
     static bool persist_tcp_connection; ///< False to break connections on first packet received
     static uint16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
     static uint8_t ntpip[IP_LEN];  ///< NTP server IP address
-    static long time_offset; ///< time offset from UTC
+    static int32_t time_offset; ///< time offset from UTC
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface
