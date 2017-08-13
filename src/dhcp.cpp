@@ -146,9 +146,11 @@ static void addOption (byte opt, byte len, const byte* data) {
 
 // options used (both send/receive)
 #define DHCP_OPT_SUBNET_MASK            1
+#define DHCP_OPT_TIME_OFFSET            2
 #define DHCP_OPT_ROUTERS                3
 #define DHCP_OPT_DOMAIN_NAME_SERVERS    6
 #define DHCP_OPT_HOSTNAME               12
+#define DHCP_OPT_NTP_SERVERS            42
 #define DHCP_OPT_REQUESTED_ADDRESS      50
 #define DHCP_OPT_LEASE_TIME             51
 #define DHCP_OPT_MESSAGE_TYPE           53
@@ -210,7 +212,7 @@ static void send_dhcp_message(uint8_t *requestip) {
     }
 
     // Additional info in parameter list - minimal list for what we need
-    byte len = 3;
+    byte len = 5;
     if (dhcpCustomOptionNum)
         len++;
     addToBuf(DHCP_OPT_PARAMETER_REQUEST_LIST);
@@ -218,6 +220,8 @@ static void send_dhcp_message(uint8_t *requestip) {
     addToBuf(DHCP_OPT_SUBNET_MASK);
     addToBuf(DHCP_OPT_ROUTERS);
     addToBuf(DHCP_OPT_DOMAIN_NAME_SERVERS);
+    addToBuf(DHCP_OPT_TIME_OFFSET);
+    addToBuf(DHCP_OPT_NTP_SERVERS);
     if (dhcpCustomOptionNum)
         addToBuf(dhcpCustomOptionNum);  // Custom option
 
@@ -269,6 +273,14 @@ static void process_dhcp_ack(uint16_t len) {
             break;
         case DHCP_OPT_DOMAIN_NAME_SERVERS:
             EtherCard::copyIp(EtherCard::dnsip, ptr);
+            break;
+	case DHCP_OPT_NTP_SERVERS:
+            EtherCard::copyIp(EtherCard::ntpip, ptr);
+            break;
+	case DHCP_OPT_TIME_OFFSET:
+            EtherCard::time_offset=0;
+            for (byte i = 0; i<4; i++)
+              EtherCard::time_offset = (EtherCard::time_offset << 8) + ptr[i];
             break;
         case DHCP_OPT_LEASE_TIME:
         case DHCP_OPT_RENEWAL_TIME:
