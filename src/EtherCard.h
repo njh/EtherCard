@@ -284,8 +284,6 @@ public:
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
     static uint16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
-    static uint8_t ntpip[IP_LEN];  ///< NTP server IP address
-    static int32_t time_offset; ///< time offset from UTC
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface
@@ -545,6 +543,12 @@ public:
     *     @param  callback The function to be call when the option is received
     */
     static void dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback);
+
+    /**   @brief  Register a callback for multiple DHCP option numbers
+    *     @param  optionlist pointer to null terminate list of DHCP option numbers (must be static) 
+    *     @param  callback The function to be call when the option is received
+    */
+    static void dhcpAddOptionCallback(uint8_t* optionlist, DhcpOptionCallback callback);
 
     // dns.cpp
     /**   @brief  Perform DNS lookup

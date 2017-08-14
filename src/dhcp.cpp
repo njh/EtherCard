@@ -107,6 +107,7 @@ static uint32_t leaseTime;
 static byte* bufPtr;
 
 static uint8_t dhcpCustomOptionNum = 0;
+static uint8_t* dhcpCustomOptionList = NULL;
 static DhcpOptionCallback dhcpCustomOptionCallback = NULL;
 
 extern uint8_t allOnes[];// = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -146,11 +147,9 @@ static void addOption (byte opt, byte len, const byte* data) {
 
 // options used (both send/receive)
 #define DHCP_OPT_SUBNET_MASK            1
-#define DHCP_OPT_TIME_OFFSET            2
 #define DHCP_OPT_ROUTERS                3
 #define DHCP_OPT_DOMAIN_NAME_SERVERS    6
 #define DHCP_OPT_HOSTNAME               12
-#define DHCP_OPT_NTP_SERVERS            42
 #define DHCP_OPT_REQUESTED_ADDRESS      50
 #define DHCP_OPT_LEASE_TIME             51
 #define DHCP_OPT_MESSAGE_TYPE           53
@@ -212,19 +211,26 @@ static void send_dhcp_message(uint8_t *requestip) {
     }
 
     // Additional info in parameter list - minimal list for what we need
-    byte len = 5;
+    byte len = 3;
     if (dhcpCustomOptionNum)
         len++;
+    else if (dhcpCustomOptionList) {
+      uint8_t *p = dhcpCustomOptionList;
+      while (*p++ != 0) len++;
+    }
     addToBuf(DHCP_OPT_PARAMETER_REQUEST_LIST);
     addToBuf(len);    // Length
     addToBuf(DHCP_OPT_SUBNET_MASK);
     addToBuf(DHCP_OPT_ROUTERS);
     addToBuf(DHCP_OPT_DOMAIN_NAME_SERVERS);
-    addToBuf(DHCP_OPT_TIME_OFFSET);
-    addToBuf(DHCP_OPT_NTP_SERVERS);
     if (dhcpCustomOptionNum)
         addToBuf(dhcpCustomOptionNum);  // Custom option
-
+    else if (dhcpCustomOptionList) {
+      uint8_t *p = dhcpCustomOptionList; // Custom option list
+      while (*p != 0) {
+	addToBuf(*p++);
+      }
+    }
     addToBuf(DHCP_OPT_END);
 
     // packet size will be under 300 bytes
@@ -274,14 +280,6 @@ static void process_dhcp_ack(uint16_t len) {
         case DHCP_OPT_DOMAIN_NAME_SERVERS:
             EtherCard::copyIp(EtherCard::dnsip, ptr);
             break;
-	case DHCP_OPT_NTP_SERVERS:
-            EtherCard::copyIp(EtherCard::ntpip, ptr);
-            break;
-	case DHCP_OPT_TIME_OFFSET:
-            EtherCard::time_offset=0;
-            for (byte i = 0; i<4; i++)
-              EtherCard::time_offset = (EtherCard::time_offset << 8) + ptr[i];
-            break;
         case DHCP_OPT_LEASE_TIME:
         case DHCP_OPT_RENEWAL_TIME:
             leaseTime = 0;
@@ -296,8 +294,19 @@ static void process_dhcp_ack(uint16_t len) {
             break;
         default: {
             // Is is a custom configured option?
-            if (dhcpCustomOptionCallback && option == dhcpCustomOptionNum) {
-                dhcpCustomOptionCallback(option, ptr, optionLen);
+	    if (dhcpCustomOptionCallback) {
+	        if (dhcpCustomOptionNum && option == dhcpCustomOptionNum) {
+		    dhcpCustomOptionCallback(option, ptr, optionLen);
+		} else if (dhcpCustomOptionList) {
+		    uint8_t *p = dhcpCustomOptionList;
+		    while (*p != 0) {
+		        if (option == *p) {
+		            dhcpCustomOptionCallback(option, ptr, optionLen);
+		            break;
+		        }
+		        p++;
+		    }
+		}
             }
         }
         }
@@ -366,6 +375,14 @@ bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
 void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback)
 {
     dhcpCustomOptionNum = option;
+    dhcpCustomOptionList = NULL;
+    dhcpCustomOptionCallback = callback;
+}
+
+void EtherCard::dhcpAddOptionCallback(uint8_t* optionlist, DhcpOptionCallback callback)
+{
+    dhcpCustomOptionNum = 0;
+    dhcpCustomOptionList = optionlist;
     dhcpCustomOptionCallback = callback;
 }
 
