@@ -390,6 +390,9 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeReg(ETXST, TXSTART_INIT);
     writeReg(ETXND, TXSTOP_INIT);
 
+    // Stretch pulses for LED, LED_A=Link, LED_B=activity
+    writePhy(PHLCON, 0x476);
+
     writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN|ERXFCON_BCEN);
     writeReg(EPMM0, 0x303f);
     writeReg(EPMCS, 0xf7f9);
