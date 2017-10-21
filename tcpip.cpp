@@ -48,6 +48,8 @@ static const char *client_postval;
 static const char *client_urlbuf; // Pointer to c-string path part of HTTP request URL
 static const char *client_urlbuf_var; // Pointer to c-string filename part of HTTP request URL
 static const char *client_hoststr; // Pointer to c-string hostname of current HTTP request
+static const char *client_content_type; // Program memory string specifying httpPost request content type
+static const char *client_accept_type; // Program memory string specifying httpPost response type(s)
 static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost recieves ping respnse (pong))
 static uint8_t destmacaddr[ETH_LEN]; // storing both dns server and destination mac addresses, but at different times because both are never needed at same time.
 static boolean waiting_for_dns_mac = false; //might be better to use bit flags and bitmask operations for these conditions
@@ -551,15 +553,17 @@ static uint16_t www_client_internal_datafill_cb(uint8_t fd) {
             bfill.emit_p(PSTR("POST $F HTTP/1.0\r\n"
                               "Host: $F\r\n"
                               "$F$S"
-                              "Accept: */*\r\n"
+                              "Accept: $F\r\n"
                               "Content-Length: $D\r\n"
-                              "Content-Type: application/x-www-form-urlencoded\r\n"
+                              "Content-Type: $F\r\n"
                               "\r\n"
                               "$S"), client_urlbuf,
                          client_hoststr,
                          ahl != 0 ? ahl : PSTR(""),
                          ahl != 0 ? "\r\n" : "",
+                         client_accept_type ? client_accept_type : PSTR("*/*"),
                          strlen(client_postval),
+                         client_content_type ? client_content_type : PSTR("application/x-www-form-urlencoded"),
                          client_postval);
         }
     }
@@ -590,12 +594,15 @@ void EtherCard::browseUrl (const char *urlbuf, const char *urlbuf_varpart, const
     www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 
-void EtherCard::httpPost (const char *urlbuf, const char *hoststr, const char *additionalheaderline, const char *postval, void (*callback)(uint8_t,uint16_t,uint16_t)) {
+void EtherCard::httpPost (const char *urlbuf, const char *hoststr, const char *additionalheaderline, const char *postval, void (*callback)(uint8_t,uint16_t,uint16_t),
+        const char *content_type, const char *accept_type) {
     client_urlbuf = urlbuf;
     client_hoststr = hoststr;
     client_additionalheaderline = additionalheaderline;
     client_postval = postval;
     client_browser_cb = callback;
+    client_content_type = content_type;
+    client_accept_type = accept_type;
     www_fd = clientTcpReq(&www_client_internal_result_cb,&www_client_internal_datafill_cb,hisport);
 }
 

@@ -384,6 +384,7 @@ void BufferFiller::emit_p(const char* fmt PROGMEM, ...) {
         }
         ptr += strlen((char*) ptr);
     }
+    *ptr = '\0'; // ensure string is terminated
     va_end(ap);
 }
 
