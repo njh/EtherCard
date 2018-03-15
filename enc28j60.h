@@ -38,7 +38,7 @@
 /** This class provide low-level interfacing with the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class ENC28J60 {
 public:
-    static uint8_t buffer[]; //!< Data buffer (shared by recieve and transmit)
+    static uint8_t buffer[]; //!< Data buffer (shared by receive and transmit)
     static uint16_t bufferSize; //!< Size of data buffer
     static bool broadcast_enabled; //!< True if broadcasts enabled (used to allow temporary disable of broadcast for DHCP or other internal functions)
     static bool promiscuous_enabled; //!< True if promiscuous mode enabled (used to allow temporary disable of promiscuous mode)
@@ -66,13 +66,13 @@ public:
 
     /**   @brief  Sends data to network interface
     *     @param  len Size of data to send
-    *     @note   Data buffer is shared by recieve and transmit functions
+    *     @note   Data buffer is shared by receive and transmit functions
     */
     static void packetSend (uint16_t len);
 
-    /**   @brief  Copy recieved packets to data buffer
-    *     @return <i>uint16_t</i> Size of recieved data
-    *     @note   Data buffer is shared by recieve and transmit functions
+    /**   @brief  Copy received packets to data buffer
+    *     @return <i>uint16_t</i> Size of received data
+    *     @note   Data buffer is shared by receive and transmit functions
     */
     static uint16_t packetReceive ();
 
@@ -105,24 +105,24 @@ public:
 
     /**   @brief  Enable reception of broadcast messages
     *     @param  temporary Set true to temporarily enable broadcast
-    *     @note   This will increase load on recieved data handling
+    *     @note   This will increase load on received data handling
     */
     static void enableBroadcast(bool temporary = false);
 
     /**   @brief  Disable reception of broadcast messages
     *     @param  temporary Set true to only disable if temporarily enabled
-    *     @note   This will reduce load on recieved data handling
+    *     @note   This will reduce load on received data handling
     */
     static void disableBroadcast(bool temporary = false);
 
     /**   @brief  Enables reception of mulitcast messages
-    *     @note   This will increase load on recieved data handling
+    *     @note   This will increase load on received data handling
     */
     static void enableMulticast ();
     
     /**   @brief  Enables reception of all messages
     *     @param  temporary Set true to temporarily enable promiscuous
-    *     @note   This will increase load significantly on recieved data handling
+    *     @note   This will increase load significantly on received data handling
     *     @note   All messages will be accepted, even messages with destination MAC other than own
     *     @note   Messages with invalid CRC checksum will still be rejected
     */
@@ -136,7 +136,7 @@ public:
     static void disablePromiscuous(bool temporary = false);
 
     /**   @brief  Disable reception of mulitcast messages
-    *     @note   This will reduce load on recieved data handling
+    *     @note   This will reduce load on received data handling
     */
     static void disableMulticast();
 
