@@ -115,7 +115,7 @@ public:
     */
     static void disableBroadcast(bool temporary = false);
 
-    /**   @brief  Enables reception of mulitcast messages
+    /**   @brief  Enables reception of multicast messages
     *     @note   This will increase load on received data handling
     */
     static void enableMulticast ();
@@ -135,7 +135,7 @@ public:
     */
     static void disablePromiscuous(bool temporary = false);
 
-    /**   @brief  Disable reception of mulitcast messages
+    /**   @brief  Disable reception of multicast messages
     *     @note   This will reduce load on received data handling
     */
     static void disableMulticast();
