@@ -71,8 +71,8 @@ public:
     static void packetSend (uint16_t len);
 
     /**   @brief  Copy recieved packets to data buffer
-    *     @return <i>uint16_t</i> Size of recieved data
-    *     @note   Data buffer is shared by recieve and transmit functions
+    *     @return <i>uint16_t</i> Size of received data
+    *     @note   Data buffer is shared by receive and transmit functions
     */
     static uint16_t packetReceive ();
 
