@@ -84,7 +84,7 @@
 #define ETHERCARD_STASH 1
 
 
-/** This type definition defines the structure of a UDP server event handler callback funtion */
+/** This type definition defines the structure of a UDP server event handler callback function */
 typedef void (*UdpServerCallback)(
     uint16_t dest_port,    ///< Port the packet was sent to
     uint8_t src_ip[IP_LEN],    ///< IP address of the sender
@@ -92,7 +92,7 @@ typedef void (*UdpServerCallback)(
     const char *data,   ///< UDP payload data
     uint16_t len);        ///< Length of the payload data
 
-/** This type definition defines the structure of a DHCP Option callback funtion */
+/** This type definition defines the structure of a DHCP Option callback function */
 typedef void (*DhcpOptionCallback)(
     uint8_t option,     ///< The option number
     const byte* data,   ///< DHCP option data
@@ -257,7 +257,7 @@ public:
     uint8_t* buffer () const { return start; }
 
     /** @brief  Get cursor position
-    *   @return <i>uint16_t</i> Cursor postion
+    *   @return <i>uint16_t</i> Cursor position
     */
     uint16_t position () const { return ptr - start; }
 
@@ -451,7 +451,7 @@ public:
     static void registerPingCallback (void (*cb)(uint8_t*));
 
     /**   @brief  Send ping
-    *     @param  destip Ponter to 4 byte destination IP address
+    *     @param  destip Pointer to 4 byte destination IP address
     */
     static void clientIcmpRequest (const uint8_t *destip);
 
@@ -482,7 +482,7 @@ public:
     static void persistTcpConnection(bool persist);
 
     //udpserver.cpp
-    /**   @brief  Register function to handle incomint UDP events
+    /**   @brief  Register function to handle incoming UDP events
     *     @param  callback Function to handle event
     *     @param  port Port to listen on
     */
@@ -595,7 +595,7 @@ public:
     *     @param  maxlen Maximum length of result
     *     @param  key Pointer to null terminated string holding the key to search for
     *     @return <i>unit_t</i> Length of the value. 0 if not found
-    *     @note   Ensure strbuf has memory allocated of at least maxlen + 1 (to accomodate result plus terminating null)
+    *     @note   Ensure strbuf has memory allocated of at least maxlen + 1 (to accommodate result plus terminating null)
     */
     static uint8_t findKeyVal(const char *str,char *strbuf,
                               uint8_t maxlen, const char *key);
@@ -606,7 +606,7 @@ public:
     */
     static void urlDecode(char *urlbuf);
 
-    /**   @brief  Encode a URL, replacing illegal charaters like ' '
+    /**   @brief  Encode a URL, replacing illegal characters like ' '
     *     @param  str Pointer to the null terminated string to encode
     *     @param  urlbuf Pointer to a buffer to contain the null terminated encoded URL
     *     @note   There must be enough space in urlbuf. In the worst case that is 3 times the length of str

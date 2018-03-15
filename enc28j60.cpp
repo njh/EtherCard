@@ -412,7 +412,7 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
     byte rev = readRegByte(EREVID);
-    // microchip forgot to step the number on the silcon when they
+    // microchip forgot to step the number on the silicon when they
     // released the revision B7. 6 is now rev B7. We still have
     // to see what they do when they release B8. At the moment
     // there is no B8 out yet
@@ -493,7 +493,7 @@ void ENC28J60::packetSend(uint16_t len) {
 
     resume_last_transmission:
 
-        // wait until transmission has finished; referrring to the data sheet and 
+        // wait until transmission has finished; referring to the data sheet and 
         // to the errata (Errata Issue 13; Example 1) you only need to wait until either 
         // TXIF or TXERIF gets set; however this leads to hangs; apparently Microchip
         // realized this and in later implementations of their tcp/ip stack they introduced 
@@ -514,10 +514,10 @@ void ENC28J60::packetSend(uint16_t len) {
         BREAKORCONTINUE
     #endif
 
-        // Check whether the chip thinks that a late collision ocurred; the chip
+        // Check whether the chip thinks that a late collision occurred; the chip
         // may be wrong (Errata Issue 13); therefore we retry. We could check
         // LATECOL in the ESTAT register in order to find out whether the chip
-        // thinks a late collision ocurred but (Errata Issue 15) tells us that
+        // thinks a late collision occurred but (Errata Issue 15) tells us that
         // this is not working. Therefore we check TSV
         transmit_status_vector tsv;   
         uint16_t etxnd = readReg(ETXND);
