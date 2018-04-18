@@ -16,7 +16,7 @@ const char website[] PROGMEM = "textfiles.com";
 uint32_t nextSeq;
 // called when the client request is complete
 static void my_callback (byte status, word off, word len) {
-   
+
     if (strncmp_P((char*) Ethernet::buffer+off,PSTR("HTTP"),4) == 0) {
         Serial.println(">>>");
         // first reply packet
@@ -24,19 +24,19 @@ static void my_callback (byte status, word off, word len) {
     }
 
     if (nextSeq != ether.getSequenceNumber()) { Serial.print(F("<IGNORE DUPLICATE(?) PACKET>")); return; }
-    
+
     uint16_t payloadlength = ether.getTcpPayloadLength();
     int16_t chunk_size   = BUFFERSIZE-off-1;
     int16_t char_written = 0;
     int16_t char_in_buf  = chunk_size < payloadlength ? chunk_size : payloadlength;
-      
+
     while (char_written < payloadlength) {
         Serial.write((char*) Ethernet::buffer+off,char_in_buf);
         char_written += char_in_buf;
-        
+
         char_in_buf = ether.readPacketSlice((char*) Ethernet::buffer+off,chunk_size,off+char_written);
     }
-    
+
     nextSeq += ether.getTcpPayloadLength();
 }
 
@@ -44,26 +44,26 @@ void setup () {
     Serial.begin(57600);
     Serial.println(F("\n[Persistence+readPacketSlice]"));
 
-  
-    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+
+    if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0){ // CS/SS hookup pin 8/10 for normal shield; 53 for mega
         Serial.println(F("Failed to access Ethernet controller"));
     if (!ether.dhcpSetup())
         Serial.println(F("DHCP failed"));
 
     ether.printIp("IP:  ", ether.myip);
-    ether.printIp("GW:  ", ether.gwip);  
-    ether.printIp("DNS: ", ether.dnsip);  
+    ether.printIp("GW:  ", ether.gwip);
+    ether.printIp("DNS: ", ether.dnsip);
 
     if (!ether.dnsLookup(website))
         Serial.println("DNS failed");
-    
+
     ether.printIp("SRV: ", ether.hisip);
     ether.persistTcpConnection(true);
 }
 
 void loop () {
   ether.packetLoop(ether.packetReceive());
-  
+
   static uint32_t timer =  0;
   if (millis() > timer) {
       timer = millis() + 7000;

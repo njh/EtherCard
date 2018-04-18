@@ -29,7 +29,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println(F("\n[EtherCard NTP Client]"));
 
-  if (ether.begin(sizeof Ethernet::buffer, myMac) == 0)
+  if (ether.begin(sizeof Ethernet::buffer, myMac, 8) == 0) // CS/SS hookup pin 8/10 for normal shield; 53 for mega
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));

@@ -23,14 +23,14 @@ void setup () {
       Serial.print(':');
   }
   Serial.println();
-  
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0){ // CS/SS hookup pin 8/10 for normal shield; 53 for mega
     Serial.println(F("Failed to access Ethernet controller"));
 
   Serial.println(F("Setting up DHCP"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));
-  
+
   ether.printIp("My IP: ", ether.myip);
   ether.printIp("Netmask: ", ether.netmask);
   ether.printIp("GW IP: ", ether.gwip);
