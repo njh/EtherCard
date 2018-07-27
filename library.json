@@ -15,10 +15,10 @@
     },
     {
       "name": "Pascal Stang"
-    },   
+    },
     {
       "name": "Guido Socher"
-    }    
+    }
   ],
   "include": [
     "examples",
