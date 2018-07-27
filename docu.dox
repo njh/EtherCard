@@ -23,9 +23,9 @@ Adapted and extended from code written by Guido Socher and Pascal Stang.
 
 The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/
 
-The code is available on GitHub, at https://github.com/jcw/ethercard - to install:
+The code is available on GitHub, at https://github.com/njh/EtherCard - to install:
 
-Download the ZIP file from https://github.com/jcw/ethercard/archive/master.zip
+Download the ZIP file from https://github.com/njh/EtherCard/archive/master.zip
 From the Arduino IDE: Sketch -> Import Library... -> Add Library...
 Restart the Arduino IDE to see the new "EtherCard" library with examples
 See the comments in the example sketches for details about how to try them out.

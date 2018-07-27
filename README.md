@@ -19,7 +19,7 @@ The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/.
     * Arduino Nano/Pro/Fio/Pro-mini/LiliPad/Duemilanove
     * Any other Arduino clone using an AVR microcontroller should work
 * Hardware: Non-AVR boards are **NOT** currently supported (101/Zero/Due)
-  [#211](https://github.com/jcw/ethercard/issues/211#issuecomment-255011491)
+  [#211](https://github.com/njh/EtherCard/issues/211#issuecomment-255011491)
 * Hardware: Depending on the size of the buffer for packets, this library
   uses about 1k of Arduino RAM. Large strings and other global variables
   can easily push the limits of smaller microcontrollers.
@@ -30,7 +30,7 @@ The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/.
 
 ## Library Installation
 
-1. Download the ZIP file from https://github.com/jcw/ethercard/archive/master.zip
+1. Download the ZIP file from https://github.com/njh/EtherCard/archive/master.zip
 2. Rename the downloaded file to `ethercard.zip`
 3. From the Arduino IDE: Sketch -> Include Library... -> Add .ZIP Library...
 4. Restart the Arduino IDE to see the new "EtherCard" library with examples
@@ -63,9 +63,9 @@ For questions and help, see the [forums][F] (at JeeLabs.net).
 The issue tracker has been moved back to [Github][I] again.
 
 [F]: http://jeelabs.net/projects/cafe/boards
-[I]: https://github.com/jcw/ethercard/issues
-[S]: https://travis-ci.org/jcw/ethercard.svg
-[T]: https://travis-ci.org/jcw/ethercard
+[I]: https://github.com/njh/EtherCard/issues
+[S]: https://travis-ci.org/njh/EtherCard.svg
+[T]: https://travis-ci.org/njh/EtherCard
 
 ## Related Work
 

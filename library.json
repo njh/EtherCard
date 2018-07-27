@@ -25,7 +25,7 @@
   "repository":
   {
     "type": "git",
-    "url": "https://github.com/jcw/ethercard.git"
+    "url": "https://github.com/njh/EtherCard.git"
   },
   "frameworks": "arduino",
   "platforms": "atmelavr"

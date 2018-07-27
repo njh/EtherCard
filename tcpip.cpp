@@ -380,7 +380,7 @@ void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) 
         setMACandIPs(gwmacaddr, dip);
     }
     // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
-    // multicast or broadcast address, https://github.com/jcw/ethercard/issues/59
+    // multicast or broadcast address, https://github.com/njh/EtherCard/issues/59
     if ((dip[0] & 0xF0) == 0xE0 || *((unsigned long*) dip) == 0xFFFFFFFF || !memcmp(broadcastip,dip,IP_LEN))
         EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;

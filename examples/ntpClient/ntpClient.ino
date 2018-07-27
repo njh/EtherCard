@@ -15,7 +15,7 @@
 
 */
 
-#include <EtherCard.h>  // https://github.com/jcw/ethercard
+#include <EtherCard.h>  // https://github.com/njh/EtherCard
 
 // Ethernet mac address - must be unique on your network
 const byte myMac[] PROGMEM = { 0x70, 0x69, 0x69, 0x2D, 0x30, 0x31 };
