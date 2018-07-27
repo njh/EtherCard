@@ -5,10 +5,13 @@
   "authors":
   [
     {
-      "name": "Jean-Claude Wippler",
-      "email": "jc@wippler.nl",
-      "url": "http://jeelabs.org/",
+      "name": "Nicholas Humfrey",
+      "url": "http://njh.me/",
       "maintainer": true
+    },
+    {
+      "name": "Jean-Claude Wippler",
+      "url": "http://jeelabs.org/"
     },
     {
       "name": "Pascal Stang"
