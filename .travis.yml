@@ -20,6 +20,8 @@ env:
     - PLATFORMIO_CI_SRC=examples/nanether/nanether.ino
     - PLATFORMIO_CI_SRC=examples/noipClient/noipClient.ino
     - PLATFORMIO_CI_SRC=examples/notifyMyAndroid/notifyMyAndroid.ino
+    - PLATFORMIO_CI_SRC=examples/ntpClient/ntpClient.ino
+    - PLATFORMIO_CI_SRC=examples/persistence/persistence.ino
     - PLATFORMIO_CI_SRC=examples/pings/pings.ino
     - PLATFORMIO_CI_SRC=examples/rbbb_server/rbbb_server.ino
     - PLATFORMIO_CI_SRC=examples/SSDP/SSDP.ino
@@ -28,7 +30,7 @@ env:
     - PLATFORMIO_CI_SRC=examples/thingspeak/thingspeak.ino
     - PLATFORMIO_CI_SRC=examples/twitter/twitter.ino
     - PLATFORMIO_CI_SRC=examples/udpClientSendOnly/udpClientSendOnly.ino
-#    - PLATFORMIO_CI_SRC=examples/udpListener/udpListener.ino
+    - PLATFORMIO_CI_SRC=examples/udpListener/udpListener.ino
     - PLATFORMIO_CI_SRC=examples/webClient/webClient.ino
     - PLATFORMIO_CI_SRC=examples/xively/xively.ino
 
@@ -38,8 +40,8 @@ install:
     - wget https://github.com/jcw/jeelib/archive/master.zip -O /tmp/jeelib.zip
     - unzip /tmp/jeelib.zip -d /tmp
 
-    - wget https://github.com/Rodot/Gamebuino/archive/master.zip  -O /tmp/gamebuino.zip
-    - unzip /tmp/gamebuino.zip -d /tmp
+    - wget http://www.rinkydinkelectronics.com/resource/tinyFAT/tinyFAT.zip -O /tmp/tinyFAT.zip
+    - unzip /tmp/tinyFAT.zip -d /tmp
 
 script:
-    - platformio ci --lib="." --lib="/tmp/jeelib-master" --lib="/tmp/Gamebuino-master/libraries/tinyFAT" --board=uno --board=megaatmega2560
+    - platformio ci --lib="." --lib="/tmp/jeelib-master" --lib="/tmp/tinyFAT" --board=uno --board=megaatmega2560
