@@ -6,7 +6,7 @@
 //
 // This sketch is derived from RF12eth.pde:
 // May 2010, Andras Tucsni, http://opensource.org/licenses/mit-license.php
- 
+
 #include <EtherCard.h>
 #include <JeeLib.h>
 #include <avr/eeprom.h>
@@ -67,9 +67,9 @@ static void saveConfig() {
 
 #if DEBUG
 static int freeRam () {
-  extern int __heap_start, *__brkval; 
-  int v; 
-  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+  extern int __heap_start, *__brkval;
+  int v;
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 }
 #endif
 
@@ -79,8 +79,8 @@ void setup(){
     Serial.println("\n[etherNode]");
 #endif
     loadConfig();
-    
-    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+
+    if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0) // CS/SS hookup pin 8/10 for normal shield; 53 for mega
       Serial.println( "Failed to access Ethernet controller");
     if (!ether.dhcpSetup())
       Serial.println("DHCP failed");
@@ -89,7 +89,7 @@ void setup(){
 #endif
 }
 
-const char okHeader[] PROGMEM = 
+const char okHeader[] PROGMEM =
     "HTTP/1.0 200 OK\r\n"
     "Content-Type: text/html\r\n"
     "Pragma: no-cache\r\n"
@@ -99,7 +99,7 @@ static void homePage(BufferFiller& buf) {
     word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
     buf.emit_p(PSTR("$F\r\n"
         "<meta http-equiv='refresh' content='$D'/>"
-        "<title>RF12 etherNode - $D MHz, group $D</title>" 
+        "<title>RF12 etherNode - $D MHz, group $D</title>"
         "RF12 etherNode - $D MHz, group $D "
             "- <a href='c'>configure</a> - <a href='s'>send packet</a>"
         "<h3>Last $D messages:</h3>"
@@ -245,7 +245,7 @@ void loop(){
                 "HTTP/1.0 401 Unauthorized\r\n"
                 "Content-Type: text/html\r\n"
                 "\r\n"
-                "<h1>401 Unauthorized</h1>"));  
+                "<h1>401 Unauthorized</h1>"));
         ether.httpServerReply(bfill.position()); // send web page data
     }
 
@@ -253,7 +253,7 @@ void loop(){
     if (rf12_recvDone() && rf12_crc == 0 && (rf12_hdr & RF12_HDR_CTL) == 0) {
         history_rcvd[next_msg][0] = rf12_hdr;
         for (byte i = 0; i < rf12_len; ++i)
-            if (i < MESSAGE_TRUNC) 
+            if (i < MESSAGE_TRUNC)
                 history_rcvd[next_msg][i+1] = rf12_data[i];
         history_len[next_msg] = rf12_len < MESSAGE_TRUNC ? rf12_len+1
                                                          : MESSAGE_TRUNC+1;
@@ -267,7 +267,7 @@ void loop(){
             rf12_sendStart(RF12_ACK_REPLY);
         }
     }
-    
+
     // send a data packet out if requested
     if (outCount >= 0 && rf12_canSend()) {
         rf12_sendStart(outDest, outBuf, outCount);

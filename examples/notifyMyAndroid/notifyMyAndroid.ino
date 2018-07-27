@@ -56,7 +56,7 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\nStarting Notify My Android Example");
 
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0) // CS/SS hookup pin 8/10 for normal shield; 53 for mega
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));

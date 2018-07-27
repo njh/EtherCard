@@ -67,9 +67,9 @@ static void saveConfig () {
 
 #if DEBUG
 static int freeRam () {
-extern int __heap_start, *__brkval; 
-int v; 
-return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+extern int __heap_start, *__brkval;
+int v;
+return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 }
 #endif
 
@@ -77,14 +77,14 @@ void setup (){
   Serial.begin(57600);
   Serial.println("\n[JeeUdp]");
   loadConfig();
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0) // CS/SS hookup pin 8/10 for normal shield; 53 for mega
     Serial.println( "Failed to access Ethernet controller");
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
   ether.printIp("IP: ", ether.myip);
 }
 
-const char okHeader[] PROGMEM = 
+const char okHeader[] PROGMEM =
   "HTTP/1.0 200 OK\r\n"
   "Content-Type: text/html\r\n"
   "Pragma: no-cache\r\n"
@@ -93,7 +93,7 @@ const char okHeader[] PROGMEM =
 static void homePage (BufferFiller& buf) {
   word mhz = config.band == 4 ? 433 : config.band == 8 ? 868 : 915;
   buf.emit_p(PSTR("$F\r\n"
-    "<title>RF12 JeeUdp</title>" 
+    "<title>RF12 JeeUdp</title>"
     "<h2>RF12 JeeUdp @ $D - RF12 @ $D.$D</h2>"
         "<a href='c'>Configure</a> - <a href='s'>Send Packet</a>"
     "<h3>Last $D messages:</h3>"
@@ -246,7 +246,7 @@ static void collectPayload (word type) {
 static void forwardToUDP () {
   static byte destIp[] = { 239,192,74,66 }; // UDP multicast address
   char buf[10];
-  
+
   collPos = 0;
   collectStr(0x0000, "JeeUdp");
   collectStr(0x0002, "RF12");
@@ -257,7 +257,7 @@ static void forwardToUDP () {
   sprintf(buf, "%d", rf12_hdr);
   collectStr(0x0005, buf);
   collectPayload(0x0006);
-  
+
   ether.sendUdp ((char*) collBuf, collPos, 23456, destIp, config.port);
 #if SERIAL
   Serial.println("UDP sent");
@@ -286,7 +286,7 @@ void loop (){
         "HTTP/1.0 401 Unauthorized\r\n"
         "Content-Type: text/html\r\n"
         "\r\n"
-        "<h1>401 Unauthorized</h1>"));  
+        "<h1>401 Unauthorized</h1>"));
     ether.httpServerReply(bfill.position()); // send web page data
   }
 
@@ -294,7 +294,7 @@ void loop (){
   if (rf12_recvDone() && rf12_crc == 0 && (rf12_hdr & RF12_HDR_CTL) == 0) {
     history_rcvd[next_msg][0] = rf12_hdr;
     for (byte i = 0; i < rf12_len; ++i)
-      if (i < MESSAGE_TRUNC) 
+      if (i < MESSAGE_TRUNC)
         history_rcvd[next_msg][i+1] = rf12_data[i];
     history_len[next_msg] = rf12_len < MESSAGE_TRUNC ? rf12_len+1
                                                      : MESSAGE_TRUNC+1;
@@ -307,10 +307,10 @@ void loop (){
 #endif
       rf12_sendStart(RF12_ACK_REPLY);
     }
-    
+
     forwardToUDP();
   }
-  
+
   // send a data packet out if requested
   if (outCount >= 0 && rf12_canSend()) {
     rf12_sendStart(outDest, outBuf, outCount);

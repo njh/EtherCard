@@ -17,8 +17,8 @@ static void gotPinged (byte* ptr) {
 void setup () {
   Serial.begin(57600);
   Serial.println("\n[pings]");
-  
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
+
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0){ // CS/SS hookup pin 8/10 for normal shield; 53 for mega
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));
@@ -34,10 +34,10 @@ void setup () {
   ether.parseIp(ether.hisip, "74.125.77.99");
 #endif
   ether.printIp("SRV: ", ether.hisip);
-    
+
   // call this to report others pinging us
   ether.registerPingCallback(gotPinged);
-  
+
   timer = -9999999; // start timing out right away
   Serial.println();
 }
@@ -45,14 +45,14 @@ void setup () {
 void loop () {
   word len = ether.packetReceive(); // go receive new packets
   word pos = ether.packetLoop(len); // respond to incoming pings
-  
+
   // report whenever a reply to our outgoing ping comes back
   if (len > 0 && ether.packetLoopIcmpCheckReply(ether.hisip)) {
     Serial.print("  ");
     Serial.print((micros() - timer) * 0.001, 3);
     Serial.println(" ms");
   }
-  
+
   // ping a remote server once every few seconds
   if (micros() - timer >= 5000000) {
     ether.printIp("Pinging: ", ether.hisip);

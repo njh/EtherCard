@@ -46,9 +46,9 @@ void dumpStash (const char* msg, void* ptr) {
 void setup () {
   Serial.begin(57600);
   Serial.println("\n[stashTest]");
-  ether.begin(sizeof Ethernet::buffer, mymac);
-  
-#if 1  
+  ether.begin(sizeof Ethernet::buffer, mymac, 8); // CS/SS hookup pin 8/10 for normal shield; 53 for mega
+
+#if 1
   Stash buf;
   dumpStash("> AAA", &buf);
   byte fd = buf.create();
@@ -85,7 +85,7 @@ void setup () {
   Serial.println();
   dumpStash("> GGG", &buf);
 #endif
-  
+
   Stash buf2;
   byte fd2 = buf2.create();
   buf2.print("<XYZ>");
@@ -93,7 +93,7 @@ void setup () {
   buf2.load(1, fd2);
   dumpBlock("SECOND", 1);
   dumpStash("> HHH", &buf2);
-  
+
   Stash::prepare(PSTR("a $S b $F c $D d $H e"),
                   "123", PSTR("4567"), -12345, fd2);
   dumpBlock("BUFFER", 0);

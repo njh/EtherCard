@@ -1,6 +1,6 @@
 // Present a "Will be back soon web page", as stand-in webserver.
 // 2011-01-30 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
- 
+
 #include <EtherCard.h>
 
 #define STATIC 0  // set to 1 to disable DHCP (adjust myip/gwip values below)
@@ -39,8 +39,8 @@ const char page[] PROGMEM =
 void setup(){
   Serial.begin(57600);
   Serial.println("\n[backSoon]");
-  
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0) // CS/SS hookup pin 8/10 for normal shield; 53 for mega
     Serial.println( "Failed to access Ethernet controller");
 #if STATIC
   ether.staticSetup(myip, gwip);
@@ -50,8 +50,8 @@ void setup(){
 #endif
 
   ether.printIp("IP:  ", ether.myip);
-  ether.printIp("GW:  ", ether.gwip);  
-  ether.printIp("DNS: ", ether.dnsip);  
+  ether.printIp("GW:  ", ether.gwip);
+  ether.printIp("DNS: ", ether.dnsip);
 }
 
 void loop(){

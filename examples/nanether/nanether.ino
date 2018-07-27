@@ -20,7 +20,7 @@ void setup(void)
 
     /* Check that the Ethernet controller exists */
     Serial.println("Initialising the Ethernet controller");
-    if (ether.begin(sizeof Ethernet::buffer, mac, 8) == 0) {
+    if (ether.begin(sizeof Ethernet::buffer, mac, 8) == 0){ // CS/SS hookup pin 8/10 for normal shield; 53 for mega
         Serial.println( "Ethernet controller NOT initialised");
         while (true)
             /* MT */ ;
