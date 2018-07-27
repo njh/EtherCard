@@ -9,7 +9,7 @@
 //
 // 2010-05-19 <jc@wippler.nl>
 
-#include <EtherCard.h>
+#include "EtherCard.h"
 #include <stdarg.h>
 #include <avr/eeprom.h>
 
