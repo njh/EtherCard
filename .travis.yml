@@ -38,8 +38,8 @@ install:
     - wget https://github.com/jcw/jeelib/archive/master.zip -O /tmp/jeelib.zip
     - unzip /tmp/jeelib.zip -d /tmp
 
-    - wget https://github.com/Rodot/Gamebuino/archive/master.zip  -O /tmp/gamebuino.zip
-    - unzip /tmp/gamebuino.zip -d /tmp
+    - wget http://www.rinkydinkelectronics.com/resource/tinyFAT/tinyFAT.zip -O /tmp/tinyFAT.zip
+    - unzip /tmp/tinyFAT.zip -d /tmp
 
 script:
-    - platformio ci --lib="." --lib="/tmp/jeelib-master" --lib="/tmp/Gamebuino-master/libraries/tinyFAT" --board=uno --board=megaatmega2560
+    - platformio ci --lib="." --lib="/tmp/jeelib-master" --lib="/tmp/tinyFAT" --board=uno --board=megaatmega2560
