@@ -1,4 +1,4 @@
-// DHCP look-up functions based on the udp client
+// DHCP lookup functions based on the udp client
 // http://www.ietf.org/rfc/rfc2131.txt
 //
 // Author: Andrew Lindsay
@@ -321,7 +321,7 @@ static char toAsciiHex(byte b) {
 
 bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
     // Use during setup, as this discards all incoming requests until it returns.
-    // That shouldn't be a problem, because we don't have an IP-address yet.
+    // That shouldn't be a problem, because we don't have an IPaddress yet.
     // Will try 60 secs to obtain DHCP-lease.
 
     using_dhcp = true;

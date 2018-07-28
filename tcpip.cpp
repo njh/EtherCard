@@ -48,7 +48,7 @@ static const char *client_postval;
 static const char *client_urlbuf; // Pointer to c-string path part of HTTP request URL
 static const char *client_urlbuf_var; // Pointer to c-string filename part of HTTP request URL
 static const char *client_hoststr; // Pointer to c-string hostname of current HTTP request
-static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost recieves ping respnse (pong))
+static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost receives ping response (pong))
 static uint8_t destmacaddr[ETH_LEN]; // storing both dns server and destination mac addresses, but at different times because both are never needed at same time.
 static boolean waiting_for_dns_mac = false; //might be better to use bit flags and bitmask operations for these conditions
 static boolean has_dns_mac = false;
@@ -56,7 +56,7 @@ static boolean waiting_for_dest_mac = false;
 static boolean has_dest_mac = false;
 static uint8_t gwmacaddr[ETH_LEN]; // Hardware (MAC) address of gateway router
 static uint8_t waitgwmac; // Bitwise flags of gateway router status - see below for states
-//Define gatweay router ARP statuses
+//Define gateway router ARP statuses
 #define WGW_INITIAL_ARP 1 // First request, no answer yet
 #define WGW_HAVE_GW_MAC 2 // Have gateway router MAC
 #define WGW_REFRESHING 4 // Refreshing but already have gateway MAC
@@ -140,7 +140,7 @@ static void fill_ip_hdr_checksum() {
     gPB[IP_CHECKSUM_P] = 0;
     gPB[IP_CHECKSUM_P+1] = 0;
     gPB[IP_FLAGS_P] = 0x40; // don't fragment
-    gPB[IP_FLAGS_P+1] = 0;  // fragement offset
+    gPB[IP_FLAGS_P+1] = 0;  // fragment offset
     gPB[IP_TTL_P] = 64; // ttl
     fill_checksum(IP_CHECKSUM_P, IP_P, IP_HEADER_LEN,0);
 }
@@ -288,7 +288,7 @@ static uint32_t getBigEndianLong(byte offs) { //get the sequence number of packe
     return (((unsigned long)gPB[offs]*256+gPB[offs+1])*256+gPB[offs+2])*256+gPB[offs+3];
 } //thanks to mstuetz for the missing (unsigned long)
 
-static void setSequenceNumber(uint32_t seq) { 
+static void setSequenceNumber(uint32_t seq) {
     gPB[TCP_SEQ_H_P]   = (seq & 0xff000000 ) >> 24;
     gPB[TCP_SEQ_H_P+1] = (seq & 0xff0000 ) >> 16;
     gPB[TCP_SEQ_H_P+2] = (seq & 0xff00 ) >> 8;
@@ -380,7 +380,7 @@ void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) 
         setMACandIPs(gwmacaddr, dip);
     }
     // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
-    // multicast or broadcast address, https://github.com/jcw/ethercard/issues/59
+    // multicast or broadcast address, https://github.com/njh/EtherCard/issues/59
     if ((dip[0] & 0xF0) == 0xE0 || *((unsigned long*) dip) == 0xFFFFFFFF || !memcmp(broadcastip,dip,IP_LEN))
         EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes);
     gPB[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
@@ -650,7 +650,7 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
 
     if (gPB[TCP_DST_PORT_H_P] == (port >> 8) &&
             gPB[TCP_DST_PORT_L_P] == ((uint8_t) port))
-    {   //Packet targetted at specified port
+    {   //Packet targeted at specified port
         if (gPB[TCP_FLAGS_P] & TCP_FLAGS_SYN_V)
             make_tcp_synack_from_syn(); //send SYN+ACK
         else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_ACK_V)
@@ -660,7 +660,7 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
             {   //Got some data
                 pos = TCP_DATA_START; // TCP_DATA_START is a formula
                 //!@todo no idea what this check pos<=plen-8 does; changed this to pos<=plen as otw. perfectly valid tcp packets are ignored; still if anybody has any idea please leave a comment
-                if (pos <= plen) 
+                if (pos <= plen)
                     return pos;
             }
             else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)
@@ -831,7 +831,7 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
 #endif
 
 #if ETHERCARD_TCPSERVER
-    //If we are here then this is a TCP/IP packet targetted at us and not related to our client connection so accept
+    //If we are here then this is a TCP/IP packet targeted at us and not related to our client connection so accept
     return accept(hisport, plen);
 #endif
 }

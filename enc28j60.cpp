@@ -72,7 +72,6 @@ bool ENC28J60::promiscuous_enabled = false;
 #define EPKTCNT          (0x19|0x20)
 // Bank 2 registers
 #define MACON1           (0x00|0x40|0x80)
-#define MACON2           (0x01|0x40|0x80)
 #define MACON3           (0x02|0x40|0x80)
 #define MACON4           (0x03|0x40|0x80)
 #define MABBIPG          (0x04|0x40|0x80)
@@ -154,13 +153,6 @@ bool ENC28J60::promiscuous_enabled = false;
 #define MACON1_RXPAUS    0x04
 #define MACON1_PASSALL   0x02
 #define MACON1_MARXEN    0x01
-// ENC28J60 MACON2 Register Bit Definitions
-#define MACON2_MARST     0x80
-#define MACON2_RNDRST    0x40
-#define MACON2_MARXRST   0x08
-#define MACON2_RFUNRST   0x04
-#define MACON2_MATXRST   0x02
-#define MACON2_TFUNRST   0x01
 // ENC28J60 MACON3 Register Bit Definitions
 #define MACON3_PADCFG2   0x80
 #define MACON3_PADCFG1   0x40
@@ -292,36 +284,36 @@ static void readBuf(uint16_t len, byte* data) {
     uint8_t nextbyte;
 
     enableChip();
-    if (len != 0) {    
+    if (len != 0) {
         xferSPI(ENC28J60_READ_BUF_MEM);
-          
-        SPDR = 0x00; 
+
+        SPDR = 0x00;
         while (--len) {
             while (!(SPSR & (1<<SPIF)))
                 ;
             nextbyte = SPDR;
             SPDR = 0x00;
-            *data++ = nextbyte;     
+            *data++ = nextbyte;
         }
         while (!(SPSR & (1<<SPIF)))
             ;
-        *data++ = SPDR;    
+        *data++ = SPDR;
     }
-    disableChip(); 
+    disableChip();
 }
 
 static void writeBuf(uint16_t len, const byte* data) {
     enableChip();
     if (len != 0) {
         xferSPI(ENC28J60_WRITE_BUF_MEM);
-           
-        SPDR = *data++;    
+
+        SPDR = *data++;
         while (--len) {
             uint8_t nextbyte = *data++;
         	while (!(SPSR & (1<<SPIF)))
                 ;
             SPDR = nextbyte;
-     	};  
+     	};
         while (!(SPSR & (1<<SPIF)))
             ;
     }
@@ -394,7 +386,6 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeReg(EPMM0, 0x303f);
     writeReg(EPMCS, 0xf7f9);
     writeRegByte(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
-    writeRegByte(MACON2, 0x00);
     writeOp(ENC28J60_BIT_FIELD_SET, MACON3,
             MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
     writeReg(MAIPG, 0x0C12);
@@ -412,7 +403,7 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
     byte rev = readRegByte(EREVID);
-    // microchip forgot to step the number on the silcon when they
+    // microchip forgot to step the number on the silicon when they
     // released the revision B7. 6 is now rev B7. We still have
     // to see what they do when they release B8. At the moment
     // there is no B8 out yet
@@ -440,7 +431,7 @@ struct __attribute__((__packed__)) transmit_status_vector {
     byte     transmitLateCollision       :  1;
     byte     transmitGiant               :  1;
     byte     transmitUnderrun            :  1;
-    uint16_t totalTransmitted; 
+    uint16_t totalTransmitted;
     byte     transmitControlFrame        :  1;
     byte     transmitPauseControlFrame   :  1;
     byte     backpressureApplied         :  1;
@@ -466,25 +457,25 @@ void ENC28J60::packetSend(uint16_t len) {
         goto resume_last_transmission;
     #endif
     while (1) {
-        // latest errata sheet: DS80349C 
+        // latest errata sheet: DS80349C
         // always reset transmit logic (Errata Issue 12)
         // the Microchip TCP/IP stack implementation used to first check
         // whether TXERIF is set and only then reset the transmit logic
         // but this has been changed in later versions; possibly they
-        // have a reason for this; they don't mention this in the errata 
+        // have a reason for this; they don't mention this in the errata
         // sheet
         writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
-        writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST); 
+        writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
         writeOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF|EIR_TXIF);
-   
-        // prepare new transmission 
+
+        // prepare new transmission
         if (retry == 0) {
             writeReg(EWRPT, TXSTART_INIT);
             writeReg(ETXND, TXSTART_INIT+len);
             writeOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
             writeBuf(len, buffer);
         }
-   
+
         // initiate transmission
         writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
         #if ETHERCARD_SEND_PIPELINING
@@ -493,33 +484,33 @@ void ENC28J60::packetSend(uint16_t len) {
 
     resume_last_transmission:
 
-        // wait until transmission has finished; referrring to the data sheet and 
-        // to the errata (Errata Issue 13; Example 1) you only need to wait until either 
+        // wait until transmission has finished; referring to the data sheet and
+        // to the errata (Errata Issue 13; Example 1) you only need to wait until either
         // TXIF or TXERIF gets set; however this leads to hangs; apparently Microchip
-        // realized this and in later implementations of their tcp/ip stack they introduced 
-        // a counter to avoid hangs; of course they didn't update the errata sheet 
+        // realized this and in later implementations of their tcp/ip stack they introduced
+        // a counter to avoid hangs; of course they didn't update the errata sheet
         uint16_t count = 0;
         while ((readRegByte(EIR) & (EIR_TXIF | EIR_TXERIF)) == 0 && ++count < 1000U)
             ;
-   
+
         if (!(readRegByte(EIR) & EIR_TXERIF) && count < 1000U) {
             // no error; start new transmission
             BREAKORCONTINUE
         }
-   
+
         // cancel previous transmission if stuck
-        writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS); 
-    
+        writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+
     #if ETHERCARD_RETRY_LATECOLLISIONS == 0
         BREAKORCONTINUE
     #endif
 
-        // Check whether the chip thinks that a late collision ocurred; the chip
+        // Check whether the chip thinks that a late collision occurred; the chip
         // may be wrong (Errata Issue 13); therefore we retry. We could check
         // LATECOL in the ESTAT register in order to find out whether the chip
-        // thinks a late collision ocurred but (Errata Issue 15) tells us that
+        // thinks a late collision occurred but (Errata Issue 15) tells us that
         // this is not working. Therefore we check TSV
-        transmit_status_vector tsv;   
+        transmit_status_vector tsv;
         uint16_t etxnd = readReg(ETXND);
         writeReg(ERDPT, etxnd+1);
         readBuf(sizeof(transmit_status_vector), (byte*) &tsv);
@@ -529,7 +520,7 @@ void ENC28J60::packetSend(uint16_t len) {
             // there was some error but no LATECOL so we do not repeat
             BREAKORCONTINUE
         }
-        
+
         retry++;
     }
 }
@@ -541,7 +532,7 @@ uint16_t ENC28J60::packetReceive() {
     uint16_t len = 0;
 
     if (unreleasedPacket) {
-        if (gNextPacketPtr == 0) 
+        if (gNextPacketPtr == 0)
             writeReg(ERXRDPT, RXSTOP_INIT);
         else
             writeReg(ERXRDPT, gNextPacketPtr - 1);
@@ -746,7 +737,7 @@ void ENC28J60::memcpy_from_enc(void* dest, uint16_t source, int16_t num) {
     readBuf(num, (uint8_t*) dest);
 }
 
-static uint16_t endRam = ENC_HEAP_END; 
+static uint16_t endRam = ENC_HEAP_END;
 uint16_t ENC28J60::enc_malloc(uint16_t size) {
     if (endRam-size >= ENC_HEAP_START) {
         endRam -= size;
@@ -765,12 +756,12 @@ uint16_t ENC28J60::readPacketSlice(char* dest, int16_t maxlength, int16_t packet
 
     memcpy_from_enc((char*) &packetLength, (erxrdpt+3)%(RXSTOP_INIT+1), 2);
     packetLength -= 4; // remove crc
-    
+
     int16_t bytesToCopy = packetLength - packetOffset;
     if (bytesToCopy > maxlength) bytesToCopy = maxlength;
     if (bytesToCopy <= 0) bytesToCopy = 0;
 
-    int16_t startofSlice = (erxrdpt+7+packetOffset)%(RXSTOP_INIT+1); 
+    int16_t startofSlice = (erxrdpt+7+packetOffset)%(RXSTOP_INIT+1);
     memcpy_from_enc(dest, startofSlice, bytesToCopy);
     dest[bytesToCopy] = 0;
 
