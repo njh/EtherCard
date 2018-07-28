@@ -544,6 +544,12 @@ public:
     */
     static void dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback);
 
+    /**   @brief  Register a callback for multiple DHCP option numbers
+    *     @param  optionlist pointer to null terminate list of DHCP option numbers (must be static) 
+    *     @param  callback The function to be call when the option is received
+    */
+    static void dhcpAddOptionCallback(uint8_t* optionlist, DhcpOptionCallback callback);
+
     // dns.cpp
     /**   @brief  Perform DNS lookup
     *     @param  name Host name to lookup

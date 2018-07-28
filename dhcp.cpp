@@ -107,6 +107,7 @@ static uint32_t leaseTime;
 static byte* bufPtr;
 
 static uint8_t dhcpCustomOptionNum = 0;
+static uint8_t* dhcpCustomOptionList = NULL;
 static DhcpOptionCallback dhcpCustomOptionCallback = NULL;
 
 extern uint8_t allOnes[];// = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -213,6 +214,10 @@ static void send_dhcp_message(uint8_t *requestip) {
     byte len = 3;
     if (dhcpCustomOptionNum)
         len++;
+    else if (dhcpCustomOptionList) {
+      uint8_t *p = dhcpCustomOptionList;
+      while (*p++ != 0) len++;
+    }
     addToBuf(DHCP_OPT_PARAMETER_REQUEST_LIST);
     addToBuf(len);    // Length
     addToBuf(DHCP_OPT_SUBNET_MASK);
@@ -220,7 +225,12 @@ static void send_dhcp_message(uint8_t *requestip) {
     addToBuf(DHCP_OPT_DOMAIN_NAME_SERVERS);
     if (dhcpCustomOptionNum)
         addToBuf(dhcpCustomOptionNum);  // Custom option
-
+    else if (dhcpCustomOptionList) {
+      uint8_t *p = dhcpCustomOptionList; // Custom option list
+      while (*p != 0) {
+	addToBuf(*p++);
+      }
+    }
     addToBuf(DHCP_OPT_END);
 
     // packet size will be under 300 bytes
@@ -284,8 +294,19 @@ static void process_dhcp_ack(uint16_t len) {
             break;
         default: {
             // Is is a custom configured option?
-            if (dhcpCustomOptionCallback && option == dhcpCustomOptionNum) {
-                dhcpCustomOptionCallback(option, ptr, optionLen);
+	    if (dhcpCustomOptionCallback) {
+	        if (dhcpCustomOptionNum && option == dhcpCustomOptionNum) {
+		    dhcpCustomOptionCallback(option, ptr, optionLen);
+		} else if (dhcpCustomOptionList) {
+		    uint8_t *p = dhcpCustomOptionList;
+		    while (*p != 0) {
+		        if (option == *p) {
+		            dhcpCustomOptionCallback(option, ptr, optionLen);
+		            break;
+		        }
+		        p++;
+		    }
+		}
             }
         }
         }
@@ -354,6 +375,14 @@ bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
 void EtherCard::dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback)
 {
     dhcpCustomOptionNum = option;
+    dhcpCustomOptionList = NULL;
+    dhcpCustomOptionCallback = callback;
+}
+
+void EtherCard::dhcpAddOptionCallback(uint8_t* optionlist, DhcpOptionCallback callback)
+{
+    dhcpCustomOptionNum = 0;
+    dhcpCustomOptionList = optionlist;
     dhcpCustomOptionCallback = callback;
 }
 
