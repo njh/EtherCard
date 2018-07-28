@@ -1,19 +1,19 @@
 #include <EtherCard.h>//                                                                                                                                    |Mac adress|
-const char SSDP_RESPONSE[] PROGMEM = "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1200\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
-const char SSDP_RESPONSE_XML[] PROGMEM = "/??\r\n\r\n"; // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n 
+const char SSDP_RESPONSE[] PROGMEM = "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1200\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr
+const char SSDP_RESPONSE_XML[] PROGMEM = "/??\r\n\r\n"; // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n
 const char XML_DESCRIP[] PROGMEM = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version='1.0'?>\r<root xmlns='urn:schemas-upnp-org:device-1-0'><device><deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType><presentationURL>/</presentationURL><friendlyName>Arduino</friendlyName><manufacturer>Fredycpu</manufacturer><manufacturerURL>http://fredycpu.pro</manufacturerURL><serialNumber>1</serialNumber><UDN>uuid:abcdefgh-7dec-11d0-a765-7499692d3040</UDN></device></root>     ";
-const char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nCACHE-CONTROL: max-age=1200\r\nNT: upnp:rootdevice\r\nUSN: uuid:abcdefga-7dec-11d0-a765-7499692d3040::upnp:rootdevice\r\nNTS: ssdp:alive\r\nSERVER: Arduino UPnP/1.0\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr 
+const char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nCACHE-CONTROL: max-age=1200\r\nNT: upnp:rootdevice\r\nUSN: uuid:abcdefga-7dec-11d0-a765-7499692d3040::upnp:rootdevice\r\nNTS: ssdp:alive\r\nSERVER: Arduino UPnP/1.0\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr
 //  in XML_DESCRIP // <deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType> // declare as home automation
 //  in XML_DESCRIP // <friendlyName>Arduino</friendlyName> // declare the name of the service here Arduino
 //  in XML_DESCRIP // <presentationURL>/</presentationURL> // adress of the page who would opened on service double click ,you could use http://ip  but if you use dhcp it's better so and dont wase memory
 // this is the entire protocol, but you can try to use SSDP_NOTIFY as SSDP_RESPONSE with most systems will work and you can free a bit of flash mem.
-static byte myip[] = { 
+static byte myip[] = {
   192,168,0,67 };
-static byte gwip[] = { 
+static byte gwip[] = {
   192,168,0,250 };
-static byte ssdp[] = { 
+static byte ssdp[] = {
   239,255,255,250 };
-static byte mymac[] = { 
+static byte mymac[] = {
   0x74,0x99,0x69,0x2D,0x30,0x40 }; // if you change it you must update SSDP_RESPONSE and XML_DESCRIP
 byte Ethernet::buffer[750]; // tcp ip send and receive buffer
 unsigned long timer=9999;
@@ -75,17 +75,17 @@ wait:
       ether.httpServerReply_with_flags(sizeof pageC - 1,TCP_FLAGS_ACK_V);
       memcpy_P(ether.tcpOffset(), pageD, sizeof pageD); // send fourth packet and send the terminate flag
       ether.httpServerReply_with_flags(sizeof pageD - 1,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
-      goto wait;  
+      goto wait;
     }
     if (strncmp("GET /??", data, 7) == 0) { // description of services (normaly an xml file but here .....)
       ether.httpServerReplyAck();
       memcpy_P(Ethernet::buffer + TCP_OPTIONS_P,XML_DESCRIP, sizeof XML_DESCRIP);
       ether.httpServerReply_with_flags(sizeof XML_DESCRIP - 1 ,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
-      goto wait;  
+      goto wait;
     }
     if (strncmp("M-SEARCH", data, 8) == 0) { // service discovery request comes here (udp protocol)
       ssdpresp();
-      goto wait;  
+      goto wait;
     }
   }
   if (((millis()-timer)>50000)||(timer>millis())) {
@@ -93,21 +93,21 @@ wait:
   ssdpnotify();
   }
 }
-void ssdpresp() { //response to m-search 
+void ssdpresp() { //response to m-search
   byte ip_dst[IP_LEN];
   unsigned int port_dst=Ethernet::buffer[34]*256+Ethernet::buffer[35];//extract source port of request
   for(  int i=0; i<IP_LEN;i++) { //extract source IP of request
     ip_dst[i]=Ethernet::buffer[i+26];
   }
   int udppos = UDP_DATA_P;
-  
+
   EtherCard::udpPrepare(1900,ip_dst,port_dst);
   memcpy_P(Ethernet::buffer + udppos, SSDP_RESPONSE, sizeof SSDP_RESPONSE);
   udppos = udppos  + sizeof SSDP_RESPONSE-1;
   addip(udppos);
 }
 
-void ssdpnotify() { //Notification 
+void ssdpnotify() { //Notification
   int udppos = UDP_DATA_P;
   EtherCard::udpPrepare(1900,ssdp,1900);
   memcpy_P(Ethernet::buffer + udppos, SSDP_NOTIFY, sizeof SSDP_NOTIFY);

@@ -19,7 +19,7 @@
 
 #define RXSTART_INIT        0x0000  // start of RX buffer, (must be zero, Rev. B4 Errata point 5)
 #define RXSTOP_INIT         0x0BFF  // end of RX buffer, room for 2 packets
- 
+
 #define TXSTART_INIT        0x0C00  // start of TX buffer, room for 1 packet
 #define TXSTOP_INIT         0x11FF  // end of TX buffer
 
@@ -38,7 +38,7 @@
 /** This class provide low-level interfacing with the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class ENC28J60 {
 public:
-    static uint8_t buffer[]; //!< Data buffer (shared by recieve and transmit)
+    static uint8_t buffer[]; //!< Data buffer (shared by receive and transmit)
     static uint16_t bufferSize; //!< Size of data buffer
     static bool broadcast_enabled; //!< True if broadcasts enabled (used to allow temporary disable of broadcast for DHCP or other internal functions)
     static bool promiscuous_enabled; //!< True if promiscuous mode enabled (used to allow temporary disable of promiscuous mode)
@@ -66,13 +66,13 @@ public:
 
     /**   @brief  Sends data to network interface
     *     @param  len Size of data to send
-    *     @note   Data buffer is shared by recieve and transmit functions
+    *     @note   Data buffer is shared by receive and transmit functions
     */
     static void packetSend (uint16_t len);
 
-    /**   @brief  Copy recieved packets to data buffer
-    *     @return <i>uint16_t</i> Size of recieved data
-    *     @note   Data buffer is shared by recieve and transmit functions
+    /**   @brief  Copy received packets to data buffer
+    *     @return <i>uint16_t</i> Size of received data
+    *     @note   Data buffer is shared by receive and transmit functions
     */
     static uint16_t packetReceive ();
 
@@ -105,29 +105,29 @@ public:
 
     /**   @brief  Enable reception of broadcast messages
     *     @param  temporary Set true to temporarily enable broadcast
-    *     @note   This will increase load on recieved data handling
+    *     @note   This will increase load on received data handling
     */
     static void enableBroadcast(bool temporary = false);
 
     /**   @brief  Disable reception of broadcast messages
     *     @param  temporary Set true to only disable if temporarily enabled
-    *     @note   This will reduce load on recieved data handling
+    *     @note   This will reduce load on received data handling
     */
     static void disableBroadcast(bool temporary = false);
 
-    /**   @brief  Enables reception of mulitcast messages
-    *     @note   This will increase load on recieved data handling
+    /**   @brief  Enables reception of multicast messages
+    *     @note   This will increase load on received data handling
     */
     static void enableMulticast ();
-    
+
     /**   @brief  Enables reception of all messages
     *     @param  temporary Set true to temporarily enable promiscuous
-    *     @note   This will increase load significantly on recieved data handling
+    *     @note   This will increase load significantly on received data handling
     *     @note   All messages will be accepted, even messages with destination MAC other than own
     *     @note   Messages with invalid CRC checksum will still be rejected
     */
     static void enablePromiscuous (bool temporary = false);
-    
+
     /**   @brief  Disable reception of all messages and go back to default mode
     *     @param  temporary Set true to only disable if temporarily enabled
     *     @note   This will reduce load on received data handling
@@ -135,8 +135,8 @@ public:
     */
     static void disablePromiscuous(bool temporary = false);
 
-    /**   @brief  Disable reception of mulitcast messages
-    *     @note   This will reduce load on recieved data handling
+    /**   @brief  Disable reception of multicast messages
+    *     @note   This will reduce load on received data handling
     */
     static void disableMulticast();
 
@@ -148,18 +148,18 @@ public:
 
     /**   @brief  Copies a slice from the current packet to RAM
     *     @param  dest pointer in RAM where the data is copied to
-    *     @param  maxlength how many bytes to copy; 
+    *     @param  maxlength how many bytes to copy;
     *     @param  packetOffset where within the packet to start; if less than maxlength bytes are available only the remaining bytes are copied.
     *     @return <i>uint16_t</i> the number of bytes that have been read
     *     @note   At the destination at least maxlength+1 bytes should be reserved because the copied content will be 0-terminated.
-    */                   
+    */
     static uint16_t readPacketSlice(char* dest, int16_t maxlength, int16_t packetOffset);
 
     /** @brief  reserves a block of RAM in the memory of the enc chip
      *  @param  size number of bytes to reserve
-     *  @return <i>uint16_t</i> start address of the block within the enc memory. 0 if the remaining memory for malloc operation is less than size.   
-     *  @note  There is no enc_free(), i.e., reserved blocks stay reserved for the duration of the program. 
-     *  @note  The total memory available for malloc-operations is determined by ENC_HEAP_END-ENC_HEAP_START, defined in enc28j60.h; by default this is 0, i.e., you have to change these values in order to use enc_malloc().  
+     *  @return <i>uint16_t</i> start address of the block within the enc memory. 0 if the remaining memory for malloc operation is less than size.
+     *  @note  There is no enc_free(), i.e., reserved blocks stay reserved for the duration of the program.
+     *  @note  The total memory available for malloc-operations is determined by ENC_HEAP_END-ENC_HEAP_START, defined in enc28j60.h; by default this is 0, i.e., you have to change these values in order to use enc_malloc().
      */
     static uint16_t enc_malloc(uint16_t size);
 
@@ -172,7 +172,7 @@ public:
         @param dest destination address within enc memory
         @param source source pointer to a block of SRAM in the arduino
         @param num number of bytes to copy
-        @note  There is no sanity check. Handle with care 
+        @note  There is no sanity check. Handle with care
      */
     static void memcpy_to_enc(uint16_t dest, void* source, int16_t num);
 
@@ -198,7 +198,7 @@ typedef ENC28J60 Ethernet; //!< Define alias Ethernet for ENC28J60
 /** Enable pipelining of packet transmissions.
 *   If enabled the packetSend function will not block/wait until the packet is actually
 *   transmitted; but instead this wait is shifted to the next time that packetSend is
-*   called. This gives higher performance; however in combination with 
+*   called. This gives higher performance; however in combination with
 *   ETHERCARD_RETRY_LATECOLLISIONS this may lead to problems because a packet whose
 *   transmission fails because the ENC-chip thinks that it is a late collision will
 *   not be retried until the next call to packetSend.
