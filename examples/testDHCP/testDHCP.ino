@@ -3,8 +3,7 @@
 // Original author: Andrew Lindsay
 // Major rewrite and API overhaul by jcw, 2011-06-07
 //
-// Copyright: GPL V2
-// See http://www.gnu.org/licenses/gpl.html
+// License: GPLv2
 
 #include <EtherCard.h>
 

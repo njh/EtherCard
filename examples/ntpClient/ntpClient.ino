@@ -1,6 +1,6 @@
 /*
 
-  Udp NTP Client using the EtherCard library
+  UDP NTP Client using the EtherCard library
 
   Get the time from a Network Time Protocol (NTP) time server
   Demonstrates use of UDP sendPacket and ReceivePacket
@@ -11,7 +11,7 @@
   by Jeroen Vermeulen
   inspired by https://www.arduino.cc/en/Tutorial/UdpNtpClient
 
-  This code is in the public domain.
+  License: GPLv2
 
 */
 

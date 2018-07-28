@@ -1,5 +1,7 @@
 // Demo using DHCP and DNS to perform a web client request.
-// 2011-06-08 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2011-06-08 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

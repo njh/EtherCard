@@ -1,5 +1,7 @@
-// This is a demo of the RBBB running as webserver with the Ether Card
-// 2010-05-28 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// This is a demo of the RBBB running as webserver with the EtherCard
+// 2010-05-28 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

@@ -4,7 +4,9 @@
 // HTTP to interact with the nma api (not HTTPS). The API key WILL be sent
 // accross the wire in plain text.
 //
-// 2015-04-10 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2015-04-10 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

@@ -1,5 +1,7 @@
 // This demo does web requests to a fixed IP address, using a fixed gateway.
-// 2010-11-27 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2010-11-27 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

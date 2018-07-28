@@ -1,5 +1,7 @@
 // Simple demo for feeding some random data to Pachube.
-// 2011-07-08 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2011-07-08 <jc@wippler.nl>
+//
+// License: GPLv2
 
 // Handle returning code and reset ethernet module if needed
 // 2013-10-22 hneiraf@gmail.com

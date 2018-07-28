@@ -1,4 +1,6 @@
 // Example of EtherCard usage, contributed by Will Rose, 2012-07-05.
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

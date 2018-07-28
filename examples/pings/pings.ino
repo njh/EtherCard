@@ -1,5 +1,7 @@
 // Ping a remote server, also uses DHCP and DNS.
-// 2011-06-12 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2011-06-12 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 
