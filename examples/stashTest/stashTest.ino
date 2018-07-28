@@ -46,7 +46,9 @@ void dumpStash (const char* msg, void* ptr) {
 void setup () {
   Serial.begin(57600);
   Serial.println("\n[stashTest]");
-  ether.begin(sizeof Ethernet::buffer, mymac);
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac, SS);
 
 #if 1
   Stash buf;
