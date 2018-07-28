@@ -53,7 +53,8 @@ const char pageD[] PROGMEM =
 ;
 
 void setup(){
-  ether.begin(sizeof Ethernet::buffer, mymac , SS);// SS = 53 for the mega ethernet shield and  10 for normal ethernet shield
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac, SS);
   ether.staticSetup(myip, gwip);
   ENC28J60::disableMulticast(); //disable multicast filter means enable multicast reception
   Serial.begin(115200);

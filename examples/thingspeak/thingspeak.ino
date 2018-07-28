@@ -15,7 +15,6 @@
 // change these settings to match your own setup
 //#define FEED "000"
 #define APIKEY "beef1337beef1337" // put your key here
-#define ethCSpin 10 // put your CS/SS pin here.
 
 // ethernet interface mac address, must be unique on the LAN
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
@@ -123,7 +122,8 @@ void initialize_ethernet(void){
     //digitalWrite(5, HIGH);
     //delay(500);
 
-    if (ether.begin(sizeof Ethernet::buffer, mymac, ethCSpin) == 0){
+    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
       Serial.println( "Failed to access Ethernet controller");
       continue;
     }

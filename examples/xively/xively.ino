@@ -113,7 +113,8 @@ void initialize_ethernet(void){
     digitalWrite(5, HIGH);
     delay(500);
 
-    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0){
+    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
       Serial.println( "Failed to access Ethernet controller");
       continue;
     }

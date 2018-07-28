@@ -30,7 +30,9 @@ void setup() {
     file.setSSpin(4);
   res=file.initFAT(0);
   if (res==NO_ERROR)    Serial.println("SD started");
-  ether.begin(sizeof Ethernet::buffer, mymac , SS); //SS = 53 on mega ethernet shield 10 on others
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac , SS);
   ether.staticSetup(myip, gwip);
   Serial.println("ETH started");
 }

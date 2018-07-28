@@ -47,9 +47,11 @@ const char pageE[] PROGMEM =
 
 
 void setup(){
-  ether.begin(sizeof Ethernet::buffer, mymac , 10);// 53 for the mega ethernet shield and 10 for normal ethernet shield
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac , SS);
   ether.staticSetup(myip, gwip);
 }
+
 void loop(){
     word pos = ether.packetLoop(ether.packetReceive());
     // check if valid tcp data is received
