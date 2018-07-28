@@ -70,7 +70,7 @@ void loop(){
         else
         {
             ether.httpServerReplyAck(); // send ack to the request
-            memcpy_P(ether.tcpOffset(), pageA, sizeof pageA);//only the first part will sended 
+            memcpy_P(ether.tcpOffset(), pageA, sizeof pageA);//only the first part will sended
             ether.httpServerReply_with_flags(sizeof pageA - 1,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
         }
   }

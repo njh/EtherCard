@@ -23,13 +23,13 @@ byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
 //callback that prints received packets to the serial port
 void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *data, uint16_t len){
   IPAddress src(src_ip[0],src_ip[1],src_ip[2],src_ip[3]);
-  
+
   Serial.print("dest_port: ");
   Serial.println(dest_port);
   Serial.print("src_port: ");
   Serial.println(src_port);
-  
-  
+
+
   Serial.print("src_port: ");
   ether.printIp(src_ip);
   Serial.println("data: ");
