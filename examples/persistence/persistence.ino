@@ -1,5 +1,6 @@
 // Demo for using persistence flag and readPacketSlice()
-// http://opensource.org/licenses/mit-license.php
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 
