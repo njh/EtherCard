@@ -38,4 +38,6 @@ void setup () {
   ether.printIp("DNS IP: ", ether.dnsip);
 }
 
-void loop () {}
+void loop () {
+  ether.packetLoop(ether.packetReceive());
+}
