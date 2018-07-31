@@ -288,7 +288,7 @@ static uint32_t getBigEndianLong(byte offs) { //get the sequence number of packe
     return (((unsigned long)gPB[offs]*256+gPB[offs+1])*256+gPB[offs+2])*256+gPB[offs+3];
 } //thanks to mstuetz for the missing (unsigned long)
 
-static void setSequenceNumber(uint32_t seq) { 
+static void setSequenceNumber(uint32_t seq) {
     gPB[TCP_SEQ_H_P]   = (seq & 0xff000000 ) >> 24;
     gPB[TCP_SEQ_H_P+1] = (seq & 0xff0000 ) >> 16;
     gPB[TCP_SEQ_H_P+2] = (seq & 0xff00 ) >> 8;
@@ -660,7 +660,7 @@ uint16_t EtherCard::accept(const uint16_t port, uint16_t plen) {
             {   //Got some data
                 pos = TCP_DATA_START; // TCP_DATA_START is a formula
                 //!@todo no idea what this check pos<=plen-8 does; changed this to pos<=plen as otw. perfectly valid tcp packets are ignored; still if anybody has any idea please leave a comment
-                if (pos <= plen) 
+                if (pos <= plen)
                     return pos;
             }
             else if (gPB[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)

@@ -11,7 +11,7 @@ public class UDPserver {
 	}
 	private int port;
 	private DatagramSocket s;
-	
+
 	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	public UDPserver(int port) {

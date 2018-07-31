@@ -46,9 +46,11 @@ void dumpStash (const char* msg, void* ptr) {
 void setup () {
   Serial.begin(57600);
   Serial.println("\n[stashTest]");
-  ether.begin(sizeof Ethernet::buffer, mymac);
-  
-#if 1  
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac, SS);
+
+#if 1
   Stash buf;
   dumpStash("> AAA", &buf);
   byte fd = buf.create();
@@ -85,7 +87,7 @@ void setup () {
   Serial.println();
   dumpStash("> GGG", &buf);
 #endif
-  
+
   Stash buf2;
   byte fd2 = buf2.create();
   buf2.print("<XYZ>");
@@ -93,7 +95,7 @@ void setup () {
   buf2.load(1, fd2);
   dumpBlock("SECOND", 1);
   dumpStash("> HHH", &buf2);
-  
+
   Stash::prepare(PSTR("a $S b $F c $D d $H e"),
                   "123", PSTR("4567"), -12345, fd2);
   dumpBlock("BUFFER", 0);

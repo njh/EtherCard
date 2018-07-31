@@ -23,14 +23,15 @@ void setup () {
       Serial.print(':');
   }
   Serial.println();
-  
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
 
   Serial.println(F("Setting up DHCP"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));
-  
+
   ether.printIp("My IP: ", ether.myip);
   ether.printIp("Netmask: ", ether.netmask);
   ether.printIp("GW IP: ", ether.gwip);

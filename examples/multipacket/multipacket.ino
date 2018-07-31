@@ -47,9 +47,11 @@ const char pageE[] PROGMEM =
 
 
 void setup(){
-  ether.begin(sizeof Ethernet::buffer, mymac , 10);// 53 for the mega ethernet shield and 10 for normal ethernet shield
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac , SS);
   ether.staticSetup(myip, gwip);
 }
+
 void loop(){
     word pos = ether.packetLoop(ether.packetReceive());
     // check if valid tcp data is received
@@ -70,7 +72,7 @@ void loop(){
         else
         {
             ether.httpServerReplyAck(); // send ack to the request
-            memcpy_P(ether.tcpOffset(), pageA, sizeof pageA);//only the first part will sended 
+            memcpy_P(ether.tcpOffset(), pageA, sizeof pageA);//only the first part will sended
             ether.httpServerReply_with_flags(sizeof pageA - 1,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
         }
   }

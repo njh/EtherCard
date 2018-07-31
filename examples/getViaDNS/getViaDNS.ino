@@ -28,8 +28,9 @@ static void my_result_cb (byte status, word off, word len) {
 void setup () {
   Serial.begin(57600);
   Serial.println("\n[getViaDNS]");
-  
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println( "Failed to access Ethernet controller");
 
   ether.staticSetup(myip, gwip);
@@ -37,13 +38,13 @@ void setup () {
   if (!ether.dnsLookup(website))
     Serial.println("DNS failed");
   ether.printIp("Server: ", ether.hisip);
-  
+
   timer = - REQUEST_RATE; // start timing out right away
 }
 
 void loop () {
   ether.packetLoop(ether.packetReceive());
-  
+
   if (millis() > timer + REQUEST_RATE) {
     timer = millis();
     Serial.println("\n>>> REQ");

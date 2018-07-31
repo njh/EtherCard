@@ -23,14 +23,15 @@ void setup () {
   Serial.begin(57600);
   Serial.println(F("\n[webClient]"));
 
-  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));
 
   ether.printIp("IP:  ", ether.myip);
-  ether.printIp("GW:  ", ether.gwip);  
-  ether.printIp("DNS: ", ether.dnsip);  
+  ether.printIp("GW:  ", ether.gwip);
+  ether.printIp("DNS: ", ether.dnsip);
 
 #if 1
   // use DNS to resolve the website's IP address
@@ -46,13 +47,13 @@ void setup () {
   byte hisip[] = { 192,168,1,1 };
   ether.copyIp(ether.hisip, hisip);
 #endif
-    
+
   ether.printIp("SRV: ", ether.hisip);
 }
 
 void loop () {
   ether.packetLoop(ether.packetReceive());
-  
+
   if (millis() > timer) {
     timer = millis() + 5000;
     Serial.println();

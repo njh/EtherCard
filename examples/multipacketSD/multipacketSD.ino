@@ -1,12 +1,12 @@
 // works only with tinyfat library
 // with SD library packets lost will occurs
-// don't know why ! 
+// don't know why !
 // tested with arduino mega 1280 and uno
 // send 240 Megabyte file without packet loss
 // at 100 kbyte/s
-// tinyfat read a block of 512 bytes on SD card , 
+// tinyfat read a block of 512 bytes on SD card ,
 // so the buffer must be 512 + 60 bytes
-// on the arduino mega with bigger buffer you can adjust 
+// on the arduino mega with bigger buffer you can adjust
 // if (cur>=512) { // 512 to 1024 with 1100 bytes buffer
 
 #include <EtherCard.h>
@@ -25,17 +25,19 @@ byte res;
 void setup() {
   // Initialize serial communication at 115200 baud
   Serial.begin(115200);
-  // Initialize tinyFAT 
+  // Initialize tinyFAT
   // You might need to select a lower speed than the default SPISPEED_HIGH
     file.setSSpin(4);
-  res=file.initFAT(0); 
+  res=file.initFAT(0);
   if (res==NO_ERROR)    Serial.println("SD started");
-  ether.begin(sizeof Ethernet::buffer, mymac , SS); //SS = 53 on mega ethernet shield 10 on others
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac , SS);
   ether.staticSetup(myip, gwip);
   Serial.println("ETH started");
-}  
+}
 
-void loop() 
+void loop()
 {
    wait:
     pos = ether.packetLoop(ether.packetReceive());// check if valid tcp data is received
@@ -46,26 +48,26 @@ void loop()
           sendfiles("index.htm");
           goto wait;
           }
-        if (strncmp("GET /", data, 5) == 0) { // serve anything on sd card 
-            int i =0;  
+        if (strncmp("GET /", data, 5) == 0) { // serve anything on sd card
+            int i =0;
             char temp[15]=""; // here will be the name of requested file
             while (data[i+5]!=32) {temp[i]=data[i+5];i++;}//search the end
             sendfiles((char*) temp);
             goto wait;
           }
        not_found();
-       
+
   }
-  
+
 }
 
-void not_found() { //content not found 
+void not_found() { //content not found
   cur=0;
-  streamfile ("404.hea",TCP_FLAGS_FIN_V); 
+  streamfile ("404.hea",TCP_FLAGS_FIN_V);
   // Serial.println("not found");
 }
 
-byte streamfile (char* name , byte lastflag) { //send a file to the buffer 
+byte streamfile (char* name , byte lastflag) { //send a file to the buffer
   if (!file.exists(name)) {return 0;}
   res=file.openFile(name, FILEMODE_BINARY);
   int  car=512;
@@ -79,7 +81,7 @@ if (cur>=512) {
       ether.httpServerReply_with_flags(cur,TCP_FLAGS_ACK_V);
       cur=0;
     }  else {
- 
+
   if (lastflag==TCP_FLAGS_FIN_V) {
     ether.httpServerReply_with_flags(cur,TCP_FLAGS_ACK_V+TCP_FLAGS_FIN_V);
   }
@@ -89,10 +91,10 @@ if (cur>=512) {
   return 1;
 }
 
-byte sendfiles(char* name) { // function to find the correct header and send a file 
+byte sendfiles(char* name) { // function to find the correct header and send a file
   ether.httpServerReplyAck();
-  int i =0;  
-  char dtype[13]=""; 
+  int i =0;
+  char dtype[13]="";
   while (name[i]!=0) {
     i++;
   }//search the end
@@ -108,7 +110,7 @@ byte sendfiles(char* name) { // function to find the correct header and send a f
   dtype[a-b-1]='.';
   dtype[a-b]='h';
   dtype[a-b+1]='e';
-  dtype[a-b+2]='a';        
+  dtype[a-b+2]='a';
   //Serial.println(dtype); // print the requested header file
   if (streamfile ((char *)dtype,0)==0) {
     streamfile ("txt.hea",0);
