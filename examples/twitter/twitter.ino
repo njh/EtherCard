@@ -11,6 +11,8 @@
 //  WARNING: This example uses insecure HTTP and not HTTPS.
 //  The API key will be sent over the wire in plain text.
 //  NOTE: Twitter rejects tweets with identical content as dupes (returns 403)
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

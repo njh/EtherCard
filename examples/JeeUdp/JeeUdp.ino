@@ -1,8 +1,10 @@
 // Collect RF12 packets and send them on as UDP collectd packets on Ethernet.
-// 2010-05-20 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2010-05-20 <jc@wippler.nl>
+//
+// License: GPLv2
 
 // This sketch is derived from RF12eth.pde (and etherNode.ino):
-// May 2010, Andras Tucsni, http://opensource.org/licenses/mit-license.php
+// May 2010, Andras Tucsni
 
 #include <EtherCard.h>
 #include <JeeLib.h>

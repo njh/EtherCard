@@ -1,7 +1,10 @@
 // Demonstrates usage of the new udpServer feature.
-//You can register the same function to multiple ports, and multiple functions to the same port.
+// You can register the same function to multiple ports,
+// and multiple functions to the same port.
 //
 // 2013-4-7 Brian Lee <cybexsoft@hotmail.com>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 #include <IPAddress.h>
