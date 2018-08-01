@@ -1,5 +1,7 @@
 // This demo does web requests via DHCP and DNS lookup.
-// 2011-07-05 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2011-07-05 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 

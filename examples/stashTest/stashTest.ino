@@ -1,5 +1,7 @@
 // Test the offloaded RAM stash mechanism.
-// 2011-07-10 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+// 2011-07-10 <jc@wippler.nl>
+//
+// License: GPLv2
 
 #include <EtherCard.h>
 #include <avr/eeprom.h>
