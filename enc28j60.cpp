@@ -386,8 +386,6 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writePhy(PHLCON, 0x476);
 
     writeRegByte(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN|ERXFCON_BCEN);
-    writeReg(EPMM0, 0x303f);
-    writeReg(EPMCS, 0xf7f9);
     writeRegByte(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
     writeOp(ENC28J60_BIT_FIELD_SET, MACON3,
             MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
