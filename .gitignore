@@ -1,3 +1,4 @@
 .DS_Store
 *.esproj
-/html
+*.bak
+/docs/html
