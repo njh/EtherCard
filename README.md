@@ -2,12 +2,14 @@
 
 [![Travis Status][S]][T]
 
-**EtherCard** is a driver for the ENC28J60 chip, compatible with Arduino IDE.
-Adapted and extended from code written by Guido Socher and Pascal Stang.
+**EtherCard** is a driver for the Microchip ENC28J60 chip, compatible with Arduino IDE.
+It is adapted and extended from code written by Guido Socher and Pascal Stang.
+
+High-level routines are provided to allow a variety of purposes 
+including simple data transfer through to HTTP handling.
 
 License: GPL2
 
-The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/.
 
 ## Requirements
 
@@ -28,7 +30,11 @@ The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/.
   SCK pins of the SPI interface.
 * Software: Any Arduino IDE >= 1.0.0 should be fine
 
+
 ## Library Installation
+
+EtherCard is available for installation in the [Arduino Library Manager].
+Alternatively it can be downloaded directly from GitHub:
 
 1. Download the ZIP file from https://github.com/njh/EtherCard/archive/master.zip
 2. Rename the downloaded file to `ethercard.zip`
@@ -37,35 +43,114 @@ The documentation for this library is at http://jeelabs.net/pub/docs/ethercard/.
 
 See the comments in the example sketches for details about how to try them out.
 
+
 ## Physical Installation
 
 ### PIN Connections (Using Arduino UNO):
 
-    VCC -   3.3V
-    GND -    GND
-    SCK - Pin 13
-    SO  - Pin 12
-    SI  - Pin 11
-    CS  - Pin 10 # Selectable with the ether.begin() function
+| ENC28J60 | Arduino Uno | Notes                                       |
+|----------|-------------|---------------------------------------------|
+| VCC      | 3.3V        |                                             |
+| GND      | GND         |                                             |
+| SCK      | Pin 13      |                                             |
+| MISO     | Pin 12      |                                             |
+| MOSI     | Pin 11      |                                             |
+| CS       | Pin 10      | Selectable with the ether.begin() function  |
+
 
 ### PIN Connections using an Arduino Mega
 
-    VCC -   3.3V
-    GND -    GND
-    SCK - Pin 52
-    SO  - Pin 50
-    SI  - Pin 51
-    CS  - Pin 53 # Selectable with the ether.begin() function
+| ENC28J60 | Arduino Mega | Notes                                       |
+|----------|--------------|---------------------------------------------|
+| VCC      | 3.3V         |                                             |
+| GND      | GND          |                                             |
+| SCK      | Pin 52       |                                             |
+| MISO     | Pin 50       |                                             |
+| MOSI     | Pin 51       |                                             |
+| CS       | Pin 53       | Selectable with the ether.begin() function  |
 
-## Support
 
-For questions and help, see the [forums][F] (at JeeLabs.net).
-The issue tracker has been moved back to [Github][I] again.
+## Using the library
 
-[F]: http://jeelabs.net/projects/cafe/boards
-[I]: https://github.com/njh/EtherCard/issues
-[S]: https://travis-ci.org/njh/EtherCard.svg
-[T]: https://travis-ci.org/njh/EtherCard
+Full API documentation for this library is at: http://www.aelius.com/njh/ethercard/
+
+Several [example sketches] are provided with the library which demonstrate various features.
+Below are descriptions on how to use the library.
+
+Note: `ether` is a globally defined instance of the `EtherCard` class and may be used to access the library.
+
+
+### Initialising the library
+
+Initiate To initiate the library call `ether.begin()`.
+
+```cpp
+uint8_t Ethernet::buffer[700]; // configure buffer size to 700 octets
+static uint8_t mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 }; // define (unique on LAN) hardware (MAC) address
+
+uint8_type vers = ether.begin(sizeof Ethernet::buffer, mymac);
+if(vers == 0)
+{
+    // handle failure to initiate network interface
+}
+```
+
+### Configure using DHCP
+
+To configure IP address via DHCP use `ether.dhcpSetup()`.
+
+```cpp
+if(!ether.dhcpSetup())
+{
+    // handle failure to obtain IP address via DHCP
+}
+ether.printIp("IP:   ", ether.myip); // output IP address to Serial
+ether.printIp("GW:   ", ether.gwip); // output gateway address to Serial
+ether.printIp("Mask: ", ether.mymask); // output netmask to Serial
+ether.printIp("DHCP server: ", ether.dhcpip); // output IP address of the DHCP server
+```
+
+### Static IP Address
+
+To configure a static IP address use `ether.staticSetup()`.
+
+```cpp
+const static uint8_t ip[] = {192,168,0,100};
+const static uint8_t gw[] = {192,168,0,254};
+const static uint8_t dns[] = {192,168,0,1};
+
+if(!ether.staticSetup(ip, gw, dns);
+{
+    // handle failure to configure static IP address (current implementation always returns true!)
+}
+```
+
+### Send UDP packet
+
+To send a UDP packet use `ether.sendUdp()`.
+
+```C
+char payload[] = "My UDP message";
+uint8_t nSourcePort = 1234;
+uint8_t nDestinationPort = 5678;
+uint8_t ipDestinationAddress[IP_LEN];
+ether.parseIp(ipDestinationAddress, "192.168.0.200");
+
+ether.sendUdp(payload, sizeof(payload), nSourcePort, ipDestinationAddress, nDestinationPort);
+```
+
+### DNS Lookup
+
+To perform a DNS lookup use `ether.dnsLookup()`.
+
+```
+if(!ether.dnsLookup("google.com"))
+{
+    // handle failure of DNS lookup
+}
+ether.printIp("Server: ", ether.hispip); // Result of DNS lookup is placed in the hisip member of EtherCard.
+```
+
 
 ## Related Work
 
@@ -77,3 +162,9 @@ There are other Arduino libraries for the ENC28J60 that are worth mentioning:
 * [ETHER_28J60](https://github.com/muanis/arduino-projects/tree/master/libraries/ETHER_28J60) (no longer maintained, very low footprint and simple)
 
 Read more about the differences at [this blog post](http://www.tweaking4all.com/hardware/arduino/arduino-enc28j60-ethernet/).
+
+
+[Arduino Library Manager]: https://www.arduino.cc/en/Guide/Libraries
+[example sketches]: https://github.com/njh/EtherCard/tree/master/examples
+[S]: https://travis-ci.org/njh/EtherCard.svg
+[T]: https://travis-ci.org/njh/EtherCard
