@@ -1,7 +1,9 @@
 {
   "name": "EtherCard",
+  "version": "1.1.0",
   "keywords": "http, web, server, client, ethernet",
   "description": "EtherCard is an IPv4 driver for the ENC28J60 chip.",
+  "homepage": "https://github.com/njh/EtherCard",
   "authors":
   [
     {
@@ -20,16 +22,12 @@
       "name": "Guido Socher"
     }
   ],
-  "include": [
-    "examples",
-    "*.cpp",
-    "*.h"
-  ],
   "repository":
   {
     "type": "git",
     "url": "https://github.com/njh/EtherCard.git"
   },
+  "license": "GPL-2.0",
   "frameworks": "arduino",
   "platforms": "atmelavr"
 }

@@ -37,8 +37,10 @@
 #endif
 
 #include <avr/pgmspace.h>
+#include "bufferfiller.h"
 #include "enc28j60.h"
 #include "net.h"
+#include "stash.h"
 
 /** Enable DHCP.
 *   Setting this to zero disables the use of DHCP; if a program uses DHCP it will
@@ -99,173 +101,6 @@ typedef void (*DhcpOptionCallback)(
     uint8_t len);       ///< Length of the DHCP option data
 
 
-/** This structure describes the structure of memory used within the ENC28J60 network interface. */
-typedef struct {
-    uint8_t count;     ///< Number of allocated pages
-    uint8_t first;     ///< First allocated page
-    uint8_t last;      ///< Last allocated page
-} StashHeader;
-
-/** This class provides access to the memory within the ENC28J60 network interface. */
-class Stash : public /*Stream*/ Print, private StashHeader {
-    uint8_t curr;      //!< Current page
-    uint8_t offs;      //!< Current offset in page
-
-    typedef struct {
-        union {
-            uint8_t bytes[64];
-            uint16_t words[32];
-            struct {
-                StashHeader head; // StashHeader is only stored in first block
-                uint8_t filler[59];
-                uint8_t tail;     // only meaningful if bnum==last; number of bytes in last block
-                uint8_t next;     // pointer to next block
-            };
-        };
-        uint8_t bnum;
-    } Block;
-
-    static uint8_t allocBlock ();
-    static void freeBlock (uint8_t block);
-    static uint8_t fetchByte (uint8_t blk, uint8_t off);
-
-    static Block bufs[2];
-    static uint8_t map[SCRATCH_MAP_SIZE];
-
-public:
-    static void initMap (uint8_t last=SCRATCH_PAGE_NUM);
-    static void load (uint8_t idx, uint8_t blk);
-    static uint8_t freeCount ();
-
-    Stash () : curr (0) { first = 0; }
-    Stash (uint8_t fd) { open(fd); }
-
-    uint8_t create ();
-    uint8_t open (uint8_t blk);
-    void save ();
-    void release ();
-
-    void put (char c);
-    char get ();
-    uint16_t size ();
-
-    virtual WRITE_RESULT write(uint8_t b) { put(b); WRITE_RETURN }
-
-    // virtual int available() {
-    //   if (curr != last)
-    //     return 1;
-    //   load(1, last);
-    //   return offs < bufs[1].tail;
-    // }
-    // virtual int read() {
-    //   return available() ? get() : -1;
-    // }
-    // virtual int peek() {
-    //   return available() ? bufs[1].bytes[offs] : -1;
-    // }
-    // virtual void flush() {
-    //   curr = last;
-    //   offs = 63;
-    // }
-
-    static void prepare (const char* fmt PROGMEM, ...);
-    static uint16_t length ();
-    static void extract (uint16_t offset, uint16_t count, void* buf);
-    static void cleanup ();
-
-    friend void dumpBlock (const char* msg, uint8_t idx); // optional
-    friend void dumpStash (const char* msg, void* ptr);   // optional
-};
-
-/** This class populates network send and receive buffers.
-*
-*   This class provides formatted printing into memory. Users can use it to write into send buffers.
-*
-*   Nota: PGM_P: is a pointer to a string in program space (defined in the source code, updated to PROGMEM)
-*
-*   # Format string
-*
-*   | Format | Parameter   | Output
-*   |--------|-------------|----------
-*   | $D     | uint16_t    | Decimal representation
-*   | $T ¤   | double      | Decimal representation with 3 digits after decimal sign ([-]d.ddd)
-*   | $H     | uint16_t    | Hexadecimal value of lsb (from 00 to ff)
-*   | $L     | long        | Decimal representation
-*   | $S     | const char* | Copy null terminated string from main memory
-*   | $F     | PGM_P       | Copy null terminated string from program space
-*   | $E     | byte*       | Copy null terminated string from EEPROM space
-*   | $$     | _none_      | '$'
-*
-*   ¤ _Available only if FLOATEMIT is defined_
-*
-*   # Examples
-*   ~~~~~~~~~~~~~{.c}
-*     uint16_t ddd = 123;
-*     double ttt = 1.23;
-*     uint16_t hhh = 0xa4;
-*     long lll = 123456789;
-*     char * sss;
-*     char fff[] PROGMEM = "MyMemory";
-*
-*     sss[0] = 'G';
-*     sss[1] = 'P';
-*     sss[2] = 'L';
-*     sss[3] = 0;
-*     buf.emit_p( PSTR("ddd=$D\n"), ddd );  // "ddd=123\n"
-*     buf.emit_p( PSTR("ttt=$T\n"), ttt );  // "ttt=1.23\n" **TO CHECK**
-*     buf.emit_p( PSTR("hhh=$H\n"), hhh );  // "hhh=a4\n"
-*     buf.emit_p( PSTR("lll=$L\n"), lll );  // "lll=123456789\n"
-*     buf.emit_p( PSTR("sss=$S\n"), sss );  // "sss=GPL\n"
-*     buf.emit_p( PSTR("fff=$F\n"), fff );  // "fff=MyMemory\n"
-*   ~~~~~~~~~~~~~
-*
-*/
-class BufferFiller : public Print {
-    uint8_t *start; //!< Pointer to start of buffer
-    uint8_t *ptr; //!< Pointer to cursor position
-public:
-    /** @brief  Empty constructor
-    */
-    BufferFiller () {}
-
-    /** @brief  Constructor
-    *   @param  buf Pointer to the ethernet data buffer
-    */
-    BufferFiller (uint8_t* buf) : start (buf), ptr (buf) {}
-
-    /** @brief  Add formatted text to buffer
-    *   @param  fmt Format string (see Class description)
-    *   @param  ... parameters for format string
-    */
-    void emit_p (const char* fmt PROGMEM, ...);
-
-    /** @brief  Add data to buffer from main memory
-    *   @param  s Pointer to data
-    *   @param  n Number of characters to copy
-    */
-    void emit_raw (const char* s, uint16_t n) { memcpy(ptr, s, n); ptr += n; }
-
-    /** @brief  Add data to buffer from program space string
-    *   @param  p Program space string pointer
-    *   @param  n Number of characters to copy
-    */
-    void emit_raw_p (const char* p PROGMEM, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
-
-    /** @brief  Get pointer to start of buffer
-    *   @return <i>uint8_t*</i> Pointer to start of buffer
-    */
-    uint8_t* buffer () const { return start; }
-
-    /** @brief  Get cursor position
-    *   @return <i>uint16_t</i> Cursor position
-    */
-    uint16_t position () const { return ptr - start; }
-
-    /** @brief  Write one byte to buffer
-    *   @param  v Byte to add to buffer
-    */
-    virtual WRITE_RESULT write (uint8_t v) { *ptr++ = v; WRITE_RETURN }
-};
 
 /** This class provides the main interface to a ENC28J60 based network interface card and is the class most users will use.
 *   @note   All TCP/IP client (outgoing) connections are made from source port in range 2816-3071. Do not use these source ports for other purposes.
@@ -635,6 +470,12 @@ public:
     */
     static void makeNetStr(char *resultstr,uint8_t *bytestr,uint8_t len,
                            char separator,uint8_t base);
+
+    /**   @brief  Convert a 16-bit integer into a string
+    *     @param  value The number to convert
+    *     @param  ptr The string location to write to
+    */
+    char* wtoa(uint16_t value, char* ptr);
 
     /**   @brief  Return the sequence number of the current TCP package
     */
