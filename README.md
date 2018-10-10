@@ -106,7 +106,7 @@ if(!ether.dhcpSetup())
 }
 ether.printIp("IP:   ", ether.myip); // output IP address to Serial
 ether.printIp("GW:   ", ether.gwip); // output gateway address to Serial
-ether.printIp("Mask: ", ether.mymask); // output netmask to Serial
+ether.printIp("Mask: ", ether.netmask); // output netmask to Serial
 ether.printIp("DHCP server: ", ether.dhcpip); // output IP address of the DHCP server
 ```
 
