@@ -148,7 +148,7 @@ if(!ether.dnsLookup("google.com"))
 {
     // handle failure of DNS lookup
 }
-ether.printIp("Server: ", ether.hispip); // Result of DNS lookup is placed in the hisip member of EtherCard.
+ether.printIp("Server: ", ether.hisip); // Result of DNS lookup is placed in the hisip member of EtherCard.
 ```
 
 
