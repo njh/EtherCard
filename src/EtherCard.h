@@ -459,7 +459,7 @@ public:
     *     @param  str Pointer to string to parse
     *     @return <i>uint8_t</i> 0 on success
     */
-    static uint8_t parseIp(uint8_t *bytestr,char *str);
+    static uint8_t parseIp(uint8_t *bytestr, const char *str);
 
     /**   @brief  Convert a byte array to a human readable display string
     *     @param  resultstr Pointer to a buffer to hold the resulting null terminated string
