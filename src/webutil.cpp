@@ -149,35 +149,27 @@ void EtherCard::urlEncode (char *str,char *urlbuf)
 }
 
 // parse a string and extract the IP to bytestr
-uint8_t EtherCard::parseIp (uint8_t *bytestr,char *str)
+uint8_t EtherCard::parseIp (uint8_t *bytestr, const char *str)
 {
-    char *sptr;
-    uint8_t i=0;
-    sptr=NULL;
-    while(i<IP_LEN) {
-        bytestr[i]=0;
-        i++;
-    }
-    i=0;
-    while(*str && i<IP_LEN) {
-        // if a number then start
-        if (sptr==NULL && isdigit(*str)) {
-            sptr=str;
+    uint8_t res = 1;
+    for (uint8_t i = 0; i < IP_LEN; ++i)
+    {
+        bytestr[i] = atoi(str) & 0xFF;
+        for (; *str != '\0'; ++str)
+        {
+            if (*str == '.')
+            {
+                ++str;
+                break;
+            }
+            else if (!isdigit(*str))
+            {
+                res = 0;
+                break;
+            }
         }
-        if (*str == '.') {
-            *str ='\0';
-            bytestr[i]=(atoi(sptr)&0xff);
-            i++;
-            sptr=NULL;
-        }
-        str++;
     }
-    *str ='\0';
-    if (i==IP_LEN-1) {
-        bytestr[i]=(atoi(sptr)&0xff);
-        return(0);
-    }
-    return(1);
+    return res;
 }
 
 // take a byte string and convert it to a human readable display string  (base is 10 for ip and 16 for mac addr), len is 4[IP_LEN] for IP addr and 6[ETHER_LEN] for mac.
