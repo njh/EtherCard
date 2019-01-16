@@ -48,6 +48,12 @@ static uint32_t request_timer;
 int attempt;
 Stash stash;
 
+void checkPublicIP();
+void checkPublicIPResponse();
+void updateNoIP();
+void checkNoIPResponse();
+void SerialPrint_P(const char* str PROGMEM);
+
 void setup () {
 
     Serial.begin(57600);
