@@ -25,6 +25,7 @@ byte session;
 //timing variable
 int res = 0;
 
+void initialize_ethernet(void);
 
 
 void setup () {
