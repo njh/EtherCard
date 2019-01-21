@@ -11,6 +11,8 @@
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 // ethernet interface ip address
 static byte myip[] = { 192,168,1,203 };
+// ethernet interface ip netmask
+static byte mask[] = { 255,255,255,0 };
 // gateway ip address
 static byte gwip[] = { 192,168,1,1 };
 // remote website name
@@ -35,7 +37,7 @@ void setup () {
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println( "Failed to access Ethernet controller");
 
-  ether.staticSetup(myip, gwip);
+  ether.staticSetup(myip, gwip, NULL, mask);
 
   if (!ether.dnsLookup(website))
     Serial.println("DNS failed");
