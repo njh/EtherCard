@@ -7,14 +7,10 @@ const char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1
 //  in XML_DESCRIP // <friendlyName>Arduino</friendlyName> // declare the name of the service here Arduino
 //  in XML_DESCRIP // <presentationURL>/</presentationURL> // adress of the page who would opened on service double click ,you could use http://ip  but if you use dhcp it's better so and dont wase memory
 // this is the entire protocol, but you can try to use SSDP_NOTIFY as SSDP_RESPONSE with most systems will work and you can free a bit of flash mem.
-static byte myip[] = {
-  192,168,0,67 };
-static byte gwip[] = {
-  192,168,0,250 };
-static byte ssdp[] = {
-  239,255,255,250 };
-static byte mymac[] = {
-  0x74,0x99,0x69,0x2D,0x30,0x40 }; // if you change it you must update SSDP_RESPONSE and XML_DESCRIP
+static byte myip[] = { 192,168,0,67 };
+static byte gwip[] = { 192,168,0,250 };
+static byte ssdp[] = { 239,255,255,250 };
+static byte mymac[] = { 0x74,0x99,0x69,0x2D,0x30,0x40 }; // if you change it you must update SSDP_RESPONSE and XML_DESCRIP
 byte Ethernet::buffer[750]; // tcp ip send and receive buffer
 unsigned long timer=9999;
 const char pageA[] PROGMEM =
