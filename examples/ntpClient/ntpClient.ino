@@ -25,6 +25,9 @@ const unsigned int NTP_LOCALPORT = 8888;             // Local UDP port to use
 const unsigned int NTP_PACKET_SIZE = 48;             // NTP time stamp is in the first 48 bytes of the message
 byte Ethernet::buffer[350];                          // Buffer must be 350 for DHCP to work
 
+void sendNTPpacket(const uint8_t* remoteAddress);
+void udpReceiveNtpPacket(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *packetBuffer, uint16_t len);
+
 void setup() {
   Serial.begin(9600);
   Serial.println(F("\n[EtherCard NTP Client]"));
