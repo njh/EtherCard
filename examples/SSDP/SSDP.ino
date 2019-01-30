@@ -48,6 +48,10 @@ const char pageD[] PROGMEM =
 "</em></p>"
 ;
 
+void ssdpresp();
+void addip(int udppos);
+void ssdpnotify();
+
 void setup(){
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
   ether.begin(sizeof Ethernet::buffer, mymac, SS);
