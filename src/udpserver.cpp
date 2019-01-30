@@ -53,7 +53,7 @@ bool EtherCard::udpServerListening() {
     return numListeners > 0;
 }
 
-bool EtherCard::udpServerHasProcessedPacket(uint16_t plen) {
+bool EtherCard::udpServerHasProcessedPacket(const IpHeader &iph, const uint8_t *iter, const uint8_t *last) {
     bool packetProcessed = false;
     for(int i = 0; i < numListeners; i++)
     {
@@ -62,7 +62,7 @@ bool EtherCard::udpServerHasProcessedPacket(uint16_t plen) {
             uint16_t datalen = (uint16_t) (gPB[UDP_LEN_H_P] << 8)  + gPB[UDP_LEN_L_P] - UDP_HEADER_LEN;
             listeners[i].callback(
                 listeners[i].port,
-                gPB + IP_SRC_P,
+                (uint8_t *)iph.spaddr, // TODO: change definition of UdpServerCallback to const uint8_t *
                 (gPB[UDP_SRC_PORT_H_P] << 8) | gPB[UDP_SRC_PORT_L_P],
                 (const char *) (gPB + UDP_DATA_P),
                 datalen);

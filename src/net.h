@@ -39,12 +39,28 @@
 #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     #define HTONS(x) BSWAP_16(x)
     #define HTONL(x) BSWAP_32(x)
+    #define NTOHS(x) BSWAP_16(x)
+    #define NTOHL(x) BSWAP_32(x)
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     #define HTONS(x) x
     #define HTONL(x) x
+    #define NTOHS(x) x
+    #define NTOHL(x) x
 #else
 #   error __BYTE_ORDER__ not defined! PLease define it for your platform
 #endif
+
+inline uint16_t htons(const uint16_t v)
+{ return HTONS(v); }
+
+inline uint32_t htonl(const uint32_t v)
+{ return HTONL(v); }
+
+inline uint16_t ntohs(const uint16_t v)
+{ return NTOHS(v); }
+
+inline uint32_t ntohl(const uint32_t v)
+{ return NTOHL(v); }
 
 // ******* SERVICE PORTS *******
 #define HTTP_PORT 80
@@ -56,8 +72,7 @@
 #define ETH_LEN 6
 // values of certain bytes:
 #define ETHTYPE_ARP_V               HTONS(0x0806)
-#define ETHTYPE_IP_H_V  0x08
-#define ETHTYPE_IP_L_V  0x00
+#define ETHTYPE_IP_V                HTONS(0x0800)
 // byte positions in the ethernet frame:
 //
 // Ethernet type field (2bytes):
@@ -78,20 +93,15 @@ struct EthHeader
 
 
 // ******* IP *******
-#define IP_HEADER_LEN    20
 #define IP_LEN 4
-// ip.src
-#define IP_SRC_P 0x1a
-#define IP_DST_P 0x1e
-#define IP_HEADER_LEN_VER_P 0xe
-#define IP_CHECKSUM_P 0x18
-#define IP_TTL_P 0x16
-#define IP_FLAGS_P 0x14
-#define IP_P 0xe
-#define IP_TOTLEN_H_P 0x10
-#define IP_TOTLEN_L_P 0x11
+#define IP_V4 0x4
+#define IP_IHL 0x5
 
-#define IP_PROTO_P 0x17
+enum IpFlags
+{
+    IP_DF = 1 << 1,
+    IP_MF = 1 << 0,
+};
 
 #define IP_PROTO_ICMP_V 1
 #define IP_PROTO_TCP_V 6
@@ -100,20 +110,46 @@ struct EthHeader
 
 struct IpHeader
 {
-    uint8_t     version:4;
-    uint8_t     ihl:4;
-    uint8_t     dscp:6;
-    uint8_t     ecn:2;
+    uint8_t     versionIhl;
+    uint8_t     dscpEcn;
     uint16_t    totalLen;
     uint16_t    identification;
-    uint8_t     flags:3;
-    uint16_t    fragmentOffset:13;
+    uint16_t    flagsFragmentOffset;
     uint8_t     ttl;
     uint8_t     protocol;
     uint16_t    hchecksum;
     uint8_t     spaddr[IP_LEN];
     uint8_t     tpaddr[IP_LEN];
-};
+
+    static uint8_t version_mask() { return 0xF0; }
+    uint8_t version() const { return (versionIhl & version_mask()) >> 4; }
+    void version(const uint8_t v)
+    {
+        versionIhl &= ~version_mask();
+        versionIhl |= (v << 4) & version_mask();
+    }
+
+    uint8_t ihl() const { return versionIhl & 0xF; }
+    void ihl(const uint8_t i)
+    {
+        versionIhl &= version_mask();
+        versionIhl |= i & ~version_mask();
+    }
+
+    static uint16_t flags_mask() { return HTONS(0xE000); }
+
+    void flags(const uint16_t f)
+    {
+        flagsFragmentOffset &= ~flags_mask();
+        flagsFragmentOffset |= HTONS(f << 13) & flags_mask();
+    }
+    void fragmentOffset(const uint16_t o)
+    {
+        flagsFragmentOffset &= flags_mask();
+        flagsFragmentOffset |= HTONS(o) & ~flags_mask();
+    }
+
+} __attribute__((__packed__));
 
 
 // ******* ARP *******

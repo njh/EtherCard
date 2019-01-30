@@ -105,6 +105,7 @@ typedef void (*DhcpOptionCallback)(
     const byte* data,   ///< DHCP option data
     uint8_t len);       ///< Length of the DHCP option data
 
+typedef void (*IcmpCallback)(const uint8_t *src_ip);
 
 
 /** This class provides the main interface to a ENC28J60 based network interface card and is the class most users will use.
@@ -298,7 +299,7 @@ public:
     /**   @brief  Resister the function to handle ping events
     *     @param  cb Pointer to function
     */
-    static void registerPingCallback (void (*cb)(uint8_t*));
+    static void registerPingCallback (const IcmpCallback cb);
 
     /**   @brief  Send ping
     *     @param  destip Pointer to 4 byte destination IP address
@@ -357,7 +358,7 @@ public:
     *     @param  len Not used
     *     @return <i>bool</i> True if packet processed
     */
-    static bool udpServerHasProcessedPacket(uint16_t len);    //called by tcpip, in packetLoop
+    static bool udpServerHasProcessedPacket(const IpHeader &ip, const uint8_t *iter, const uint8_t *last);    //called by tcpip, in packetLoop
 
     // dhcp.cpp
     /**   @brief  Update DHCP state
