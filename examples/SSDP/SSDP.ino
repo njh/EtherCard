@@ -1,4 +1,5 @@
 #include <EtherCard.h>//                                                                                                                                    |Mac adress|
+#include <EtherUtil.h>
 const char SSDP_RESPONSE[] PROGMEM = "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1200\r\nEXT:\r\nSERVER:Arduino\r\nST: upnp:rootdevice\r\nUSN: uuid:abcdefgh-7dec-11d0-a765-7499692d3040\r\nLOCATION: http://"; //dont forget our mac adress USN: uuid:abcdefgh-7dec-11d0-a765-Mac addr
 const char SSDP_RESPONSE_XML[] PROGMEM = "/??\r\n\r\n"; // here is the adress of xml file /?? in this exemple but you could use another /upnp.xml\r\n\r\n
 const char XML_DESCRIP[] PROGMEM = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version='1.0'?>\r<root xmlns='urn:schemas-upnp-org:device-1-0'><device><deviceType>urn:schemas-upnp-org:device:BinaryLight:1</deviceType><presentationURL>/</presentationURL><friendlyName>Arduino</friendlyName><manufacturer>Fredycpu</manufacturer><manufacturerURL>http://fredycpu.pro</manufacturerURL><serialNumber>1</serialNumber><UDN>uuid:abcdefgh-7dec-11d0-a765-7499692d3040</UDN></device></root>     ";
@@ -48,6 +49,10 @@ const char pageD[] PROGMEM =
 "</em></p>"
 ;
 
+void ssdpresp();
+void addip(uint8_t *udppos);
+void ssdpnotify();
+
 void setup(){
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
   ether.begin(sizeof Ethernet::buffer, mymac, SS);
@@ -96,46 +101,46 @@ void ssdpresp() { //response to m-search
   for(  int i=0; i<IP_LEN;i++) { //extract source IP of request
     ip_dst[i]=Ethernet::buffer[i+26];
   }
-  int udppos = UDP_DATA_P;
+  uint8_t *udppos = udp_payload();
 
   EtherCard::udpPrepare(1900,ip_dst,port_dst);
-  memcpy_P(Ethernet::buffer + udppos, SSDP_RESPONSE, sizeof SSDP_RESPONSE);
+  memcpy_P(udppos, SSDP_RESPONSE, sizeof SSDP_RESPONSE);
   udppos = udppos  + sizeof SSDP_RESPONSE-1;
   addip(udppos);
 }
 
 void ssdpnotify() { //Notification
-  int udppos = UDP_DATA_P;
+  int udppos = udp_payload();
   EtherCard::udpPrepare(1900,ssdp,1900);
-  memcpy_P(Ethernet::buffer + udppos, SSDP_NOTIFY, sizeof SSDP_NOTIFY);
+  memcpy_P(udppos, SSDP_NOTIFY, sizeof SSDP_NOTIFY);
 udppos = udppos  + sizeof SSDP_NOTIFY-1;
 addip(udppos);
 }
 
-void addip(int udppos) { // add current ip to the request and send it
+void addip(uint8_t *udppos) { // add current ip to the request and send it
   int adr;
   for(int i=0;i<IP_LEN;i++) { // extract the current ip of arduino
     adr = ether.myip[i]/100;
     if (adr)  {
-      Ethernet::buffer[udppos]=adr+48;
+      *udppos=adr+48;
       udppos++;
     }
     adr=(ether.myip[i]%100)/10;
     if (adr||(ether.myip[i]/100))  {
-      Ethernet::buffer[udppos]=adr+48;
+      *udppos=adr+48;
       udppos++;
     }
     adr=ether.myip[i]%10;
-    Ethernet::buffer[udppos]=adr+48;
+    *udppos=adr+48;
     udppos++;
-    Ethernet::buffer[udppos]=46;
+    *udppos=46;
     udppos++; //"."
   }
   udppos--;//erase the last point
-  memcpy_P(Ethernet::buffer + udppos,SSDP_RESPONSE_XML,sizeof SSDP_RESPONSE_XML);
+  memcpy_P(udppos,SSDP_RESPONSE_XML,sizeof SSDP_RESPONSE_XML);
   udppos = udppos  + sizeof SSDP_RESPONSE_XML;
   udppos--;
-  EtherCard::udpTransmit(udppos-UDP_DATA_P); // send all to the computer who make the request on her ip and port who make the request
+  EtherCard::udpTransmit(udppos-udp_payload()); // send all to the computer who make the request on her ip and port who make the request
 }
 
 

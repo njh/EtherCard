@@ -15,9 +15,8 @@
 //#define DHCPDEBUG
 
 #include "EtherCard.h"
+#include "EtherUtil.h"
 #include "net.h"
-
-#define gPB ether.buffer
 
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTRESPONSE 2
@@ -83,6 +82,7 @@ typedef struct {
     uint16_t secs, flags;
     byte ciaddr[IP_LEN], yiaddr[IP_LEN], siaddr[IP_LEN], giaddr[IP_LEN];
     byte chaddr[16], sname[64], file[128];
+    uint32_t magicCookie;
     // options
 } DHCPdata;
 
@@ -162,8 +162,6 @@ static void addOption (byte opt, byte len, const byte* data) {
 
 static void send_dhcp_message(uint8_t *requestip) {
 
-    memset(gPB, 0, UDP_DATA_P + sizeof( DHCPdata ));
-
     EtherCard::udpPrepare(DHCP_CLIENT_PORT,
                           (dhcpState == DHCP_STATE_BOUND ? EtherCard::dhcpip : allOnes),
                           DHCP_SERVER_PORT);
@@ -174,7 +172,8 @@ static void send_dhcp_message(uint8_t *requestip) {
     EtherCard::copyMac(gPB + ETH_DST_MAC, allOnes); //force broadcast mac
 
     // Build DHCP Packet from buf[UDP_DATA_P]
-    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+    DHCPdata *dhcpPtr = (DHCPdata*) (udp_payload());
+    memset(dhcpPtr, 0, sizeof(DHCPdata));
     dhcpPtr->op = DHCP_BOOTREQUEST;
     dhcpPtr->htype = 1;
     dhcpPtr->hlen = 6;
@@ -184,12 +183,12 @@ static void send_dhcp_message(uint8_t *requestip) {
     }
     EtherCard::copyMac(dhcpPtr->chaddr, EtherCard::mymac);
 
-    // options defined as option, length, value
-    bufPtr = gPB + UDP_DATA_P + sizeof( DHCPdata );
     // DHCP magic cookie
-    static const byte cookie[] PROGMEM = { 0x63,0x82,0x53,0x63 };
-    for (byte i = 0; i < sizeof(cookie); i++)
-        addToBuf(pgm_read_byte(&cookie[i]));
+    dhcpPtr->magicCookie = HTONL(0x63825363);
+
+    // options defined as option, length, value
+    bufPtr = (uint8_t *)dhcpPtr + sizeof( DHCPdata );
+
     addToBuf(DHCP_OPT_MESSAGE_TYPE); // DHCP_STATE_SELECTING, DHCP_STATE_REQUESTING
     addToBuf(1);   // Length
     addToBuf(dhcpState == DHCP_STATE_INIT ? DHCP_DISCOVER : DHCP_REQUEST);
@@ -229,18 +228,18 @@ static void send_dhcp_message(uint8_t *requestip) {
     addToBuf(DHCP_OPT_END);
 
     // packet size will be under 300 bytes
-    EtherCard::udpTransmit((bufPtr - gPB) - UDP_DATA_P);
+    EtherCard::udpTransmit(bufPtr - (uint8_t *)dhcpPtr);
 }
 
 static void process_dhcp_offer(uint16_t len, uint8_t *offeredip) {
     // Map struct onto payload
-    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+    DHCPdata *dhcpPtr = (DHCPdata*) (udp_payload());
 
     // Offered IP address is in yiaddr
     EtherCard::copyIp(offeredip, dhcpPtr->yiaddr);
 
     // Search for the server IP
-    byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+    byte *ptr = (byte*) (dhcpPtr + 1);
     do {
         byte option = *ptr++;
         byte optionLen = *ptr++;
@@ -254,13 +253,13 @@ static void process_dhcp_offer(uint16_t len, uint8_t *offeredip) {
 
 static void process_dhcp_ack(uint16_t len) {
     // Map struct onto payload
-    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+    DHCPdata *dhcpPtr = (DHCPdata*) (udp_payload());
 
     // Allocated IP address is in yiaddr
     EtherCard::copyIp(EtherCard::myip, dhcpPtr->yiaddr);
 
     // Scan through variable length option list identifying options we want
-    byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+    byte *ptr = (byte*) (dhcpPtr + 1);
     bool done = false;
     do {
         byte option = *ptr++;
@@ -308,12 +307,12 @@ while (!done && ptr < gPB + len);
 
 static bool dhcp_received_message_type (uint16_t len, byte msgType) {
     // Map struct onto payload
-    DHCPdata *dhcpPtr = (DHCPdata*) (gPB + UDP_DATA_P);
+    DHCPdata *dhcpPtr = (DHCPdata*) (udp_payload());
 
-    if (len >= 70 && gPB[UDP_SRC_PORT_L_P] == DHCP_SERVER_PORT &&
+    if (len >= 70 && udp_header().sport == HTONS(DHCP_SERVER_PORT) &&
             dhcpPtr->xid == currentXid ) {
 
-        byte *ptr = (byte*) (dhcpPtr + 1) + 4;
+        byte *ptr = (byte*) (dhcpPtr + 1);
         do {
             byte option = *ptr++;
             byte optionLen = *ptr++;

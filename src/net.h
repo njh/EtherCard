@@ -50,6 +50,12 @@
 #   error __BYTE_ORDER__ not defined! PLease define it for your platform
 #endif
 
+inline void htons(uint16_t &d, const uint16_t v)
+{
+    ((uint8_t *)(&d))[0] = v >> 8;
+    ((uint8_t *)(&d))[1] = v & 0xFF;
+}
+
 inline uint16_t htons(const uint16_t v)
 { return HTONS(v); }
 
@@ -193,18 +199,13 @@ struct ArpHeader
 #define ICMP_DATA_P 0x2a
 
 // ******* UDP *******
-#define UDP_HEADER_LEN    8
-//
-#define UDP_SRC_PORT_H_P 0x22
-#define UDP_SRC_PORT_L_P 0x23
-#define UDP_DST_PORT_H_P 0x24
-#define UDP_DST_PORT_L_P 0x25
-//
-#define UDP_LEN_H_P 0x26
-#define UDP_LEN_L_P 0x27
-#define UDP_CHECKSUM_H_P 0x28
-#define UDP_CHECKSUM_L_P 0x29
-#define UDP_DATA_P 0x2a
+struct UdpHeader
+{
+    uint16_t sport;
+    uint16_t dport;
+    uint16_t length;
+    uint16_t checksum;
+};
 
 // ******* TCP *******
 #define TCP_SRC_PORT_H_P 0x22

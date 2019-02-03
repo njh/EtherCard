@@ -13,9 +13,8 @@
 
 #include "EtherCard.h"
 #include "net.h"
+#include "EtherUtil.h"
 #undef word // arduino nonsense
-
-#define gPB ether.buffer
 
 #define PINGPATTERN 0x42
 
@@ -73,43 +72,6 @@ extern const uint8_t allOnes[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Used
 //     }
 //     Serial.println();
 // }
-
-static inline EthHeader &ethernet_header()
-{
-    uint8_t *iter = gPB; // avoid strict aliasing warning
-    return *(EthHeader *)iter;
-}
-
-static inline uint8_t *ethernet_payload()
-{
-    return (uint8_t *)&ethernet_header() + sizeof(EthHeader);
-}
-
-static inline ArpHeader &arp_header()
-{
-    return *(ArpHeader *)ethernet_payload();
-}
-
-static inline IpHeader &ip_header()
-{
-    return *(IpHeader *)ethernet_payload();
-}
-
-static inline uint8_t *ip_payload()
-{
-    return (uint8_t *)&ip_header() + sizeof(IpHeader);
-}
-
-static inline uint8_t *tcp_header()
-{
-    return (uint8_t *)ip_payload();
-}
-
-static inline uint8_t *udp_header()
-{
-    return (uint8_t *)ip_payload();
-}
-
 
 static void fill_checksum(uint16_t &checksum, const uint8_t *ptr, uint16_t len, uint8_t type) {
     uint32_t sum = type==1 ? IP_PROTO_UDP_V+len-8 :
@@ -232,7 +194,7 @@ static void make_eth_ip_reply(const uint16_t payloadlen = 0xFFFF) {
 
     IpHeader &iph = ip_header();
     if (payloadlen != 0xFFFF)
-        iph.totalLen = htons(ip_payload() - (uint8_t *)&iph + payloadlen);
+        htons(iph.totalLen, ip_payload() - (uint8_t *)&iph + payloadlen);
 
     fill_ip_hdr_checksum(iph);
 }
@@ -296,19 +258,16 @@ void EtherCard::makeUdpReply (const char *data,uint8_t datalen,uint16_t port) {
     if (datalen>220)
         datalen = 220;
 
-    make_eth_ip_reply(UDP_HEADER_LEN + datalen);
+    make_eth_ip_reply(sizeof(UdpHeader) + datalen);
     IpHeader &iph = ip_header();
-    gPB[UDP_DST_PORT_H_P] = gPB[UDP_SRC_PORT_H_P];
-    gPB[UDP_DST_PORT_L_P] = gPB[UDP_SRC_PORT_L_P];
-    gPB[UDP_SRC_PORT_H_P] = port>>8;
-    gPB[UDP_SRC_PORT_L_P] = port;
-    gPB[UDP_LEN_H_P] = (UDP_HEADER_LEN+datalen) >> 8;
-    gPB[UDP_LEN_L_P] = UDP_HEADER_LEN+datalen;
-    gPB[UDP_CHECKSUM_H_P] = 0;
-    gPB[UDP_CHECKSUM_L_P] = 0;
-    memcpy(gPB + UDP_DATA_P, data, datalen);
-    fill_checksum(UDP_CHECKSUM_H_P, (uint8_t *)&iph.spaddr - gPB, 16 + datalen,1);
-    packetSend(udp_header() - gPB + UDP_HEADER_LEN + datalen);
+    UdpHeader &udph = udp_header();
+    udph.dport = udph.sport;
+    htons(udph.sport, port);
+    htons(udph.length, sizeof(UdpHeader)+datalen);
+    udph.checksum = 0;
+    memcpy(udp_payload(), data, datalen);
+    fill_checksum(udph.checksum, (const uint8_t *)&iph.spaddr, 16 + datalen,1);
+    packetSend(udp_payload() - gPB + datalen);
 }
 
 static void make_tcp_synack_from_syn() {
@@ -353,7 +312,7 @@ static void make_tcp_ack_from_any(int16_t datlentoack,uint8_t addflags) {
 
 static void make_tcp_ack_with_data_noflags(uint16_t dlen) {
     IpHeader &iph = ip_header();
-    iph.totalLen = htons(ip_payload() - (uint8_t *)&ip_header() + TCP_HEADER_LEN_PLAIN + dlen);
+    htons(iph.totalLen, ip_payload() - (uint8_t *)&ip_header() + TCP_HEADER_LEN_PLAIN + dlen);
     fill_ip_hdr_checksum(iph);
     gPB[TCP_CHECKSUM_H_P] = 0;
     gPB[TCP_CHECKSUM_L_P] = 0;
@@ -428,23 +387,22 @@ void EtherCard::ntpRequest (uint8_t *ntpip, uint8_t srcport) {
     IpHeader &iph = init_ip_frame(ntpip, IP_PROTO_UDP_V);
     iph.totalLen = HTONS(0x4c);
     fill_ip_hdr_checksum(iph);
-    gPB[UDP_DST_PORT_H_P] = 0;
-    gPB[UDP_DST_PORT_L_P] = NTP_PORT; // ntp = 123
-    gPB[UDP_SRC_PORT_H_P] = 10;
-    gPB[UDP_SRC_PORT_L_P] = srcport; // lower 8 bit of src port
-    gPB[UDP_LEN_H_P] = 0;
-    gPB[UDP_LEN_L_P] = 56; // fixed len
-    gPB[UDP_CHECKSUM_H_P] = 0;
-    gPB[UDP_CHECKSUM_L_P] = 0;
-    memset(gPB + UDP_DATA_P, 0, 48);
-    memcpy_P(gPB + UDP_DATA_P,ntpreqhdr,10);
-    fill_checksum(UDP_CHECKSUM_H_P, iph.spaddr - gPB, 16 + 48, 1);
+    UdpHeader &udph = udp_header();
+    uint8_t *udpp = udp_payload();
+    udph.dport = HTONS(NTP_PORT);
+    udph.sport = HTONS((10 << 8) | srcport);
+    udph.length = HTONS(56);
+    udph.checksum = 0;
+    memset(udpp, 0, 48);
+    memcpy_P(udpp,ntpreqhdr,10);
+    fill_checksum(udph.checksum, (const uint8_t *)&iph.spaddr, 16 + 48, 1);
     packetSend(90);
 }
 
 uint8_t EtherCard::ntpProcessAnswer (uint32_t *time,uint8_t dstport_l) {
-    if ((dstport_l && gPB[UDP_DST_PORT_L_P]!=dstport_l) || gPB[UDP_LEN_H_P]!=0 ||
-            gPB[UDP_LEN_L_P]!=56 || gPB[UDP_SRC_PORT_L_P]!=0x7b)
+    UdpHeader &udph = udp_header();
+    if ((dstport_l && (ntohs(udph.dport) & 0xFF) != dstport_l) || udph.length != HTONS(56)
+            || udph.sport != HTONS(NTP_PORT))
         return 0;
     ((uint8_t*) time)[3] = gPB[0x52];
     ((uint8_t*) time)[2] = gPB[0x53];
@@ -455,23 +413,22 @@ uint8_t EtherCard::ntpProcessAnswer (uint32_t *time,uint8_t dstport_l) {
 
 void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) {
     init_ip_frame(dip, IP_PROTO_UDP_V);
-    gPB[UDP_DST_PORT_H_P] = (dport>>8);
-    gPB[UDP_DST_PORT_L_P] = dport;
-    gPB[UDP_SRC_PORT_H_P] = (sport>>8);
-    gPB[UDP_SRC_PORT_L_P] = sport;
-    gPB[UDP_LEN_H_P] = 0;
-    gPB[UDP_CHECKSUM_H_P] = 0;
-    gPB[UDP_CHECKSUM_L_P] = 0;
+    UdpHeader &udph = udp_header();
+    htons(udph.dport, dport);
+    htons(udph.sport, sport);
+    udph.length = 0;
+    udph.checksum = 0;
 }
 
 void EtherCard::udpTransmit (uint16_t datalen) {
     IpHeader &iph = ip_header();
-    iph.totalLen = htons(udp_header() - (uint8_t *)&ip_header() + UDP_HEADER_LEN + datalen);
+    htons(iph.totalLen, sizeof(IpHeader) + sizeof(UdpHeader) + datalen);
     fill_ip_hdr_checksum(iph);
-    gPB[UDP_LEN_H_P] = (UDP_HEADER_LEN+datalen) >>8;
-    gPB[UDP_LEN_L_P] = UDP_HEADER_LEN+datalen;
-    fill_checksum(UDP_CHECKSUM_H_P, (uint8_t *)&iph.spaddr - gPB, 16 + datalen,1);
-    packetSend(udp_header() - gPB + UDP_HEADER_LEN + datalen);
+
+    UdpHeader &udph = udp_header();
+    htons(udph.length, sizeof(UdpHeader) + datalen);
+    fill_checksum(udph.checksum, (const uint8_t *)&iph.spaddr, 16 + datalen,1);
+    packetSend(udp_payload() - gPB + datalen);
 }
 
 void EtherCard::sendUdp (const char *data, uint8_t datalen, uint16_t sport,
@@ -479,30 +436,19 @@ void EtherCard::sendUdp (const char *data, uint8_t datalen, uint16_t sport,
     udpPrepare(sport, dip, dport);
     if (datalen>220)
         datalen = 220;
-    memcpy(gPB + UDP_DATA_P, data, datalen);
+    memcpy(udp_payload(), data, datalen);
     udpTransmit(datalen);
 }
 
 void EtherCard::sendWol (uint8_t *wolmac) {
-    IpHeader &iph = init_ip_frame(allOnes, IP_PROTO_UDP_V);
-    iph.totalLen = HTONS(0x82);
-    fill_ip_hdr_checksum(iph);
-    gPB[UDP_DST_PORT_H_P] = 0;
-    gPB[UDP_DST_PORT_L_P] = 0x9; // wol = normally 9
-    gPB[UDP_SRC_PORT_H_P] = 10;
-    gPB[UDP_SRC_PORT_L_P] = 0x42; // source port does not matter
-    gPB[UDP_LEN_H_P] = 0;
-    gPB[UDP_LEN_L_P] = 110; // fixed len
-    gPB[UDP_CHECKSUM_H_P] = 0;
-    gPB[UDP_CHECKSUM_L_P] = 0;
-    copyMac(gPB + UDP_DATA_P, allOnes);
-    uint8_t pos = UDP_DATA_P;
-    for (uint8_t m = 0; m < 16; ++m) {
-        pos += 6;
-        copyMac(gPB + pos, wolmac);
+    udpPrepare(0x1042, allOnes, 9);
+    uint8_t *pos = udp_payload();
+    copyMac(pos, allOnes);
+    pos += 6;
+    for (uint8_t m = 0; m < 16; ++m, pos += 6) {
+        copyMac(pos, wolmac);
     }
-    fill_checksum(UDP_CHECKSUM_H_P, (uint8_t *)&iph.spaddr - gPB, 16 + 102,1);
-    packetSend(pos + 6);
+    udpTransmit(6 + 16*6);
 }
 
 // make a arp request
