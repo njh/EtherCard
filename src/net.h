@@ -189,14 +189,22 @@ struct ArpHeader
 // ******* ICMP *******
 #define ICMP_TYPE_ECHOREPLY_V 0
 #define ICMP_TYPE_ECHOREQUEST_V 8
-//
-#define ICMP_TYPE_P 0x22
-#define ICMP_CHECKSUM_P 0x24
-#define ICMP_CHECKSUM_H_P 0x24
-#define ICMP_CHECKSUM_L_P 0x25
-#define ICMP_IDENT_H_P 0x26
-#define ICMP_IDENT_L_P 0x27
-#define ICMP_DATA_P 0x2a
+
+struct IcmpHeader
+{
+    uint8_t     type;
+    uint8_t     code;
+    uint16_t    checksum;
+    union
+    {
+        uint32_t    rest;
+        struct
+        {
+            uint16_t identifier;
+            uint16_t sequence;
+        } ping;
+    };
+};
 
 // ******* UDP *******
 struct UdpHeader

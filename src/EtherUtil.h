@@ -50,4 +50,14 @@ inline uint8_t *udp_payload()
     return (uint8_t *)&udp_header() + sizeof(UdpHeader);
 }
 
+inline IcmpHeader &icmp_header()
+{
+    return *(IcmpHeader *)ip_payload();
+}
+
+inline uint8_t *icmp_payload()
+{
+    return (uint8_t *)&icmp_header() + sizeof(IcmpHeader);
+}
+
 #endif /* ETHERUTIL_H */

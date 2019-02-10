@@ -16,7 +16,8 @@
 #include "EtherUtil.h"
 #undef word // arduino nonsense
 
-#define PINGPATTERN 0x42
+#define ICMP_PING_PAYLOAD_PATTERN 0x42
+#define ICMP_PING_PAYLOAD_SIZE 56
 
 // Avoid spurious pgmspace warnings - http://forum.jeelabs.net/node/327
 // See also http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
@@ -247,10 +248,9 @@ static void make_arp_answer_from_request() {
 
 static void make_echo_reply_from_request(uint16_t len) {
     make_eth_ip_reply();
-    gPB[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;
-    if (gPB[ICMP_CHECKSUM_P] > (0xFF-0x08))
-        gPB[ICMP_CHECKSUM_P+1]++;
-    gPB[ICMP_CHECKSUM_P] += 0x08;
+    IcmpHeader &ih = icmp_header();
+    ih.type = ICMP_TYPE_ECHOREPLY_V;
+    ih.checksum = ih.checksum + 0x08;
     EtherCard::packetSend(len);
 }
 
@@ -370,17 +370,15 @@ void EtherCard::clientIcmpRequest(const uint8_t *destip) {
     IpHeader &iph = init_ip_frame(destip, IP_PROTO_ICMP_V);
     iph.totalLen = HTONS(0x54);
     fill_ip_hdr_checksum(iph);
-    gPB[ICMP_TYPE_P] = ICMP_TYPE_ECHOREQUEST_V;
-    gPB[ICMP_TYPE_P+1] = 0; // code
-    gPB[ICMP_CHECKSUM_H_P] = 0;
-    gPB[ICMP_CHECKSUM_L_P] = 0;
-    gPB[ICMP_IDENT_H_P] = 5; // some number
-    gPB[ICMP_IDENT_L_P] = EtherCard::myip[3]; // last byte of my IP
-    gPB[ICMP_IDENT_L_P+1] = 0; // seq number, high byte
-    gPB[ICMP_IDENT_L_P+2] = 1; // seq number, low byte, we send only 1 ping at a time
-    memset(gPB + ICMP_DATA_P, PINGPATTERN, 56);
-    fill_checksum(ICMP_CHECKSUM_H_P, ICMP_TYPE_P, 56+8,0);
-    packetSend(98);
+    IcmpHeader &ih = icmp_header();
+    ih.type = ICMP_TYPE_ECHOREQUEST_V;
+    ih.code = 0;
+    ih.checksum = 0;
+    ih.ping.identifier = HTONS(0x0500 | EtherCard::myip[3]);
+    ih.ping.sequence = HTONS(1);
+    memset(icmp_payload(), ICMP_PING_PAYLOAD_PATTERN, ICMP_PING_PAYLOAD_SIZE);
+    fill_checksum(ih.checksum, (const uint8_t *)&ih, sizeof(IcmpHeader) + ICMP_PING_PAYLOAD_SIZE, 0);
+    packetSend(icmp_payload() - gPB + ICMP_PING_PAYLOAD_SIZE);
 }
 
 void EtherCard::ntpRequest (uint8_t *ntpip, uint8_t srcport) {
@@ -654,8 +652,8 @@ void EtherCard::registerPingCallback (const IcmpCallback callback) {
 uint8_t EtherCard::packetLoopIcmpCheckReply (const uint8_t *ip_monitoredhost) {
     const IpHeader &iph = ip_header();
     return iph.protocol == IP_PROTO_ICMP_V &&
-           gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREPLY_V &&
-           gPB[ICMP_DATA_P]== PINGPATTERN &&
+           icmp_header().type == ICMP_TYPE_ECHOREPLY_V &&
+           icmp_payload()[0] == ICMP_PING_PAYLOAD_PATTERN &&
            check_ip_message_is_from(iph, ip_monitoredhost);
 }
 
@@ -790,11 +788,15 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         arpStoreSet(is_lan(myip, iph.spaddr) ? iph.spaddr : gwip, eh.shaddr);
 
 #if ETHERCARD_ICMP
-    if (iph.protocol == IP_PROTO_ICMP_V && gPB[ICMP_TYPE_P]==ICMP_TYPE_ECHOREQUEST_V)
-    {   //Service ICMP echo request (ping)
-        if (icmp_cb)
-            (*icmp_cb)(iph.spaddr);
-        make_echo_reply_from_request(plen);
+    if (iph.protocol == IP_PROTO_ICMP_V)
+    {
+        const IcmpHeader &ih = icmp_header();
+        if (ih.type == ICMP_TYPE_ECHOREQUEST_V)
+        {   //Service ICMP echo request (ping)
+            if (icmp_cb)
+                (*icmp_cb)(iph.spaddr);
+            make_echo_reply_from_request(plen);
+        }
         return 0;
     }
 #endif
