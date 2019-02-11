@@ -5,9 +5,8 @@
 // 2010-05-20 <jc@wippler.nl>
 
 #include "EtherCard.h"
+#include "EtherUtil.h"
 #include "net.h"
-
-#define gPB ether.buffer
 
 static byte dnstid_l; // a counter for transaction ID
 #define DNSCLIENT_SRC_PORT_H 0xE0
@@ -20,9 +19,11 @@ static void dnsRequest (const char *hostname, bool fromRam) {
     if (ether.dnsip[0] == 0)
         memset(ether.dnsip, 8, IP_LEN); // use 8.8.8.8 Google DNS as default
     ether.udpPrepare((DNSCLIENT_SRC_PORT_H << 8) | dnstid_l, ether.dnsip, DNS_PORT);
-    memset(gPB + UDP_DATA_P, 0, 12);
+    uint8_t *udpp = udp_payload();
+    byte *p = udpp;
+    memset(p, 0, 12);
 
-    byte *p = gPB + UDP_DATA_P + 12;
+    p += 12;
     char c;
     do {
         byte n = 0;
@@ -42,11 +43,11 @@ static void dnsRequest (const char *hostname, bool fromRam) {
     *p++ = DNS_TYPE_A;
     *p++ = 0;
     *p++ = DNS_CLASS_IN;
-    byte i = p - gPB - UDP_DATA_P;
-    gPB[UDP_DATA_P] = i;
-    gPB[UDP_DATA_P+1] = dnstid_l;
-    gPB[UDP_DATA_P+2] = 1; // flags, standard recursive query
-    gPB[UDP_DATA_P+5] = 1; // 1 question
+    byte i = p - udpp;
+    udpp[0] = i;
+    udpp[1] = dnstid_l;
+    udpp[2] = 1; // flags, standard recursive query
+    udpp[5] = 1; // 1 question
     ether.udpTransmit(i);
 }
 
@@ -56,10 +57,10 @@ static void dnsRequest (const char *hostname, bool fromRam) {
     @note   hisip contains IP address of requested host or 0.0.0.0 on failure
 */
 static bool checkForDnsAnswer (uint16_t plen) {
-    byte *p = gPB + UDP_DATA_P; //start of UDP payload
-    if (plen < 70 || gPB[UDP_SRC_PORT_L_P] != DNS_PORT || //from DNS source port
-            gPB[UDP_DST_PORT_H_P] != DNSCLIENT_SRC_PORT_H || //response to same port as we sent from (MSB)
-            gPB[UDP_DST_PORT_L_P] != dnstid_l || //response to same port as we sent from (LSB)
+    UdpHeader &udph = udp_header();
+    byte *p = udp_payload(); //start of UDP payload
+    if (plen < 70 || udph.sport != HTONS(DNS_PORT) || //from DNS source port
+            ntohs(udph.dport) != (uint16_t)(DNSCLIENT_SRC_PORT_H << 8 | dnstid_l) || //response to same port as we sent from
             p[1] != dnstid_l) //message id same as we sent
         return false; //not our DNS response
     if((p[3] & 0x0F) != 0)

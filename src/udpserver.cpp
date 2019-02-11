@@ -6,9 +6,8 @@
 // See http://www.gnu.org/licenses/gpl.html
 
 #include "EtherCard.h"
+#include "EtherUtil.h"
 #include "net.h"
-
-#define gPB ether.buffer
 
 #define UDPSERVER_MAXLISTENERS 8    //the maximum number of port listeners.
 
@@ -31,40 +30,48 @@ void EtherCard::udpServerListenOnPort(UdpServerCallback callback, uint16_t port)
     }
 }
 
-void EtherCard::udpServerPauseListenOnPort(uint16_t port) {
-    for(int i = 0; i < numListeners; i++)
+static void udp_listen_on_port(const uint16_t port, const bool listen)
+{
+    for (UdpServerListener *iter = listeners, *last = listeners + numListeners;
+            iter != last; ++iter)
     {
-        if(gPB[UDP_DST_PORT_H_P] == (listeners[i].port >> 8) && gPB[UDP_DST_PORT_L_P] == ((byte) listeners[i].port)) {
-            listeners[i].listening = false;
+        UdpServerListener &l = *iter;
+        if(l.port == port)
+        {
+            l.listening = listen;
+            break;
         }
     }
 }
 
+void EtherCard::udpServerPauseListenOnPort(uint16_t port) {
+    udp_listen_on_port(port, false);
+}
+
 void EtherCard::udpServerResumeListenOnPort(uint16_t port) {
-    for(int i = 0; i < numListeners; i++)
-    {
-        if(gPB[UDP_DST_PORT_H_P] == (listeners[i].port >> 8) && gPB[UDP_DST_PORT_L_P] == ((byte) listeners[i].port)) {
-            listeners[i].listening = true;
-        }
-    }
+    udp_listen_on_port(port, true);
 }
 
 bool EtherCard::udpServerListening() {
     return numListeners > 0;
 }
 
-bool EtherCard::udpServerHasProcessedPacket(uint16_t plen) {
+bool EtherCard::udpServerHasProcessedPacket(const IpHeader &iph, const uint8_t *iter, const uint8_t *last) {
     bool packetProcessed = false;
-    for(int i = 0; i < numListeners; i++)
+    UdpHeader &udph = udp_header();
+    const uint16_t dport = ntohs(udph.dport);
+    for (UdpServerListener *iter = listeners, *last = listeners + numListeners;
+            iter != last; ++iter)
     {
-        if(gPB[UDP_DST_PORT_H_P] == (listeners[i].port >> 8) && gPB[UDP_DST_PORT_L_P] == ((byte) listeners[i].port) && listeners[i].listening)
+        UdpServerListener &l = *iter;
+        if (l.listening && l.port == dport)
         {
-            uint16_t datalen = (uint16_t) (gPB[UDP_LEN_H_P] << 8)  + gPB[UDP_LEN_L_P] - UDP_HEADER_LEN;
-            listeners[i].callback(
-                listeners[i].port,
-                gPB + IP_SRC_P,
-                (gPB[UDP_SRC_PORT_H_P] << 8) | gPB[UDP_SRC_PORT_L_P],
-                (const char *) (gPB + UDP_DATA_P),
+            const uint16_t datalen = udph.length - sizeof(UdpHeader);
+            l.callback(
+                l.port,
+                (uint8_t *)iph.spaddr, // TODO: change definition of UdpServerCallback to const uint8_t *
+                ntohs(udph.sport),
+                (const char *)udp_payload(),
                 datalen);
             packetProcessed = true;
         }
