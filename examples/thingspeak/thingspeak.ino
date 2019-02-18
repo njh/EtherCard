@@ -30,6 +30,41 @@ byte session;
 int res = 100; // was 0
 
 
+void initialize_ethernet(void){
+  for(;;){ // keep trying until you succeed
+    //Reinitialize ethernet module
+    //pinMode(5, OUTPUT);  // do notknow what this is for, i ve got something elso on pin5
+    //Serial.println("Reseting Ethernet...");
+    //digitalWrite(5, LOW);
+    //delay(1000);
+    //digitalWrite(5, HIGH);
+    //delay(500);
+
+    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
+      Serial.println( "Failed to access Ethernet controller");
+      continue;
+    }
+
+    if (!ether.dhcpSetup()){
+      Serial.println("DHCP failed");
+      continue;
+    }
+
+    ether.printIp("IP:  ", ether.myip);
+    ether.printIp("GW:  ", ether.gwip);
+    ether.printIp("DNS: ", ether.dnsip);
+
+    if (!ether.dnsLookup(website))
+      Serial.println("DNS failed");
+
+    ether.printIp("SRV: ", ether.hisip);
+
+    //reset init value
+    res = 180;
+    break;
+  }
+}
 
 void setup () {
   Serial.begin(9600);
@@ -38,7 +73,6 @@ void setup () {
   //Initialize Ethernet
   initialize_ethernet();
 }
-
 
 void loop () {
   //if correct answer is not received then re-initialize ethernet module
@@ -53,8 +87,7 @@ void loop () {
   //200 res = 10 seconds (50ms each res)
   if (res == 200) {
 
-
-    //Generate random info
+    // Generate random info
     float demo = random(0,500);
     word one = random(0,500);
     String msje;
@@ -113,39 +146,3 @@ void loop () {
 }
 
 
-
-void initialize_ethernet(void){
-  for(;;){ // keep trying until you succeed
-    //Reinitialize ethernet module
-    //pinMode(5, OUTPUT);  // do notknow what this is for, i ve got something elso on pin5
-    //Serial.println("Reseting Ethernet...");
-    //digitalWrite(5, LOW);
-    //delay(1000);
-    //digitalWrite(5, HIGH);
-    //delay(500);
-
-    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
-      Serial.println( "Failed to access Ethernet controller");
-      continue;
-    }
-
-    if (!ether.dhcpSetup()){
-      Serial.println("DHCP failed");
-      continue;
-    }
-
-    ether.printIp("IP:  ", ether.myip);
-    ether.printIp("GW:  ", ether.gwip);
-    ether.printIp("DNS: ", ether.dnsip);
-
-    if (!ether.dnsLookup(website))
-      Serial.println("DNS failed");
-
-    ether.printIp("SRV: ", ether.hisip);
-
-    //reset init value
-    res = 180;
-    break;
-  }
-}

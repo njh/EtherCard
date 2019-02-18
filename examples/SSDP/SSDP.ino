@@ -48,48 +48,6 @@ const char pageD[] PROGMEM =
 "</em></p>"
 ;
 
-void setup(){
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  ether.begin(sizeof Ethernet::buffer, mymac, SS);
-  ether.staticSetup(myip, gwip);
-  ENC28J60::disableMulticast(); //disable multicast filter means enable multicast reception
-  Serial.begin(115200);
-}
-
-void loop(){
-wait:
-  word pos = ether.packetLoop(ether.packetReceive());
-  // check if valid tcp data is received
-  if (pos) {
-    char* data = (char *) Ethernet::buffer + pos;
-    if (strncmp("GET / ", data, 6) == 0) {
-      ether.httpServerReplyAck(); // send ack to the request
-      memcpy_P(ether.tcpOffset(), pageA, sizeof pageA); // send first packet and not send the terminate flag
-      ether.httpServerReply_with_flags(sizeof pageA - 1,TCP_FLAGS_ACK_V);
-      memcpy_P(ether.tcpOffset(), pageB, sizeof pageB); // send second packet and not send the terminate flag
-      ether.httpServerReply_with_flags(sizeof pageB - 1,TCP_FLAGS_ACK_V);
-      memcpy_P(ether.tcpOffset(), pageC, sizeof pageC); // send thirdt packet and not send the terminate flag
-      ether.httpServerReply_with_flags(sizeof pageC - 1,TCP_FLAGS_ACK_V);
-      memcpy_P(ether.tcpOffset(), pageD, sizeof pageD); // send fourth packet and send the terminate flag
-      ether.httpServerReply_with_flags(sizeof pageD - 1,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
-      goto wait;
-    }
-    if (strncmp("GET /??", data, 7) == 0) { // description of services (normaly an xml file but here .....)
-      ether.httpServerReplyAck();
-      memcpy_P(Ethernet::buffer + TCP_OPTIONS_P,XML_DESCRIP, sizeof XML_DESCRIP);
-      ether.httpServerReply_with_flags(sizeof XML_DESCRIP - 1 ,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
-      goto wait;
-    }
-    if (strncmp("M-SEARCH", data, 8) == 0) { // service discovery request comes here (udp protocol)
-      ssdpresp();
-      goto wait;
-    }
-  }
-  if (((millis()-timer)>50000)||(timer>millis())) {
-  timer=millis();
-  ssdpnotify();
-  }
-}
 void ssdpresp() { //response to m-search
   byte ip_dst[IP_LEN];
   unsigned int port_dst=Ethernet::buffer[34]*256+Ethernet::buffer[35];//extract source port of request
@@ -139,3 +97,45 @@ void addip(int udppos) { // add current ip to the request and send it
 }
 
 
+void setup(){
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac, SS);
+  ether.staticSetup(myip, gwip);
+  ENC28J60::disableMulticast(); //disable multicast filter means enable multicast reception
+  Serial.begin(115200);
+}
+
+void loop(){
+wait:
+  word pos = ether.packetLoop(ether.packetReceive());
+  // check if valid tcp data is received
+  if (pos) {
+    char* data = (char *) Ethernet::buffer + pos;
+    if (strncmp("GET / ", data, 6) == 0) {
+      ether.httpServerReplyAck(); // send ack to the request
+      memcpy_P(ether.tcpOffset(), pageA, sizeof pageA); // send first packet and not send the terminate flag
+      ether.httpServerReply_with_flags(sizeof pageA - 1,TCP_FLAGS_ACK_V);
+      memcpy_P(ether.tcpOffset(), pageB, sizeof pageB); // send second packet and not send the terminate flag
+      ether.httpServerReply_with_flags(sizeof pageB - 1,TCP_FLAGS_ACK_V);
+      memcpy_P(ether.tcpOffset(), pageC, sizeof pageC); // send thirdt packet and not send the terminate flag
+      ether.httpServerReply_with_flags(sizeof pageC - 1,TCP_FLAGS_ACK_V);
+      memcpy_P(ether.tcpOffset(), pageD, sizeof pageD); // send fourth packet and send the terminate flag
+      ether.httpServerReply_with_flags(sizeof pageD - 1,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
+      goto wait;
+    }
+    if (strncmp("GET /??", data, 7) == 0) { // description of services (normaly an xml file but here .....)
+      ether.httpServerReplyAck();
+      memcpy_P(Ethernet::buffer + TCP_OPTIONS_P,XML_DESCRIP, sizeof XML_DESCRIP);
+      ether.httpServerReply_with_flags(sizeof XML_DESCRIP - 1 ,TCP_FLAGS_ACK_V|TCP_FLAGS_FIN_V);
+      goto wait;
+    }
+    if (strncmp("M-SEARCH", data, 8) == 0) { // service discovery request comes here (udp protocol)
+      ssdpresp();
+      goto wait;
+    }
+  }
+  if (((millis()-timer)>50000)||(timer>millis())) {
+    timer=millis();
+    ssdpnotify();
+  }
+}

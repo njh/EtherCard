@@ -22,45 +22,6 @@ unsigned long cur;
 unsigned long pos;
 byte res;
 
-void setup() {
-  // Initialize serial communication at 115200 baud
-  Serial.begin(115200);
-  // Initialize tinyFAT
-  // You might need to select a lower speed than the default SPISPEED_HIGH
-    file.setSSpin(4);
-  res=file.initFAT(0);
-  if (res==NO_ERROR)    Serial.println("SD started");
-
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  ether.begin(sizeof Ethernet::buffer, mymac , SS);
-  ether.staticSetup(myip, gwip);
-  Serial.println("ETH started");
-}
-
-void loop()
-{
-   wait:
-    pos = ether.packetLoop(ether.packetReceive());// check if valid tcp data is received
-    if (pos) {
-        char* data = (char *) Ethernet::buffer + pos;
-        cur=0;
-        if (strncmp("GET / ", data, 6) == 0) {// nothing specified
-          sendfiles("index.htm");
-          goto wait;
-          }
-        if (strncmp("GET /", data, 5) == 0) { // serve anything on sd card
-            int i =0;
-            char temp[15]=""; // here will be the name of requested file
-            while (data[i+5]!=32) {temp[i]=data[i+5];i++;}//search the end
-            sendfiles((char*) temp);
-            goto wait;
-          }
-       not_found();
-
-  }
-
-}
-
 void not_found() { //content not found
   cur=0;
   streamfile ("404.hea",TCP_FLAGS_FIN_V);
@@ -128,4 +89,45 @@ if (i<33) Serial.print(".");
   }
   Serial.println(" ");
   */
+}
+
+
+void setup()
+{
+  // Initialize serial communication at 115200 baud
+  Serial.begin(115200);
+  // Initialize tinyFAT
+  // You might need to select a lower speed than the default SPISPEED_HIGH
+    file.setSSpin(4);
+  res=file.initFAT(0);
+  if (res==NO_ERROR)    Serial.println("SD started");
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  ether.begin(sizeof Ethernet::buffer, mymac , SS);
+  ether.staticSetup(myip, gwip);
+  Serial.println("ETH started");
+}
+
+void loop()
+{
+   wait:
+    pos = ether.packetLoop(ether.packetReceive());// check if valid tcp data is received
+    if (pos) {
+        char* data = (char *) Ethernet::buffer + pos;
+        cur=0;
+        if (strncmp("GET / ", data, 6) == 0) {// nothing specified
+          sendfiles("index.htm");
+          goto wait;
+          }
+        if (strncmp("GET /", data, 5) == 0) { // serve anything on sd card
+            int i =0;
+            char temp[15]=""; // here will be the name of requested file
+            while (data[i+5]!=32) {temp[i]=data[i+5];i++;}//search the end
+            sendfiles((char*) temp);
+            goto wait;
+          }
+       not_found();
+
+  }
+
 }
