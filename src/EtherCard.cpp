@@ -30,7 +30,7 @@ uint16_t EtherCard::delaycnt = 0; //request gateway ARP lookup
 
 uint8_t EtherCard::begin (const uint16_t size,
                           const uint8_t* macaddr,
-                          uint8_t csPin, uint16_t timeout = 60000) {
+                          uint8_t csPin, uint16_t timeout) {
     using_dhcp = false;
 #if ETHERCARD_STASH
     Stash::initMap();
