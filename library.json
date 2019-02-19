@@ -1,6 +1,6 @@
 {
   "name": "EtherCard",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "keywords": "http, web, server, client, ethernet",
   "description": "EtherCard is an IPv4 driver for the ENC28J60 chip.",
   "homepage": "https://github.com/njh/EtherCard",
