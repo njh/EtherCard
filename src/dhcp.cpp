@@ -332,7 +332,7 @@ static char toAsciiHex(byte b) {
     return c;
 }
 
-bool EtherCard::dhcpSetup (const char *hname, bool fromRam, uint16_t timeout = 60000) {
+bool EtherCard::dhcpSetup (const char *hname, bool fromRam, uint16_t timeout) {
     // Use during setup, as this discards all incoming requests until it returns.
     // That shouldn't be a problem, because we don't have an IPaddress yet.
     // Will try 60 secs to obtain DHCP-lease.
