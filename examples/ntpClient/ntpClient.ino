@@ -25,38 +25,6 @@ const unsigned int NTP_LOCALPORT = 8888;             // Local UDP port to use
 const unsigned int NTP_PACKET_SIZE = 48;             // NTP time stamp is in the first 48 bytes of the message
 byte Ethernet::buffer[350];                          // Buffer must be 350 for DHCP to work
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println(F("\n[EtherCard NTP Client]"));
-
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, myMac, SS) == 0)
-    Serial.println(F("Failed to access Ethernet controller"));
-  if (!ether.dhcpSetup())
-    Serial.println(F("DHCP failed"));
-
-  ether.printIp("IP:  ", ether.myip);
-  ether.printIp("GW:  ", ether.gwip);
-  ether.printIp("DNS: ", ether.dnsip);
-
-  if (!ether.dnsLookup(NTP_REMOTEHOST))
-    Serial.println("DNS failed");
-
-  uint8_t ntpIp[IP_LEN];
-  ether.copyIp(ntpIp, ether.hisip);
-  ether.printIp("NTP: ", ntpIp);
-
-  ether.udpServerListenOnPort(&udpReceiveNtpPacket, NTP_LOCALPORT);
-  Serial.println("Started listening for response.");
-
-  sendNTPpacket(ntpIp);
-}
-
-void loop() {
-  // this must be called for ethercard functions to work.
-  ether.packetLoop(ether.packetReceive());
-}
-
 // send an NTP request to the time server at the given address
 void sendNTPpacket(const uint8_t* remoteAddress) {
   // buffer to hold outgoing packet
@@ -101,3 +69,35 @@ void udpReceiveNtpPacket(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t sr
   Serial.println(epoch);
 }
 
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println(F("\n[EtherCard NTP Client]"));
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  if (ether.begin(sizeof Ethernet::buffer, myMac, SS) == 0)
+    Serial.println(F("Failed to access Ethernet controller"));
+  if (!ether.dhcpSetup())
+    Serial.println(F("DHCP failed"));
+
+  ether.printIp("IP:  ", ether.myip);
+  ether.printIp("GW:  ", ether.gwip);
+  ether.printIp("DNS: ", ether.dnsip);
+
+  if (!ether.dnsLookup(NTP_REMOTEHOST))
+    Serial.println("DNS failed");
+
+  uint8_t ntpIp[IP_LEN];
+  ether.copyIp(ntpIp, ether.hisip);
+  ether.printIp("NTP: ", ntpIp);
+
+  ether.udpServerListenOnPort(&udpReceiveNtpPacket, NTP_LOCALPORT);
+  Serial.println("Started listening for response.");
+
+  sendNTPpacket(ntpIp);
+}
+
+void loop() {
+  // this must be called for ethercard functions to work.
+  ether.packetLoop(ether.packetReceive());
+}
