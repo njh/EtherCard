@@ -128,7 +128,7 @@ public:
     *     @return <i>uint8_t</i> Firmware version or zero on failure.
     */
     static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
-                          uint8_t csPin = SS, uint16_t timeout = 60000);
+                          uint8_t csPin = SS);
 
     /**   @brief  Configure network interface with static IP
     *     @param  my_ip IP address (4 bytes). 0 for no change.
@@ -371,7 +371,7 @@ public:
     *     @return <i>bool</i> True if DHCP successful
     *     @note   Blocks until DHCP complete or timeout after 60 seconds
     */
-    static bool dhcpSetup (const char *hname = NULL, bool fromRam =false);
+    static bool dhcpSetup (const char *hname = NULL, bool fromRam = false, uint16_t timeout = 60000);
 
     /**   @brief  Register a callback for a specific DHCP option number
     *     @param  option The option number to request from the DHCP server
