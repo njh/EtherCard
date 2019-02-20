@@ -75,23 +75,6 @@ static int freeRam () {
 }
 #endif
 
-void setup(){
-#if SERIAL
-    Serial.begin(57600);
-    Serial.println("\n[etherNode]");
-#endif
-    loadConfig();
-
-    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
-      Serial.println( "Failed to access Ethernet controller");
-    if (!ether.dhcpSetup())
-      Serial.println("DHCP failed");
-#if SERIAL
-    ether.printIp("IP: ", ether.myip);
-#endif
-}
-
 const char okHeader[] PROGMEM =
     "HTTP/1.0 200 OK\r\n"
     "Content-Type: text/html\r\n"
@@ -224,6 +207,23 @@ static void sendPage(const char* data, BufferFiller& buf) {
           "</p>"
           "<input type=submit value=Send>"
         "</form>"), okHeader);
+}
+
+void setup(){
+#if SERIAL
+    Serial.begin(57600);
+    Serial.println("\n[etherNode]");
+#endif
+    loadConfig();
+
+    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
+      Serial.println( "Failed to access Ethernet controller");
+    if (!ether.dhcpSetup())
+      Serial.println("DHCP failed");
+#if SERIAL
+    ether.printIp("IP: ", ether.myip);
+#endif
 }
 
 void loop(){
