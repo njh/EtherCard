@@ -350,21 +350,6 @@ public:
     */
     static void DhcpStateMachine(uint16_t len);
 
-    /**   @brief Not implemented
-    *     @todo Implement dhcpStartTime or remove declaration
-    */
-    static uint32_t dhcpStartTime ();
-
-    /**   @brief Not implemented
-    *     @todo Implement dhcpLeaseTime or remove declaration
-    */
-    static uint32_t dhcpLeaseTime ();
-
-    /**   @brief Not implemented
-    *     @todo Implement dhcpLease or remove declaration
-    */
-    static bool dhcpLease ();
-
     /**   @brief  Configure network interface with DHCP
     *     @param  hname The hostname to pass to the DHCP server
     *     @param  fromRam Set true to indicate whether hname is in RAM or in program space. Default = false
