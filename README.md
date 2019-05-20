@@ -27,7 +27,7 @@ License: GPL2
   can easily push the limits of smaller microcontrollers.
 * Hardware: This library uses the SPI interface of the microcontroller,
   and will require at least one dedicated pin for CS, plus the SO, SI, and
-  SCK pins of the SPI interface.
+  SCK pins of the SPI interface. An interrupt pin is not required.
 * Software: Any Arduino IDE >= 1.0.0 should be fine
 
 
@@ -46,7 +46,7 @@ See the comments in the example sketches for details about how to try them out.
 
 ## Physical Installation
 
-### PIN Connections (Using Arduino UNO):
+### PIN Connections (Using Arduino UNO or Arduino NANO):
 
 | ENC28J60 | Arduino Uno | Notes                                       |
 |----------|-------------|---------------------------------------------|
