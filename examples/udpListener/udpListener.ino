@@ -12,18 +12,18 @@
 #define STATIC 0  // set to 1 to disable DHCP (adjust myip/gwip values below)
 
 #if STATIC
-// ethernet interface ip address
+// Ethernet interface IP address
 static byte myip[] = { 192,168,0,200 };
-// gateway ip address
+// Gateway IP address
 static byte gwip[] = { 192,168,0,1 };
 #endif
 
-// ethernet mac address - must be unique on your network
+// Ethernet MAC address - must be unique on your network
 static byte mymac[] = { 0x70,0x69,0x69,0x2D,0x30,0x31 };
 
-byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
+byte Ethernet::buffer[500]; // TCP/IP send and receive buffer
 
-//callback that prints received packets to the serial port
+// Callback that prints received packets to the serial port
 void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *data, uint16_t len){
   IPAddress src(src_ip[0],src_ip[1],src_ip[2],src_ip[3]);
 
@@ -33,7 +33,7 @@ void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_por
   Serial.println(src_port);
 
 
-  Serial.print("src_port: ");
+  Serial.print("src_ip: ");
   ether.printIp(src_ip);
   Serial.println("data: ");
   Serial.println(data);
@@ -43,7 +43,7 @@ void setup(){
   Serial.begin(57600);
   Serial.println(F("\n[backSoon]"));
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin if you aren't using the default pin
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
 #if STATIC
@@ -57,15 +57,15 @@ void setup(){
   ether.printIp("GW:  ", ether.gwip);
   ether.printIp("DNS: ", ether.dnsip);
 
-  //register udpSerialPrint() to port 1337
+  // Register udpSerialPrint() to port 1337
   ether.udpServerListenOnPort(&udpSerialPrint, 1337);
 
-  //register udpSerialPrint() to port 42.
+  // Register udpSerialPrint() to port 42.
   ether.udpServerListenOnPort(&udpSerialPrint, 42);
 }
 
 void loop(){
-  //this must be called for ethercard functions to work.
+  // This must be called for ethercard functions to work.
   ether.packetLoop(ether.packetReceive());
 }
 
