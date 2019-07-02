@@ -4,23 +4,23 @@
 
 #include <EtherCard.h>
 
-// ethernet interface mac address, must be unique on the LAN
+// Ethernet interface MAC address, must be unique on the LAN
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-// the buffersize must be relatively large for DHCP to work; when
-// using static setup a buffer size of 100 is sufficient;
+// The buffersize must be relatively large for DHCP to work; when
+// using static setup, a buffer size of 100 is sufficient
 #define BUFFERSIZE 350
 byte Ethernet::buffer[BUFFERSIZE];
 
 const char website[] PROGMEM = "textfiles.com";
 
 uint32_t nextSeq;
-// called when the client request is complete
+// Called when the client request is complete
 static void my_callback (byte status, word off, word len) {
 
     if (strncmp_P((char*) Ethernet::buffer+off,PSTR("HTTP"),4) == 0) {
         Serial.println(">>>");
-        // first reply packet
+        // First reply packet
         nextSeq = ether.getSequenceNumber();
     }
 
@@ -45,7 +45,7 @@ void setup () {
     Serial.begin(57600);
     Serial.println(F("\n[Persistence+readPacketSlice]"));
 
-    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    // Change 'SS' to your Slave Select pin if you aren't using the default pin
     if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
         Serial.println(F("Failed to access Ethernet controller"));
     if (!ether.dhcpSetup())

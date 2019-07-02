@@ -7,15 +7,15 @@
 
 #define REQUEST_RATE 5000 // milliseconds
 
-// ethernet interface mac address
+// Ethernet interface MAC address
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
-// remote website name
+// Remote website name
 const char website[] PROGMEM = "google.com";
 
 byte Ethernet::buffer[700];
 static long timer;
 
-// called when the client request is complete
+// Called when the client request is complete
 static void my_result_cb (byte status, word off, word len) {
   Serial.print("<<< reply ");
   Serial.print(millis() - timer);
@@ -27,7 +27,7 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[getDHCPandDNS]");
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin if you aren't using the default pin
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println( "Failed to access Ethernet controller");
 

@@ -6,7 +6,7 @@
 #include <EtherCard.h>
 #include <avr/eeprom.h>
 
-// ethernet interface mac address, must be unique on the LAN
+// Ethernet interface MAC address, must be unique on the LAN
 byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[700];
@@ -49,7 +49,7 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[stashTest]");
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin if you aren't using the default pin
   ether.begin(sizeof Ethernet::buffer, mymac, SS);
 
 #if 1

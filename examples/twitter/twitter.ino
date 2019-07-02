@@ -2,7 +2,7 @@
 // arduino-tweet.appspot.com as a OAuth gateway.
 // Step by step instructions:
 //
-//  1. Get a oauth token:
+//  1. Get a OAuth token:
 //     http://arduino-tweet.appspot.com/oauth/twitter/login
 //  2. Put the token value in the TOKEN define below
 //  3. Run the sketch!
@@ -16,10 +16,10 @@
 
 #include <EtherCard.h>
 
-// OAUTH key from http://arduino-tweet.appspot.com/
+// OAuth key from http://arduino-tweet.appspot.com/
 #define TOKEN   "Insert-your-token-here"
 
-// ethernet interface mac address, must be unique on the LAN
+// Ethernet interface MAC address, must be unique on the LAN
 byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 const char website[] PROGMEM = "arduino-tweet.appspot.com";
@@ -50,8 +50,8 @@ static void sendToTwitter () {
     "$H"),
   website, website, stash_size, sd);
 
-  // send the packet - this also releases all stash buffers once done
-  // Save the session ID so we can watch for it in the main loop.
+  // Send the packet - this also releases all stash buffers once done.
+  // Save the session ID, so we can watch for it in the main loop.
   session = ether.tcpSend();
 }
 
@@ -59,7 +59,7 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[Twitter Client]");
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin if you aren't using the default pin
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())

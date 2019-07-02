@@ -89,18 +89,17 @@ import hypermedia.net.*;
  }
 
  void keyPressed() {
- String ip       = "192.168.0.200";  // the remote IP address
- int port        = 1337;    // the destination port
+   String ip       = "192.168.0.200";  // the remote IP address
+   int port        = 1337;             // the destination port
 
- udp.send("Greetings via UDP!", ip, port );   // the message to send
-
+   udp.send("Greetings via UDP!", ip, port );   // the message to send
  }
 
  void receive( byte[] data ) {       // <-- default handler
  //void receive( byte[] data, String ip, int port ) {  // <-- extended handler
 
- for(int i=0; i < data.length; i++)
- print(char(data[i]));
- println();
+   for (int i=0; i < data.length; i++)
+   print(char(data[i]));
+   println();
  }
 */

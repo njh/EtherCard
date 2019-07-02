@@ -24,14 +24,14 @@ struct Config {
   byte valid; // keep this as last byte
 } config;
 
-// ethernet interface mac address - must be unique on your network
+// Ethernet interface MAC address - must be unique on your network
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-// buffer for an outgoing data packet
+// Buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;
 static char outCount = -1;
 
-// this buffer will be used to construct a collectd UDP packet
+// This buffer will be used to construct a collectd UDP packet
 static byte collBuf [200], collPos;
 
 #define NUM_MESSAGES  3     // Number of messages saved in history
@@ -39,12 +39,12 @@ static byte collBuf [200], collPos;
 
 static BufferFiller bfill;  // used as cursor while filling the buffer
 
-static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; //history record
-static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
-static byte next_msg;       // pointer to next rf12rcvd line
-static word msgs_rcvd;      // total number of lines received modulo 10,000
+static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; // history record
+static byte history_len[NUM_MESSAGES];                   // # of RF12 messages+header in history
+static byte next_msg;                                    // pointer to next rf12rcvd line
+static word msgs_rcvd;                                   // total number of lines received modulo 10,000
 
-byte Ethernet::buffer[700];   // tcp/ip send and receive buffer
+byte Ethernet::buffer[700];   // TCP/IP send and receive buffer
 
 static void loadConfig () {
   for (byte i = 0; i < sizeof config; ++i)
@@ -93,7 +93,7 @@ static void homePage (BufferFiller& buf) {
     byte j = (next_msg + i) % NUM_MESSAGES;
     if (history_len[j] > 0) {
       word n = msgs_rcvd - NUM_MESSAGES + i;
-      buf.emit_p(PSTR("\n$D$D$D$D: OK"), // hack, to show leading zero's
+      buf.emit_p(PSTR("\n$D$D$D$D: OK"), // hack, to show leading zeroes
                           n/1000, (n/100) % 10, (n/10) % 10, n % 10);
       for (byte k = 0; k < history_len[j]; ++k)
         buf.emit_p(PSTR(" $D"), history_rcvd[j][k]);
@@ -119,24 +119,24 @@ static int getIntArg(const char* data, const char* key, int value =-1) {
 }
 
 static void configPage (const char* data, BufferFiller& buf) {
-  // pick up submitted data, if present
+  // Pick up submitted data if present
   if (data[6] == '?') {
     byte b = getIntArg(data, "b", 8);
     byte g = getIntArg(data, "g", 1);
     byte c = getIntArg(data, "c", 0);
     word p = getIntArg(data, "p", 25827);
     if (1 <= g && g <= 250 && 1024 <= p && p <= 30000) {
-      // store values as new settings
+      // Store values as new settings
       config.band = b;
       config.group = g;
       config.collect = c;
       config.port = p;
       saveConfig();
-      // re-init RF12 driver
+      // Re-init RF12 driver
       loadConfig();
-      // clear history
+      // Clear history
       memset(history_len, 0, sizeof history_len);
-      // redirect to the home page
+      // Redirect to the home page
       buf.emit_p(PSTR(
         "HTTP/1.0 302 found\r\n"
         "Location: /\r\n"
@@ -144,7 +144,7 @@ static void configPage (const char* data, BufferFiller& buf) {
       return;
     }
   }
-  // else show a configuration form
+  // Else show a configuration form
   buf.emit_p(PSTR("$F\r\n"
     "<h3>Server node configuration</h3>"
     "<form>"
@@ -162,14 +162,14 @@ static void configPage (const char* data, BufferFiller& buf) {
 }
 
 static void sendPage (const char* data, BufferFiller& buf) {
-  // pick up submitted data, if present
+  // Pick up submitted data, if present
   const char* p = strstr(data, "b=");
   byte d = getIntArg(data, "d");
   if (data[6] == '?' && p != 0 && 0 <= d && d <= 31) {
-    // prepare to send data as soon as possible in loop()
+    // Prepare to send data as soon as possible in loop()
     outDest = d & RF12_HDR_MASK ? RF12_HDR_DST | d : 0;
     outCount = 0;
-    // convert the input string to a number of decimal data bytes in outBuf
+    // Convert the input string to a number of decimal data bytes in outBuf
     ++p;
     while (*p != 0 && *p != '&') {
       outBuf[outCount] = 0;
@@ -187,14 +187,14 @@ static void sendPage (const char* data, BufferFiller& buf) {
     }
     Serial.println();
 #endif
-    // redirect to home page
+    // Redirect to home page
     buf.emit_p(PSTR(
       "HTTP/1.0 302 found\r\n"
       "Location: /\r\n"
       "\r\n"));
     return;
   }
-  // else show a send form
+  // Else show a send form
   buf.emit_p(PSTR("$F\r\n"
     "<h3>Send a wireless data packet</h3>"
     "<form>"
@@ -260,7 +260,7 @@ void setup (){
   Serial.println("\n[JeeUdp]");
   loadConfig();
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin if you aren't using the default pin
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println( "Failed to access Ethernet controller");
   if (!ether.dhcpSetup())
@@ -271,14 +271,14 @@ void setup (){
 void loop (){
   word len = ether.packetReceive();
   word pos = ether.packetLoop(len);
-  // check if valid tcp data is received
+  // Check if valid TCP data is received
   if (pos) {
     bfill = ether.tcpOffset();
     char* data = (char *) Ethernet::buffer + pos;
 #if SERIAL
     Serial.println(data);
 #endif
-    // receive buf hasn't been clobbered by reply yet
+    // Receive buf hasn't been clobbered by reply yet
     if (strncmp("GET / ", data, 6) == 0)
       homePage(bfill);
     else if (strncmp("GET /c", data, 6) == 0)
@@ -294,7 +294,7 @@ void loop (){
     ether.httpServerReply(bfill.position()); // send web page data
   }
 
-  // RFM12 loop runner, don't report acks
+  // RFM12 loop runner, don't report ACKs
   if (rf12_recvDone() && rf12_crc == 0 && (rf12_hdr & RF12_HDR_CTL) == 0) {
     history_rcvd[next_msg][0] = rf12_hdr;
     for (byte i = 0; i < rf12_len; ++i)
@@ -315,7 +315,7 @@ void loop (){
     forwardToUDP();
   }
 
-  // send a data packet out if requested
+  // Send a data packet out if requested
   if (outCount >= 0 && rf12_canSend()) {
     rf12_sendStart(outDest, outBuf, outCount);
     rf12_sendWait(1);

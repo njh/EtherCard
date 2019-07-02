@@ -5,19 +5,19 @@
 
 #include <EtherCard.h>
 
-#define STATIC 0  // set to 1 to disable DHCP (adjust myip/gwip values below)
+#define STATIC 0  // Set to 1 to disable DHCP (adjust myip/gwip values below)
 
 #if STATIC
-// ethernet interface ip address
+// Ethernet interface IP address
 static byte myip[] = { 192,168,1,200 };
-// gateway ip address
+// Gateway IP address
 static byte gwip[] = { 192,168,1,1 };
 #endif
 
-// ethernet mac address - must be unique on your network
+// Ethernet MAC address - must be unique on your network
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
+byte Ethernet::buffer[500]; // TCP/IP send and receive buffer
 
 const char page[] PROGMEM =
 "HTTP/1.0 503 Service Unavailable\r\n"
@@ -42,7 +42,7 @@ void setup(){
   Serial.begin(57600);
   Serial.println("\n[backSoon]");
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin, if you aren't using the default pin
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println( "Failed to access Ethernet controller");
 #if STATIC
@@ -58,7 +58,7 @@ void setup(){
 }
 
 void loop(){
-  // wait for an incoming TCP packet, but ignore its contents
+  // Wait for an incoming TCP packet, but ignore its contents
   if (ether.packetLoop(ether.packetReceive())) {
     memcpy_P(ether.tcpOffset(), page, sizeof page);
     ether.httpServerReply(sizeof page - 1);

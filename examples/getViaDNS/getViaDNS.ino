@@ -7,21 +7,21 @@
 
 #define REQUEST_RATE 5000 // milliseconds
 
-// ethernet interface mac address
+// Ethernet interface MAC address
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
-// ethernet interface ip address
+// Ethernet interface IP address
 static byte myip[] = { 192,168,1,203 };
-// ethernet interface ip netmask
+// Ethernet interface IP netmask
 static byte mask[] = { 255,255,255,0 };
-// gateway ip address
+// Gateway IP address
 static byte gwip[] = { 192,168,1,1 };
-// remote website name
+// Remote website name
 const char website[] PROGMEM = "google.com";
 
-byte Ethernet::buffer[300];   // a very small tcp/ip buffer is enough here
+byte Ethernet::buffer[300];   // a very small TCP/IP buffer is enough here
 static long timer;
 
-// called when the client request is complete
+// Called when the client request is complete
 static void my_result_cb (byte status, word off, word len) {
   Serial.print("<<< reply ");
   Serial.print(millis() - timer);
@@ -33,7 +33,7 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[getViaDNS]");
 
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  // Change 'SS' to your Slave Select pin if you aren't using the default pin
   if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println( "Failed to access Ethernet controller");
 

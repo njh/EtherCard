@@ -8,11 +8,11 @@
 
 #include <EtherCard.h>
 
-// change these settings to match your own setup
+// Change these settings to match your own setup
 #define FEED "000"
 #define APIKEY "xxx"
 
-// ethernet interface mac address, must be unique on the LAN
+// Ethernet interface MAC address, must be unique on the LAN
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 const char website[] PROGMEM = "api.xively.com";
@@ -27,7 +27,7 @@ int res = 0;
 
 void initialize_ethernet(void){
   for(;;){ // keep trying until you succeed
-    //Reinitialize ethernet module
+    // Reinitialize ethernet module
     pinMode(5, OUTPUT);
     Serial.println("Reseting Ethernet...");
     digitalWrite(5, LOW);
@@ -35,7 +35,7 @@ void initialize_ethernet(void){
     digitalWrite(5, HIGH);
     delay(500);
 
-    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    // Change 'SS' to your Slave Select pin if you aren't using the default pin
     if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
       Serial.println( "Failed to access Ethernet controller");
       continue;
@@ -55,7 +55,7 @@ void initialize_ethernet(void){
 
     ether.printIp("SRV: ", ether.hisip);
 
-    //reset init value
+    // Reset init value
     res = 0;
     break;
   }
@@ -67,14 +67,14 @@ void setup () {
   Serial.begin(57600);
   Serial.println("\n[Xively example]");
 
-  //Initialize Ethernet
+  // Initialize Ethernet
   initialize_ethernet();
 }
 
 
 void loop () {
 
-  //if correct answer is not received then re-initialize ethernet module
+  // If correct answer is not received, then re-initialize ethernet module
   if (res > 220){
     initialize_ethernet();
   }
@@ -83,7 +83,7 @@ void loop () {
 
   ether.packetLoop(ether.packetReceive());
 
-  //200 res = 10 seconds (50ms each res)
+  // 200 res = 10 seconds (50ms each res)
   if (res == 200) {
 
 
@@ -100,7 +100,7 @@ void loop () {
     }
 
 
-    // generate two fake values as payload - by using a separate stash,
+    // Generate two fake values as payload - by using a separate stash,
     // we can determine the size of the generated message ahead of time
     byte sd = stash.create();
     stash.print("demo,");
@@ -111,12 +111,12 @@ void loop () {
     stash.println(msje);
     stash.save();
 
-    //Display data to be sent
+    // Display data to be sent
     Serial.println(demo);
     Serial.println(one);
 
 
-    // generate the header with payload - note that the stash size is used,
+    // Generate the header with payload - note that the stash size is used,
     // and that a "stash descriptor" is passed in as argument using "$H"
     Stash::prepare(PSTR("PUT http://$F/v2/feeds/$F.csv HTTP/1.0" "\r\n"
       "Host: $F" "\r\n"
@@ -126,7 +126,7 @@ void loop () {
       "$H"),
     website, PSTR(FEED), website, PSTR(APIKEY), stash.size(), sd);
 
-    // send the packet - this also releases all stash buffers once done
+    // Send the packet - this also releases all stash buffers once done
     session = ether.tcpSend();
   }
 

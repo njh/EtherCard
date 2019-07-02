@@ -212,7 +212,7 @@ void setup () {
     Serial.println(F("NoIP Client Demo"));
     Serial.println();
 
-    // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+    // Change 'SS' to your Slave Select pin if you aren't using the default pin
     if (!ether.begin(sizeof Ethernet::buffer, mymac, SS))
         Serial.println(F( "Failed to access Ethernet controller"));
     else
