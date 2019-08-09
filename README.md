@@ -157,7 +157,7 @@ Currently the library does not have a local network ARP cache implemented. This 
  * The only ARP lookup it does is for the gateway address.
  * You cannot send frames to local network devices network except via a gateway.
 
-If you are wondering why your local UDP packets are not being received, this is why! (See #59, #181, #269, #309, #351, #368).
+If you are wondering why your local UDP packets are not being received, this is why! (See [#59](https://github.com/njh/EtherCard/issues/59), [#181](https://github.com/njh/EtherCard/issues/181), [#269](https://github.com/njh/EtherCard/issues/269), [#309](https://github.com/njh/EtherCard/issues/309), [#351](https://github.com/njh/EtherCard/issues/351), [#368](https://github.com/njh/EtherCard/issues/368)).
 
 The general workaround is to use a gateway and send only to devices non-local network address ranges.
 
