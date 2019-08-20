@@ -27,7 +27,7 @@ License: GPL2
   can easily push the limits of smaller microcontrollers.
 * Hardware: This library uses the SPI interface of the microcontroller,
   and will require at least one dedicated pin for CS, plus the SO, SI, and
-  SCK pins of the SPI interface.
+  SCK pins of the SPI interface. An interrupt pin is not required.
 * Software: Any Arduino IDE >= 1.0.0 should be fine
 
 
@@ -46,7 +46,7 @@ See the comments in the example sketches for details about how to try them out.
 
 ## Physical Installation
 
-### PIN Connections (Using Arduino UNO):
+### PIN Connections (Using Arduino UNO or Arduino NANO):
 
 | ENC28J60 | Arduino Uno | Notes                                       |
 |----------|-------------|---------------------------------------------|
@@ -106,7 +106,7 @@ if(!ether.dhcpSetup())
 }
 ether.printIp("IP:   ", ether.myip); // output IP address to Serial
 ether.printIp("GW:   ", ether.gwip); // output gateway address to Serial
-ether.printIp("Mask: ", ether.mymask); // output netmask to Serial
+ether.printIp("Mask: ", ether.netmask); // output netmask to Serial
 ether.printIp("DHCP server: ", ether.dhcpip); // output IP address of the DHCP server
 ```
 
@@ -148,8 +148,18 @@ if(!ether.dnsLookup("google.com"))
 {
     // handle failure of DNS lookup
 }
-ether.printIp("Server: ", ether.hispip); // Result of DNS lookup is placed in the hisip member of EtherCard.
+ether.printIp("Server: ", ether.hisip); // Result of DNS lookup is placed in the hisip member of EtherCard.
 ```
+
+## Gotchas
+
+Currently the library does not have a local network ARP cache implemented. This means if sending UDP:
+ * The only ARP lookup it does is for the gateway address.
+ * You cannot send UDP frames except via a gateway.
+
+If you are wondering why your local UDP packets are not being received, this is why! (See [#59](https://github.com/njh/EtherCard/issues/59), [#181](https://github.com/njh/EtherCard/issues/181), [#269](https://github.com/njh/EtherCard/issues/269), [#309](https://github.com/njh/EtherCard/issues/309), [#351](https://github.com/njh/EtherCard/issues/351), [#368](https://github.com/njh/EtherCard/issues/368)).
+
+The general workaround is to use a gateway and send UDP packets only to non-local network addresses.
 
 
 ## Related Work

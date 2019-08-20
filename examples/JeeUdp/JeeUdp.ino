@@ -75,19 +75,6 @@ return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 }
 #endif
 
-void setup (){
-  Serial.begin(57600);
-  Serial.println("\n[JeeUdp]");
-  loadConfig();
-
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
-    Serial.println( "Failed to access Ethernet controller");
-  if (!ether.dhcpSetup())
-    Serial.println("DHCP failed");
-  ether.printIp("IP: ", ether.myip);
-}
-
 const char okHeader[] PROGMEM =
   "HTTP/1.0 200 OK\r\n"
   "Content-Type: text/html\r\n"
@@ -266,6 +253,19 @@ static void forwardToUDP () {
 #if SERIAL
   Serial.println("UDP sent");
 #endif
+}
+
+void setup (){
+  Serial.begin(57600);
+  Serial.println("\n[JeeUdp]");
+  loadConfig();
+
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
+    Serial.println( "Failed to access Ethernet controller");
+  if (!ether.dhcpSetup())
+    Serial.println("DHCP failed");
+  ether.printIp("IP: ", ether.myip);
 }
 
 void loop (){

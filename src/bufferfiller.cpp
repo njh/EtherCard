@@ -1,4 +1,5 @@
 #include "bufferfiller.h"
+#include <avr/eeprom.h>
 
 void BufferFiller::emit_p(const char* fmt PROGMEM, ...) {
     va_list ap;

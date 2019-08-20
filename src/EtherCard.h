@@ -350,21 +350,6 @@ public:
     */
     static void DhcpStateMachine(uint16_t len);
 
-    /**   @brief Not implemented
-    *     @todo Implement dhcpStartTime or remove declaration
-    */
-    static uint32_t dhcpStartTime ();
-
-    /**   @brief Not implemented
-    *     @todo Implement dhcpLeaseTime or remove declaration
-    */
-    static uint32_t dhcpLeaseTime ();
-
-    /**   @brief Not implemented
-    *     @todo Implement dhcpLease or remove declaration
-    */
-    static bool dhcpLease ();
-
     /**   @brief  Configure network interface with DHCP
     *     @param  hname The hostname to pass to the DHCP server
     *     @param  fromRam Set true to indicate whether hname is in RAM or in program space. Default = false
@@ -378,6 +363,12 @@ public:
     *     @param  callback The function to be call when the option is received
     */
     static void dhcpAddOptionCallback(uint8_t option, DhcpOptionCallback callback);
+
+    /**   @brief  Register a callback for multiple DHCP option numbers
+    *     @param  optionlist pointer to null terminate list of DHCP option numbers (must be static) 
+    *     @param  callback The function to be call when the option is received
+    */
+    static void dhcpAddOptionCallback(uint8_t* optionlist, DhcpOptionCallback callback);
 
     // dns.cpp
     /**   @brief  Perform DNS lookup
@@ -453,7 +444,7 @@ public:
     *     @param  str Pointer to string to parse
     *     @return <i>uint8_t</i> 0 on success
     */
-    static uint8_t parseIp(uint8_t *bytestr,char *str);
+    static uint8_t parseIp(uint8_t *bytestr, const char *str);
 
     /**   @brief  Convert a byte array to a human readable display string
     *     @param  resultstr Pointer to a buffer to hold the resulting null terminated string

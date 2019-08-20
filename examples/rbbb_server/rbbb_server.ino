@@ -12,13 +12,6 @@ static byte myip[] = { 192,168,1,203 };
 byte Ethernet::buffer[500];
 BufferFiller bfill;
 
-void setup () {
-  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
-    Serial.println(F("Failed to access Ethernet controller"));
-  ether.staticSetup(myip);
-}
-
 static word homePage() {
   long t = millis() / 1000;
   word h = t / 3600;
@@ -35,6 +28,15 @@ static word homePage() {
     "<h1>$D$D:$D$D:$D$D</h1>"),
       h/10, h%10, m/10, m%10, s/10, s%10);
   return bfill.position();
+}
+
+void setup () {
+  Serial.begin(57600);
+  Serial.println(F("\n[RBBB Server]"));
+  // Change 'SS' to your Slave Select pin, if you arn't using the default pin
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
+    Serial.println(F("Failed to access Ethernet controller"));
+  ether.staticSetup(myip);
 }
 
 void loop () {
