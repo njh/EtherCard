@@ -151,6 +151,16 @@ if(!ether.dnsLookup("google.com"))
 ether.printIp("Server: ", ether.hisip); // Result of DNS lookup is placed in the hisip member of EtherCard.
 ```
 
+## Gotchas
+
+Currently the library does not have a local network ARP cache implemented. This means if sending UDP:
+ * The only ARP lookup it does is for the gateway address.
+ * You cannot send UDP frames except via a gateway.
+
+If you are wondering why your local UDP packets are not being received, this is why! (See [#59](https://github.com/njh/EtherCard/issues/59), [#181](https://github.com/njh/EtherCard/issues/181), [#269](https://github.com/njh/EtherCard/issues/269), [#309](https://github.com/njh/EtherCard/issues/309), [#351](https://github.com/njh/EtherCard/issues/351), [#368](https://github.com/njh/EtherCard/issues/368)).
+
+The general workaround is to use a gateway and send UDP packets only to non-local network addresses.
+
 
 ## Related Work
 
