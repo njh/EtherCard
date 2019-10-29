@@ -373,9 +373,13 @@ uint8_t EtherCard::ntpProcessAnswer (uint32_t *time,uint8_t dstport_l) {
     return 1;
 }
 
-void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) {
+void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport, const uint8_t *dmac) {
     if(is_lan(myip, dip)) {                    // this works because both dns mac and destinations mac are stored in same variable - destmacaddr
-        setMACandIPs(destmacaddr, dip);        // at different times. The program could have separate variable for dns mac, then here should be
+        if (dmac!=nullptr){			
+			setMACandIPs(/*destmacaddr*/dmac, dip);        // at different times. The program could have separate variable for dns mac, then here should be
+		}else{ 
+			setMACandIPs(destmacaddr, dip);
+		}
     } else {                                   // checked if dip is dns ip and separately if dip is hisip and then use correct mac.
         setMACandIPs(gwmacaddr, dip);
     }
@@ -408,8 +412,8 @@ void EtherCard::udpTransmit (uint16_t datalen) {
 }
 
 void EtherCard::sendUdp (const char *data, uint8_t datalen, uint16_t sport,
-                         const uint8_t *dip, uint16_t dport) {
-    udpPrepare(sport, dip, dport);
+                         const uint8_t *dip, uint16_t dport, const uint8_t *dmac) {						 
+    udpPrepare(sport, dip, dport, dmac);
     if (datalen>220)
         datalen = 220;
     memcpy(gPB + UDP_DATA_P, data, datalen);

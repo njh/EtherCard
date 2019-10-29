@@ -89,6 +89,7 @@
 /** This type definition defines the structure of a UDP server event handler callback function */
 typedef void (*UdpServerCallback)(
     uint16_t dest_port,    ///< Port the packet was sent to
+	const uint8_t *src_mac, 
     uint8_t src_ip[IP_LEN],    ///< IP address of the sender
     uint16_t src_port,    ///< Port the packet was sent from
     const char *data,   ///< UDP payload data
@@ -263,7 +264,7 @@ public:
     *     @param  dip Pointer to 4 byte destination IP address
     *     @param  dport Destination port
     */
-    static void udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport);
+    static void udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport, const uint8_t *dmac = nullptr);
 
     /**   @brief  Transmit UDP packet
     *     @param  len Size of payload
@@ -278,7 +279,7 @@ public:
     *     @param  dport Destination port
     */
     static void sendUdp (const char *data, uint8_t len, uint16_t sport,
-                         const uint8_t *dip, uint16_t dport);
+                         const uint8_t *dip, uint16_t dport, const uint8_t *dmac = nullptr);
 
     /**   @brief  Resister the function to handle ping events
     *     @param  cb Pointer to function
