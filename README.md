@@ -166,7 +166,7 @@ The general workaround is to use a gateway and send UDP packets only to non-loca
 
 There are other Arduino libraries for the ENC28J60 that are worth mentioning:
 
-* [UIPEthernet](https://github.com/ntruchsess/arduino_uip) (Drop in replacement for stock Arduino Ethernet library)
+* [UIPEthernet](https://github.com/UIPEthernet/UIPEthernet) (Drop in replacement for stock Arduino Ethernet library)
 * [EtherSia](https://github.com/njh/EtherSia) (IPv6 Arduino library for ENC28J60)
 * [EtherShield](https://github.com/thiseldo/EtherShield) (no longer maintained, predecessor to Ethercard)
 * [ETHER_28J60](https://github.com/muanis/arduino-projects/tree/master/libraries/ETHER_28J60) (no longer maintained, very low footprint and simple)
