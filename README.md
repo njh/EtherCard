@@ -176,5 +176,5 @@ Read more about the differences at [this blog post](http://www.tweaking4all.com/
 
 [Arduino Library Manager]: https://www.arduino.cc/en/Guide/Libraries
 [example sketches]: https://github.com/njh/EtherCard/tree/master/examples
-[S]: https://travis-ci.org/njh/EtherCard.svg
-[T]: https://travis-ci.org/njh/EtherCard
+[S]: https://travis-ci.com/njh/EtherCard.svg
+[T]: https://travis-ci.com/njh/EtherCard
