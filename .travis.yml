@@ -1,6 +1,8 @@
 language: python
 python:
-    - "2.7"
+    - "3.6"
+
+dist: bionic
 
 # Cache PlatformIO packages using Travis CI container-based infrastructure
 sudo: false
