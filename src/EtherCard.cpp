@@ -30,12 +30,22 @@ uint16_t EtherCard::delaycnt = 0; //request gateway ARP lookup
 
 uint8_t EtherCard::begin (const uint16_t size,
                           const uint8_t* macaddr,
-                          uint8_t csPin) {
+                          uint8_t csPin,
+                          bool macFromRam) {
     using_dhcp = false;
 #if ETHERCARD_STASH
     Stash::initMap();
 #endif
-    copyMac(mymac, macaddr);
+    if (macFromRam) {
+        copyMac(mymac, macaddr);
+    }
+    else {
+        Serial.println("123456");
+        for (uint8_t k = 0; k < ETH_LEN; k++) {
+            uint8_t c = pgm_read_byte(macaddr+k);
+            mymac[k] = c;
+        }
+    }
     return initialize(size, mymac, csPin);
 }
 
