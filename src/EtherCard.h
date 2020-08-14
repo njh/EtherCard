@@ -125,6 +125,7 @@ public:
     *     @param  size Size of data buffer
     *     @param  macaddr Hardware address to assign to the network interface (6 bytes)
     *     @param  csPin Arduino pin number connected to chip select. Default = 8
+    *     @param  macFromRam Set true to indicate whether mac is in RAM or in program space. Default = false
     *     @return <i>uint8_t</i> Firmware version or zero on failure.
     */
     static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
