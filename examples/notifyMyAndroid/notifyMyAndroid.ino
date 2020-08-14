@@ -12,7 +12,7 @@
 
 const char apihost[] PROGMEM = "www.notifymyandroid.com";
 
-static byte mymac[] = { 0x74, 0x69, 0x69, 0x2D, 0x30, 0x31 };
+static byte mymac[] PROGMEM = { 0x74, 0x69, 0x69, 0x2D, 0x30, 0x31 };
 
 byte Ethernet::buffer[900];
 Stash stash;

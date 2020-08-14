@@ -27,7 +27,7 @@
 #define MAX_ATTEMPTS         3
 
 // MAC Address of Ethernet Shield
-static byte mymac[] = {0xDD,0xDD,0xDD,0x00,0x00,0x01};
+static byte mymac[] PROGMEM = {0xDD,0xDD,0xDD,0x00,0x00,0x01};
 
 // Insert your hostname and authentication string
 const char noIP_host[] PROGMEM = "myhost.no-ip.info";

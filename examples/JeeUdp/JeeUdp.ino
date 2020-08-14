@@ -25,7 +25,7 @@ struct Config {
 } config;
 
 // ethernet interface mac address - must be unique on your network
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;

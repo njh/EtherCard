@@ -5,7 +5,7 @@
 #include <EtherCard.h>
 
 // ethernet interface mac address, must be unique on the LAN
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 // the buffersize must be relatively large for DHCP to work; when
 // using static setup a buffer size of 100 is sufficient;

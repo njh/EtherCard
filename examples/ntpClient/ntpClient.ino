@@ -18,7 +18,7 @@
 #include <EtherCard.h>  // https://github.com/njh/EtherCard
 
 // Ethernet mac address - must be unique on your network
-const byte myMac[] PROGMEM = { 0x70, 0x69, 0x69, 0x2D, 0x30, 0x31 };
+static byte mymac[] PROGMEM = = { 0x70, 0x69, 0x69, 0x2D, 0x30, 0x31 };
 const char NTP_REMOTEHOST[] PROGMEM = "ntp.bit.nl";  // NTP server name
 const unsigned int NTP_REMOTEPORT = 123;             // NTP requests are to port 123
 const unsigned int NTP_LOCALPORT = 8888;             // Local UDP port to use
@@ -75,7 +75,7 @@ void setup() {
   Serial.println(F("\n[EtherCard NTP Client]"));
 
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, myMac, SS) == 0)
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));

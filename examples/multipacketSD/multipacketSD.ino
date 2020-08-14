@@ -16,7 +16,7 @@
 #define TCP_FLAGS_ACK_V 16 //as declared in net.h
 static byte myip[] = { 192,168,0,66 };
 static byte gwip[] = { 192,168,0,250 };
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x39 };
+static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x39 };
 byte Ethernet::buffer[700]; // tcp/ip send and receive buffer
 unsigned long cur;
 unsigned long pos;

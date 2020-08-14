@@ -19,7 +19,7 @@ static byte gwip[] = { 192,168,0,1 };
 #endif
 
 // Ethernet MAC address - must be unique on your network
-static byte mymac[] = { 0x70,0x69,0x69,0x2D,0x30,0x31 };
+static byte mymac[] PROGMEM = { 0x70,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[500]; // TCP/IP send and receive buffer
 

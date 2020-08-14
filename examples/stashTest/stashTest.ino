@@ -7,7 +7,7 @@
 #include <avr/eeprom.h>
 
 // ethernet interface mac address, must be unique on the LAN
-byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[700];
 

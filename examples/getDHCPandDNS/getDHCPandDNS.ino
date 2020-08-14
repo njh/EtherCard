@@ -8,7 +8,7 @@
 #define REQUEST_RATE 5000 // milliseconds
 
 // ethernet interface mac address
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 // remote website name
 const char website[] PROGMEM = "google.com";
 
