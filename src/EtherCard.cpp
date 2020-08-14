@@ -40,7 +40,6 @@ uint8_t EtherCard::begin (const uint16_t size,
         copyMac(mymac, macaddr);
     }
     else {
-        Serial.println("123456");
         for (uint8_t k = 0; k < ETH_LEN; k++) {
             uint8_t c = pgm_read_byte(macaddr+k);
             mymac[k] = c;
