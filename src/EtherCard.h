@@ -129,6 +129,14 @@ public:
     */
     static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
                           uint8_t csPin = SS);
+    /**   @brief  Initialise the network interface using a MAC in PROGMEM
+    *     @param  size Size of data buffer
+    *     @param  macaddr Hardware address to assign to the network interface (6 bytes), read from program space
+    *     @param  csPin Arduino pin number connected to chip select. Default = 8
+    *     @return <i>uint8_t</i> Firmware version or zero on failure.
+    */
+    static uint8_t begin (const uint16_t size, const __FlashStringHelper * macaddr,
+                          uint8_t csPin = SS);
 
     /**   @brief  Configure network interface with static IP
     *     @param  my_ip IP address (4 bytes). 0 for no change.
@@ -394,6 +402,13 @@ public:
     */
     static void copyMac (uint8_t *dst, const uint8_t *src);
 
+    /**   @brief  Copies a hardware address from PROGMEM
+    *     @param  dst Pointer to the 6 byte destination
+    *     @param  src Pointer to the 6 byte destination in program space
+    *     @note   There is no check of source or destination size. Ensure both are 6 bytes
+    */
+    static void copyMac (uint8_t *dst, const __FlashStringHelper *src);
+
     /**   @brief  Output to serial port in dotted decimal IP format
     *     @param  buf Pointer to 4 byte IP address
     *     @note   There is no check of source or destination size. Ensure both are 4 bytes
@@ -469,6 +484,14 @@ public:
     /**   @brief  Return the payload length of the current Tcp package
     */
     static uint16_t getTcpPayloadLength();
+private:
+    /**   @brief  Initialise the network interface
+    *     @param  size Size of data buffer
+    *     @param  csPin Arduino pin number connected to chip select. Default = 8
+    *     @return <i>uint8_t</i> Firmware version or zero on failure.
+    *     @note   assumes the MAC address has already been set
+    */
+    inline static uint8_t begin (const uint16_t size, uint8_t csPin = SS);
 };
 
 extern EtherCard ether; //!< Global presentation of EtherCard class

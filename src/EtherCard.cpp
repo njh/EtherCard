@@ -31,11 +31,23 @@ uint16_t EtherCard::delaycnt = 0; //request gateway ARP lookup
 uint8_t EtherCard::begin (const uint16_t size,
                           const uint8_t* macaddr,
                           uint8_t csPin) {
+    copyMac(mymac, macaddr);
+    return begin(size, csPin);
+}
+
+uint8_t EtherCard::begin (const uint16_t size,
+                          const __FlashStringHelper *macaddr,
+                          uint8_t csPin) {
+    copyMac(mymac, macaddr);
+    return begin(size, csPin);
+}
+
+/// helper for EtherCard::begin(3)
+inline uint8_t EtherCard::begin (const uint16_t size, uint8_t csPin) {
     using_dhcp = false;
 #if ETHERCARD_STASH
     Stash::initMap();
 #endif
-    copyMac(mymac, macaddr);
     return initialize(size, mymac, csPin);
 }
 
