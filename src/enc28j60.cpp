@@ -373,7 +373,7 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
 
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
     delay(2); // errata B7/2
-    while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY)
+    while (!(readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY))
         ;
 
     writeReg(ERXST, RXSTART_INIT);
@@ -607,7 +607,7 @@ void ENC28J60::powerDown() {
 
 void ENC28J60::powerUp() {
     writeOp(ENC28J60_BIT_FIELD_CLR, ECON2, ECON2_PWRSV);
-    while(!readRegByte(ESTAT) & ESTAT_CLKRDY);
+    while(!(readRegByte(ESTAT) & ESTAT_CLKRDY));
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 }
 
@@ -661,7 +661,7 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
 
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
     delay(2); // errata B7/2
-    while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY) ;
+    while (!(readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY)) ;
 
 
     // now we can start the memory test
