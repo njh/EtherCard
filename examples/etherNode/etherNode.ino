@@ -13,8 +13,8 @@
 #include <JeeLib.h>
 #include <avr/eeprom.h>
 
-#define DEBUG   1   // set to 1 to display free RAM on web page
-#define SERIAL  0   // set to 1 to show incoming requests on serial port
+#define DEBUG         1   // set to 1 to display free RAM on web page
+#define SERIAL_PRINT  0   // set to 1 to show incoming requests on serial port
 
 #define CONFIG_EEPROM_ADDR ((byte*) 0x10)
 
@@ -179,7 +179,7 @@ static void sendPage(const char* data, BufferFiller& buf) {
                 outBuf[outCount] = 10 * outBuf[outCount] + (*p - '0');
             ++outCount;
         }
-#if SERIAL
+#if SERIAL_PRINT
         Serial.print("Send to ");
         Serial.print(outDest, DEC);
         Serial.print(':');
@@ -210,7 +210,7 @@ static void sendPage(const char* data, BufferFiller& buf) {
 }
 
 void setup(){
-#if SERIAL
+#if SERIAL_PRINT
     Serial.begin(57600);
     Serial.println("\n[etherNode]");
 #endif
@@ -221,7 +221,7 @@ void setup(){
       Serial.println( "Failed to access Ethernet controller");
     if (!ether.dhcpSetup())
       Serial.println("DHCP failed");
-#if SERIAL
+#if SERIAL_PRINT
     ether.printIp("IP: ", ether.myip);
 #endif
 }
@@ -233,7 +233,7 @@ void loop(){
     if (pos) {
         bfill = ether.tcpOffset();
         char* data = (char *) Ethernet::buffer + pos;
-#if SERIAL
+#if SERIAL_PRINT
         Serial.println(data);
 #endif
         // receive buf hasn't been clobbered by reply yet
@@ -264,7 +264,7 @@ void loop(){
         msgs_rcvd = (msgs_rcvd + 1) % 10000;
 
         if (RF12_WANTS_ACK && !config.collect) {
-#if SERIAL
+#if SERIAL_PRINT
             Serial.println(" -> ack");
 #endif
             rf12_sendStart(RF12_ACK_REPLY);

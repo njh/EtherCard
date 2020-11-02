@@ -604,7 +604,7 @@ static uint16_t tcp_datafill_cb(uint8_t fd) {
     Stash::extract(0, len, EtherCard::tcpOffset());
     Stash::cleanup();
     EtherCard::tcpOffset()[len] = 0;
-#if SERIAL
+#if SERIAL_PRINT
     Serial.print("REQUEST: ");
     Serial.println(len);
     Serial.println((char*) EtherCard::tcpOffset());

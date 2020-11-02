@@ -10,8 +10,8 @@
 #include <JeeLib.h>
 #include <avr/eeprom.h>
 
-#define DEBUG   1   // set to 1 to display free RAM on web page
-#define SERIAL  1   // set to 1 to show incoming requests on serial port
+#define DEBUG         1   // set to 1 to display free RAM on web page
+#define SERIAL_PRINT  1   // set to 1 to show incoming requests on serial port
 
 #define CONFIG_EEPROM_ADDR ((byte*) 0x10)
 
@@ -177,7 +177,7 @@ static void sendPage (const char* data, BufferFiller& buf) {
         outBuf[outCount] = 10 * outBuf[outCount] + (*p - '0');
       ++outCount;
     }
-#if SERIAL
+#if SERIAL_PRINT
     Serial.print("Send to ");
     Serial.print(outDest, DEC);
     Serial.print(':');
@@ -250,7 +250,7 @@ static void forwardToUDP () {
   collectPayload(0x0006);
 
   ether.sendUdp ((char*) collBuf, collPos, 23456, destIp, config.port);
-#if SERIAL
+#if SERIAL_PRINT
   Serial.println("UDP sent");
 #endif
 }
@@ -275,7 +275,7 @@ void loop (){
   if (pos) {
     bfill = ether.tcpOffset();
     char* data = (char *) Ethernet::buffer + pos;
-#if SERIAL
+#if SERIAL_PRINT
     Serial.println(data);
 #endif
     // receive buf hasn't been clobbered by reply yet
@@ -306,7 +306,7 @@ void loop (){
     msgs_rcvd = (msgs_rcvd + 1) % 10000;
 
     if (RF12_WANTS_ACK && !config.collect) {
-#if SERIAL
+#if SERIAL_PRINT
       Serial.println(" -> ack");
 #endif
       rf12_sendStart(RF12_ACK_REPLY);
