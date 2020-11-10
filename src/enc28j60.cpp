@@ -13,6 +13,7 @@
 #else
 #include <Wprogram.h> // Arduino 0022
 #endif
+#include <SPI.h>
 #include "enc28j60.h"
 
 uint16_t ENC28J60::bufferSize;
@@ -226,78 +227,55 @@ bool ENC28J60::promiscuous_enabled = false;
 // (note: maximum ethernet frame length would be 1518)
 #define MAX_FRAMELEN      1500
 
-#define FULL_SPEED  1   // switch to full-speed SPI for bulk transfers
-
 static byte Enc28j60Bank;
 static byte selectPin;
 
-void ENC28J60::initSPI () {
-    pinMode(SS, OUTPUT);
-    digitalWrite(SS, HIGH);
-    pinMode(MOSI, OUTPUT);
-    pinMode(SCK, OUTPUT);
-    pinMode(MISO, INPUT);
+// The ENC28J60 SPI Interface supports clock speeds up to 20 MHz
+static const SPISettings spiSettings(20000000, MSBFIRST, SPI_MODE0);
 
-    digitalWrite(MOSI, HIGH);
-    digitalWrite(MOSI, LOW);
-    digitalWrite(SCK, LOW);
 
-    SPCR = bit(SPE) | bit(MSTR); // 8 MHz @ 16
-    bitSet(SPSR, SPI2X);
-}
-
-static void enableChip () {
-    cli();
-    digitalWrite(selectPin, LOW);
-}
-
-static void disableChip () {
+void ENC28J60::initSPI() {
+    pinMode(selectPin, OUTPUT);
     digitalWrite(selectPin, HIGH);
-    sei();
+
+    SPI.begin();
 }
 
-static void xferSPI (byte data) {
-    SPDR = data;
-    while (!(SPSR&(1<<SPIF)))
-        ;
+static void enableChip() {
+    digitalWrite(selectPin, LOW);
+    SPI.beginTransaction(spiSettings);
 }
 
-static byte readOp (byte op, byte address) {
+static void disableChip() {
+    SPI.endTransaction();
+    digitalWrite(selectPin, HIGH);
+}
+
+static byte readOp(byte op, byte address) {
     enableChip();
-    xferSPI(op | (address & ADDR_MASK));
-    xferSPI(0x00);
-    if (address & 0x80)
-        xferSPI(0x00);
-    byte result = SPDR;
+    SPI.transfer(op | (address & ADDR_MASK));
+    byte result = SPI.transfer(0);
+    // "If the address specifies one of the MAC or MII registers,
+    // a dummy byte will first be shifted out the SO pin."
+    if (address & SPRD_MASK)
+        result = SPI.transfer(0);
     disableChip();
     return result;
 }
 
-static void writeOp (byte op, byte address, byte data) {
+static void writeOp(byte op, byte address, byte data) {
     enableChip();
-    xferSPI(op | (address & ADDR_MASK));
-    xferSPI(data);
+    SPI.transfer(op | (address & ADDR_MASK));
+    SPI.transfer(data);
     disableChip();
 }
 
 static void readBuf(uint16_t len, byte* data) {
-    uint8_t nextbyte;
-
     enableChip();
     if (len != 0) {
-        xferSPI(ENC28J60_READ_BUF_MEM);
-
-        SPDR = 0x00;
-        while (--len) {
-            while (!(SPSR & (1<<SPIF)))
-                ;
-            nextbyte = SPDR;
-            SPDR = 0x00;
-            *data++ = nextbyte;
-        }
-        while (!(SPSR & (1<<SPIF)))
-            ;
-        *data++ = SPDR;
+        SPI.transfer(ENC28J60_READ_BUF_MEM);
+        while (len--) 
+            *data++ = SPI.transfer(0);
     }
     disableChip();
 }
@@ -305,20 +283,15 @@ static void readBuf(uint16_t len, byte* data) {
 static void writeBuf(uint16_t len, const byte* data) {
     enableChip();
     if (len != 0) {
-        xferSPI(ENC28J60_WRITE_BUF_MEM);
-
-        SPDR = *data++;
-        while (--len) {
-            uint8_t nextbyte = *data++;
-        	while (!(SPSR & (1<<SPIF)))
-                ;
-            SPDR = nextbyte;
-     	};
-        while (!(SPSR & (1<<SPIF)))
-            ;
+        SPI.transfer(ENC28J60_WRITE_BUF_MEM);
+        while (len--)
+            SPI.transfer(*data++);
     }
     disableChip();
 }
+
+
+
 
 static void SetBank (byte address) {
     if ((address & BANK_MASK) != Enc28j60Bank) {
@@ -365,10 +338,9 @@ static void writePhy (byte address, uint16_t data) {
 
 byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     bufferSize = size;
+    selectPin = csPin;
     if (bitRead(SPCR, SPE) == 0)
         initSPI();
-    selectPin = csPin;
-    pinMode(selectPin, OUTPUT);
     disableChip();
 
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
