@@ -363,7 +363,7 @@ static void writePhy (byte address, uint16_t data) {
         ;
 }
 
-byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
+byte ENC28J60::initialize (uint16_t size, const byte* macaddr, const byte csPin) {
     bufferSize = size;
     if (bitRead(SPCR, SPE) == 0)
         initSPI();

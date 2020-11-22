@@ -14,6 +14,10 @@ void EtherCard::copyMac (uint8_t *dst, const uint8_t *src) {
     memcpy(dst, src, ETH_LEN);
 }
 
+void EtherCard::copyMac_P (uint8_t *dst, const uint8_t *src) {
+    memcpy_P(dst, src, ETH_LEN);
+}
+
 void EtherCard::printIp (const char* msg, const uint8_t *buf) {
     Serial.print(msg);
     EtherCard::printIp(buf);
