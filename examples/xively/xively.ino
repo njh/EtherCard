@@ -13,7 +13,7 @@
 #define APIKEY "xxx"
 
 // ethernet interface mac address, must be unique on the LAN
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+const static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 const char website[] PROGMEM = "api.xively.com";
 
@@ -36,7 +36,7 @@ void initialize_ethernet(void){
     delay(500);
 
     // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-    if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
+    if (ether.begin(sizeof Ethernet::buffer, mymac, SS, false) == 0){
       Serial.println( "Failed to access Ethernet controller");
       continue;
     }
