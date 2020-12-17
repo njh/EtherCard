@@ -353,7 +353,7 @@ static uint16_t readPhyByte (byte address) {
     while (readRegByte(MISTAT) & MISTAT_BUSY)
         ;
     writeRegByte(MICMD, 0x00);
-    return readRegByte(MIRD+1);
+    return readRegByte(MIRD) | readRegByte(MIRD+1)<<8; //Read MIRDL and MIRDH
 }
 
 static void writePhy (byte address, uint16_t data) {
@@ -415,7 +415,7 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
 }
 
 bool ENC28J60::isLinkUp() {
-    return (readPhyByte(PHSTAT2) >> 2) & 1;
+    return (readPhyByte(PHSTAT2) >> 10) & 1; //LSTAT is bit 10
 }
 
 /*
