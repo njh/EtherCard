@@ -10,7 +10,7 @@ const char SSDP_NOTIFY[] PROGMEM = "NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1
 static byte myip[] = { 192,168,0,67 };
 static byte gwip[] = { 192,168,0,250 };
 static byte ssdp[] = { 239,255,255,250 };
-static byte mymac[] = { 0x74,0x99,0x69,0x2D,0x30,0x40 }; // if you change it you must update SSDP_RESPONSE and XML_DESCRIP
+const static byte mymac[] PROGMEM = { 0x74,0x99,0x69,0x2D,0x30,0x40 }; // if you change it you must update SSDP_RESPONSE and XML_DESCRIP
 byte Ethernet::buffer[750]; // tcp ip send and receive buffer
 unsigned long timer=9999;
 const char pageA[] PROGMEM =
@@ -99,7 +99,7 @@ void addip(int udppos) { // add current ip to the request and send it
 
 void setup(){
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  ether.begin(sizeof Ethernet::buffer, mymac, SS);
+  ether.begin(sizeof Ethernet::buffer, mymac, SS, false);
   ether.staticSetup(myip, gwip);
   ENC28J60::disableMulticast(); //disable multicast filter means enable multicast reception
   Serial.begin(115200);

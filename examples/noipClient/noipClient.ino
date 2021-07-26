@@ -27,7 +27,7 @@
 #define MAX_ATTEMPTS         3
 
 // MAC Address of Ethernet Shield
-static byte mymac[] = {0xDD,0xDD,0xDD,0x00,0x00,0x01};
+const static byte mymac[] PROGMEM = {0xDD,0xDD,0xDD,0x00,0x00,0x01};
 
 // Insert your hostname and authentication string
 const char noIP_host[] PROGMEM = "myhost.no-ip.info";
@@ -213,7 +213,7 @@ void setup () {
     Serial.println();
 
     // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-    if (!ether.begin(sizeof Ethernet::buffer, mymac, SS))
+    if (!ether.begin(sizeof Ethernet::buffer, mymac, SS, false))
         Serial.println(F( "Failed to access Ethernet controller"));
     else
         Serial.println(F("Ethernet controller initialized"));

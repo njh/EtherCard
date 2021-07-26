@@ -75,7 +75,7 @@ void setup() {
   Serial.println(F("\n[EtherCard NTP Client]"));
 
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, myMac, SS) == 0)
+  if (ether.begin(sizeof Ethernet::buffer, myMac, SS, false) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
     Serial.println(F("DHCP failed"));

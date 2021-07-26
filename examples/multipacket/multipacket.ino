@@ -3,7 +3,7 @@
 #define TCP_FLAGS_ACK_V 0x10 //as declared in net.h
 static byte myip[] = { 192,168,0,66 };
 static byte gwip[] = { 192,168,0,250 };
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x39 };
+const static byte mymac[] PROGMEM = { 0x74,0x69,0x69,0x2D,0x30,0x39 };
 byte Ethernet::buffer[900]; // tcp ip send and receive buffer
 const char pageA[] PROGMEM =
 "HTTP/1.0 200 OK\r\n"
@@ -48,7 +48,7 @@ const char pageE[] PROGMEM =
 
 void setup(){
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  ether.begin(sizeof Ethernet::buffer, mymac , SS);
+  ether.begin(sizeof Ethernet::buffer, mymac , SS, false);
   ether.staticSetup(myip, gwip);
 }
 

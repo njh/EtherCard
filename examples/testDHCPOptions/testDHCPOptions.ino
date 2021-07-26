@@ -5,7 +5,7 @@
 
 #include <EtherCard.h>
 
-static byte mymac[] = { 0x6e, 0x1b, 0xd0, 0x2e, 0xdd, 0xa5 };
+const static byte mymac[] PROGMEM = { 0x6e, 0x1b, 0xd0, 0x2e, 0xdd, 0xa5 };
 
 byte Ethernet::buffer[700];
 
@@ -28,7 +28,7 @@ void setup () {
   }
   Serial.println();
   
-  if (ether.begin(sizeof Ethernet::buffer, mymac, 8) == 0) 
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 8, false) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
 
   // Add callback for the NTP option (DHCP Option number 42)

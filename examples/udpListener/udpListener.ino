@@ -19,7 +19,7 @@ static byte gwip[] = { 192,168,0,1 };
 #endif
 
 // Ethernet MAC address - must be unique on your network
-static byte mymac[] = { 0x70,0x69,0x69,0x2D,0x30,0x31 };
+const static byte mymac[] PROGMEM = { 0x70,0x69,0x69,0x2D,0x30,0x31 };
 
 byte Ethernet::buffer[500]; // TCP/IP send and receive buffer
 
@@ -44,7 +44,7 @@ void setup(){
   Serial.println(F("\n[backSoon]"));
 
   // Change 'SS' to your Slave Select pin if you aren't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS, false) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
 #if STATIC
   ether.staticSetup(myip, gwip);

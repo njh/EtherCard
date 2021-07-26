@@ -125,10 +125,11 @@ public:
     *     @param  size Size of data buffer
     *     @param  macaddr Hardware address to assign to the network interface (6 bytes)
     *     @param  csPin Arduino pin number connected to chip select. Default = 8
+    *     @param  fromRam Set true to indicate whether macaddr is in RAM or in program space. Default = true
     *     @return <i>uint8_t</i> Firmware version or zero on failure.
     */
     static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
-                          uint8_t csPin = SS);
+                          const uint8_t csPin = SS, const bool fromRam =true);
 
     /**   @brief  Configure network interface with static IP
     *     @param  my_ip IP address (4 bytes). 0 for no change.
@@ -393,6 +394,13 @@ public:
     *     @note   There is no check of source or destination size. Ensure both are 6 bytes
     */
     static void copyMac (uint8_t *dst, const uint8_t *src);
+
+    /**   @brief  Copies a hardware address from program space
+    *     @param  dst Pointer to the 6 byte destination
+    *     @param  src Pointer to the 6 byte destination
+    *     @note   There is no check of source or destination size. Ensure both are 6 bytes
+    */
+    static void copyMac_P (uint8_t *dst, const uint8_t *src);
 
     /**   @brief  Output to serial port in dotted decimal IP format
     *     @param  buf Pointer to 4 byte IP address

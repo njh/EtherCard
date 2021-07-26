@@ -57,7 +57,7 @@ public:
     *     @return <i>uint8_t</i> ENC28J60 firmware version or zero on failure.
     */
     static uint8_t initialize (const uint16_t size, const uint8_t* macaddr,
-                               uint8_t csPin = 8);
+                               const uint8_t csPin = 8);
 
     /**   @brief  Check if network link is connected
     *     @return <i>bool</i> True if link is up

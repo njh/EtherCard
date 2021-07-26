@@ -1,6 +1,6 @@
 #include <EtherCard.h>
 
-static byte mymac[] = { 0x1A,0x2B,0x3C,0x4D,0x5E,0x6F };
+const static byte mymac[] PROGMEM = { 0x1A,0x2B,0x3C,0x4D,0x5E,0x6F };
 byte Ethernet::buffer[700];
 static uint32_t timer;
 
@@ -13,7 +13,7 @@ void setup () {
   Serial.begin(9600);
 
   // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-  if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0)
+  if (ether.begin(sizeof Ethernet::buffer, mymac, SS, false) == 0)
     Serial.println( "Failed to access Ethernet controller");
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");

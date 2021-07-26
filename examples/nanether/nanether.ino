@@ -6,7 +6,7 @@
 
 #define BUF_SIZE 512
 
-byte mac[] = { 0x00, 0x04, 0xA3, 0x21, 0xCA, 0x38 };   // Nanode MAC address.
+const byte mac[] PROGMEM = { 0x00, 0x04, 0xA3, 0x21, 0xCA, 0x38 };   // Nanode MAC address.
 
 uint8_t ip[] = { 192, 168, 1, 8 };          // The fallback board address.
 uint8_t dns[] = { 192, 168, 1, 20 };        // The DNS server address.
@@ -24,7 +24,7 @@ void setup(void)
     Serial.println("Initialising the Ethernet controller");
 
     // Change 'SS' to your Slave Select pin, if you arn't using the default pin
-    if (ether.begin(sizeof Ethernet::buffer, mac, SS) == 0) {
+    if (ether.begin(sizeof Ethernet::buffer, mac, SS, false) == 0) {
         Serial.println( "Ethernet controller NOT initialised");
         while (true)
             /* MT */ ;
