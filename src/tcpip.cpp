@@ -379,6 +379,13 @@ void EtherCard::udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport) 
     } else {                                   // checked if dip is dns ip and separately if dip is hisip and then use correct mac.
         setMACandIPs(gwmacaddr, dip);
     }
+    //form a valid multicast mac
+    if ((dip[0] & 0xF0) == 0xE0){
+        uint8_t cMac[6];cMac[0]=1;cMac[1]=0;cMac[2]=0x5e;
+        memcpy(&cMac[3],dip+1,3);
+        cMac[3]&=0x7f;
+        EtherCard::copyMac(gPB + ETH_DST_MAC, cMac);
+    } else
     // see http://tldp.org/HOWTO/Multicast-HOWTO-2.html
     // multicast or broadcast address, https://github.com/njh/EtherCard/issues/59
     if ((dip[0] & 0xF0) == 0xE0 || *((unsigned long*) dip) == 0xFFFFFFFF || !memcmp(broadcastip,dip,IP_LEN))
