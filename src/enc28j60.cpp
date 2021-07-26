@@ -232,8 +232,8 @@ static byte Enc28j60Bank;
 static byte selectPin;
 
 void ENC28J60::initSPI () {
-    pinMode(SS, OUTPUT);
-    digitalWrite(SS, HIGH);
+    pinMode(selectPin, OUTPUT);
+    digitalWrite(selectPin, HIGH);
     pinMode(MOSI, OUTPUT);
     pinMode(SCK, OUTPUT);
     pinMode(MISO, INPUT);
@@ -365,9 +365,12 @@ static void writePhy (byte address, uint16_t data) {
 
 byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     bufferSize = size;
+
+    selectPin = csPin;
+
     if (bitRead(SPCR, SPE) == 0)
         initSPI();
-    selectPin = csPin;
+
     pinMode(selectPin, OUTPUT);
     disableChip();
 
@@ -653,9 +656,12 @@ uint8_t ENC28J60::doBIST ( byte csPin) {
 #define RANDOM_RACE     0b1100
 
 // init
+
+    selectPin = csPin;
+
     if (bitRead(SPCR, SPE) == 0)
         initSPI();
-    selectPin = csPin;
+
     pinMode(selectPin, OUTPUT);
     disableChip();
 
