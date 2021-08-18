@@ -85,6 +85,11 @@
 */
 #define ETHERCARD_STASH 1
 
+/** Set ARP cache max entry count */
+#ifndef ETHERCARD_ARP_STORE_SIZE
+#   define ETHERCARD_ARP_STORE_SIZE 4
+#endif
+
 
 /** This type definition defines the structure of a UDP server event handler callback function */
 typedef void (*UdpServerCallback)(
@@ -189,6 +194,16 @@ public:
     /**   @brief  Updates the broadcast address based on current IP address and subnet mask
     */
     static void updateBroadcastAddress();
+
+    /**   @brief  Request the IP associated hardware address (ARP lookup). Use
+    *             clientWaitIp(ip) to get the ARP lookup status
+    */
+    static void clientResolveIp(const uint8_t *ip);
+
+    /**   @brief  Check if got IP associated hardware address (ARP lookup)
+    *     @return <i>unit8_t</i> True if gateway found
+    */
+    static uint8_t clientWaitIp(const uint8_t *ip);
 
     /**   @brief  Check if got gateway hardware address (ARP lookup)
     *     @return <i>unit8_t</i> True if gateway found
@@ -469,6 +484,33 @@ public:
     /**   @brief  Return the payload length of the current Tcp package
     */
     static uint16_t getTcpPayloadLength();
+
+    /**   @brief Check if IP is in ARP store
+    *     @param ip IP to check (size must be IP_LEN)
+    *     @return <i>bool</i> True if IP is in ARP store
+    */
+    static bool arpStoreHasMac(const uint8_t *ip);
+
+    /**   @brief convert IP into associated MAC address
+    *     @param ip IP to convert to MAC address (size must be IP_LEN)
+    *     @return <i>uint8_t *</i> mac MAC address or NULL if not found
+    */
+    static const uint8_t *arpStoreGetMac(const uint8_t *ip);
+
+    /**   @brief set/refresh new couple IP/MAC addresses into ARP store
+    *     @param ip IP address
+    *     @param mac MAC address
+    */
+    static void arpStoreSet(const uint8_t *ip, const uint8_t *mac);
+
+    /**   @brief remove IP from ARP store
+    *     @param ip IP address to remove
+    */
+    static void arpStoreInvalidIp(const uint8_t *ip);
+
+private:
+    static void packetLoopIdle();
+    static void packetLoopArp(const uint8_t *first, const uint8_t *last);
 };
 
 extern EtherCard ether; //!< Global presentation of EtherCard class
