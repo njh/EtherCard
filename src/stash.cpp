@@ -184,6 +184,11 @@ void Stash::prepare (const char* fmt PROGMEM, ...) {
                 arglen = stash.size();
                 break;
             }
+            case 'R':{
+                arglen = argval;
+                argval = va_arg(ap, uint16_t);
+                break;
+            }
             }
 #ifdef __AVR__
             *segs++ = argval;
@@ -237,6 +242,7 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
             case 'S':
             case 'F':
             case 'E':
+            case 'R':
                 ptr = (char*) arg;
                 break;
             case 'H':
@@ -248,6 +254,7 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
         }
         case 'D':
         case 'S':
+        case 'R':
             c = *ptr++;
             break;
         case 'F':
@@ -260,7 +267,7 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
             c = ((Stash*) ptr)->get();
             break;
         }
-        if (c == 0) {
+        if (c == 0 && mode != 'R') {
             mode = '@';
             continue;
         }
