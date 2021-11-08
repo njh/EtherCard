@@ -332,7 +332,7 @@ static char toAsciiHex(byte b) {
     return c;
 }
 
-bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
+bool EtherCard::dhcpSetup (const char *hname, bool fromRam, uint16_t timeout) {
     // Use during setup, as this discards all incoming requests until it returns.
     // That shouldn't be a problem, because we don't have an IPaddress yet.
     // Will try 60 secs to obtain DHCP-lease.
@@ -356,7 +356,7 @@ bool EtherCard::dhcpSetup (const char *hname, bool fromRam) {
     dhcpState = DHCP_STATE_INIT;
     uint16_t start = millis();
 
-    while (dhcpState != DHCP_STATE_BOUND && uint16_t(millis()) - start < 60000) {
+    while (dhcpState != DHCP_STATE_BOUND && uint16_t(millis()) - start < timeout) {
         if (isLinkUp()) DhcpStateMachine(packetReceive());
     }
     updateBroadcastAddress();

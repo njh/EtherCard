@@ -353,10 +353,10 @@ public:
     /**   @brief  Configure network interface with DHCP
     *     @param  hname The hostname to pass to the DHCP server
     *     @param  fromRam Set true to indicate whether hname is in RAM or in program space. Default = false
+    *     @param  timeout Time to wait before failing (default is 60 seconds)
     *     @return <i>bool</i> True if DHCP successful
-    *     @note   Blocks until DHCP complete or timeout after 60 seconds
     */
-    static bool dhcpSetup (const char *hname = NULL, bool fromRam =false);
+    static bool dhcpSetup (const char *hname = NULL, bool fromRam = false, uint16_t timeout = 60000);
 
     /**   @brief  Register a callback for a specific DHCP option number
     *     @param  option The option number to request from the DHCP server
