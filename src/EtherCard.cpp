@@ -21,7 +21,9 @@ uint8_t EtherCard::netmask[IP_LEN]; // subnet mask
 uint8_t EtherCard::broadcastip[IP_LEN]; // broadcast address
 uint8_t EtherCard::gwip[IP_LEN];   // gateway
 uint8_t EtherCard::dhcpip[IP_LEN]; // dhcp server
+#if ETHERCARD_DNS
 uint8_t EtherCard::dnsip[IP_LEN];  // dns server
+#endif
 uint8_t EtherCard::hisip[IP_LEN];  // ip address of remote host
 uint16_t EtherCard::hisport = HTTP_PORT; // tcp port to browse to
 bool EtherCard::using_dhcp = false;

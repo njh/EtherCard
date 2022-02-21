@@ -49,6 +49,12 @@
 */
 #define ETHERCARD_DHCP 1
 
+/** Enable DNS.
+*   Setting this to zero disables the use of DNS; if a program uses DNS it will
+*   not compile. Saves 6 bytes SRAM, 110 bytes flash, and some packet processing overhead.
+*/
+#define ETHERCARD_DNS 1
+
 /** Enable client connections.
 * Setting this to zero means that the program cannot issue TCP client requests
 * anymore. Compilation will still work but the request will never be
