@@ -4,6 +4,7 @@
 //
 // 2010-05-20 <jc@wippler.nl>
 
+#if ETHERCARD_DNS
 #include "EtherCard.h"
 #include "net.h"
 
@@ -118,3 +119,4 @@ bool EtherCard::dnsLookup (const char* name, bool fromRam) {
 
     return true;
 }
+#endif

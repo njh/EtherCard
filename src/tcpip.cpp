@@ -50,8 +50,10 @@ static const char *client_urlbuf_var; // Pointer to c-string filename part of HT
 static const char *client_hoststr; // Pointer to c-string hostname of current HTTP request
 static void (*icmp_cb)(uint8_t *ip); // Pointer to callback function for ICMP ECHO response handler (triggers when localhost receives ping response (pong))
 static uint8_t destmacaddr[ETH_LEN]; // storing both dns server and destination mac addresses, but at different times because both are never needed at same time.
+#if ETHERCARD_DNS
 static boolean waiting_for_dns_mac = false; //might be better to use bit flags and bitmask operations for these conditions
 static boolean has_dns_mac = false;
+#endif
 static boolean waiting_for_dest_mac = false;
 static boolean has_dest_mac = false;
 static uint8_t gwmacaddr[ETH_LEN]; // Hardware (MAC) address of gateway router
@@ -459,11 +461,13 @@ uint8_t EtherCard::clientWaitingGw () {
     return !(waitgwmac & WGW_HAVE_GW_MAC);
 }
 
+#if ETHERCARD_DNS
 uint8_t EtherCard::clientWaitingDns () {
     if(is_lan(myip, dnsip))
         return !has_dns_mac;
     return !(waitgwmac & WGW_HAVE_GW_MAC);
 }
+#endif
 
 static uint8_t client_store_mac(uint8_t *source_ip, uint8_t *mac) {
     if (memcmp(gPB + ETH_ARP_SRC_IP_P, source_ip, IP_LEN) != 0)
@@ -697,11 +701,13 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
         }
 #endif
 
+#if ETHERCARD_DNS
         //!@todo this is trying to find mac only once. Need some timeout to make another call if first one doesn't succeed.
         if(is_lan(myip, dnsip) && !has_dns_mac && !waiting_for_dns_mac) {
             client_arp_whohas(dnsip);
             waiting_for_dns_mac = true;
         }
+#endif
 
         //!@todo this is trying to find mac only once. Need some timeout to make another call if first one doesn't succeed.
         if(is_lan(myip, hisip) && !has_dest_mac && !waiting_for_dest_mac) {
@@ -718,10 +724,12 @@ uint16_t EtherCard::packetLoop (uint16_t plen) {
             make_arp_answer_from_request();
         if (waitgwmac & WGW_ACCEPT_ARP_REPLY && (gPB[ETH_ARP_OPCODE_L_P]==ETH_ARP_OPCODE_REPLY_L_V) && client_store_mac(gwip, gwmacaddr))
             waitgwmac = WGW_HAVE_GW_MAC;
+#if ETHERCARD_DNS
         if (!has_dns_mac && waiting_for_dns_mac && client_store_mac(dnsip, destmacaddr)) {
             has_dns_mac = true;
             waiting_for_dns_mac = false;
         }
+#endif
         if (!has_dest_mac && waiting_for_dest_mac && client_store_mac(hisip, destmacaddr)) {
             has_dest_mac = true;
             waiting_for_dest_mac = false;
