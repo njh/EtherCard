@@ -249,7 +249,7 @@ static void forwardToUDP () {
   collectStr(0x0005, buf);
   collectPayload(0x0006);
 
-  ether.sendUdp ((char*) collBuf, collPos, 23456, destIp, config.port);
+  ether.sendUdp ((uint8_t*) collBuf, collPos, 23456, destIp, config.port);
 #if SERIAL_PRINT
   Serial.println("UDP sent");
 #endif
