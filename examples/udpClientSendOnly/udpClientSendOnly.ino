@@ -33,7 +33,7 @@ char textToSend[] = "test 123";
 void loop () {
     if (millis() > timer) {
       timer = millis() + 5000;
-     //static void sendUdp (char *data,uint8_t len,uint16_t sport, uint8_t *dip, uint16_t dport);
-     ether.sendUdp(textToSend, sizeof(textToSend), srcPort, ether.hisip, dstPort );
+     //static void sendUdp (uint8_t *data,uint8_t len,uint16_t sport, uint8_t *dip, uint16_t dport);
+     ether.sendUdp((uint8_t*)textToSend, sizeof(textToSend), srcPort, ether.hisip, dstPort );
   }
 }

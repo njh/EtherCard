@@ -148,7 +148,7 @@ public:
     *     @param  len Size of data payload (max 220)
     *     @param  port Source IP port
     */
-    static void makeUdpReply (const char *data, uint8_t len, uint16_t port);
+    static void makeUdpReply (const uint8_t *data, uint8_t len, uint16_t port);
 
     /**   @brief  Parse received data
     *     @param  plen Size of data to parse (e.g. return value of packetReceive()).
@@ -277,7 +277,7 @@ public:
     *     @param  dip Pointer to 4 byte destination IP address
     *     @param  dport Destination port
     */
-    static void sendUdp (const char *data, uint8_t len, uint16_t sport,
+    static void sendUdp (const uint8_t *data, uint8_t len, uint16_t sport,
                          const uint8_t *dip, uint16_t dport);
 
     /**   @brief  Resister the function to handle ping events
