@@ -64,6 +64,11 @@ public:
     */
     static bool isLinkUp ();
 
+    /**   @brief clear EWOLIR_MPWOLIF interrupt flag
+     *    @note
+     */
+    static void clearMPWOLIFInterrupt ();
+
     /**   @brief  Sends data to network interface
     *     @param  len Size of data to send
     *     @note   Data buffer is shared by receive and transmit functions

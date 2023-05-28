@@ -151,6 +151,16 @@ if(!ether.dnsLookup("google.com"))
 ether.printIp("Server: ", ether.hisip); // Result of DNS lookup is placed in the hisip member of EtherCard.
 ```
 
+### Control WOL pin on ENC28J60 using magic packet
+
+While it is unlikely one would use wake-on-lan feature to wake-up an Arduino. A WOL magic packet can be used to trigger an interrupt in an Arduino program. By using this you can push for example a notification to your Arduino and make it do something. To make it work connect the WOL pin on the ENC28J60 module to an Arduino external interrupt pin. Once a magic packet is received the WOL pin will be turned low.
+
+In your Arduino program you have to clear the interrupt once you have dealt with it using:
+
+```
+ether.clearMPWOLIFInterrupt();
+```
+
 ## Gotchas
 
 Currently the library does not have a local network ARP cache implemented. This means if sending UDP:

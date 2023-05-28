@@ -127,6 +127,22 @@ bool ENC28J60::promiscuous_enabled = false;
 #define EIR_WOLIF        0x04
 #define EIR_TXERIF       0x02
 #define EIR_RXERIF       0x01
+// ENC28J60 EWOLIE Register Bit Definitions
+#define EWOLIE_UCWOLIE   0x80
+#define EWOLIE_AWOLIE    0x40
+#define EWOLIE_PMWOLIE   0x10
+#define EWOLIE_MPWOLIE   0x08
+#define EWOLIE_HTWOLIE   0x04
+#define EWOLIE_MCWOLIE   0x02
+#define EWOLIE_BCWOLIE   0x01
+// ENC28J60 EWOLIR Register Bit Definitions
+#define EWOLIR_UCWOLIF   0x80
+#define EWOLIR_AWOLIF    0x40
+#define EWOLIR_PMWOLIF   0x10
+#define EWOLIR_MPWOLIF   0x08
+#define EWOLIR_HTWOLIF   0x04
+#define EWOLIR_MCWOLIF   0x02
+#define EWOLIR_BCWOLIF   0x01
 // ENC28J60 ESTAT Register Bit Definitions
 #define ESTAT_INT        0x80
 #define ESTAT_LATECOL    0x10
@@ -405,7 +421,10 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     writeRegByte(MAADR0, macaddr[5]);
     writePhy(PHCON2, PHCON2_HDLDIS);
     SetBank(ECON1);
-    writeOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE|EIE_PKTIE);
+    writeOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE|EIE_PKTIE|EIE_WOLIE);
+
+    //Enable setting the WOL pin via WOL magic packet, must have set EIE_WOLIE in EIE as well
+    writeRegByte(EWOLIE, EWOLIE_MPWOLIE);
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
     byte rev = readRegByte(EREVID);
@@ -415,6 +434,10 @@ byte ENC28J60::initialize (uint16_t size, const byte* macaddr, byte csPin) {
     // there is no B8 out yet
     if (rev > 5) ++rev;
     return rev;
+}
+
+void ENC28J60::clearMPWOLIFInterrupt () {
+    writeOp(ENC28J60_BIT_FIELD_CLR, EWOLIR, EWOLIR_MPWOLIF);
 }
 
 bool ENC28J60::isLinkUp() {
