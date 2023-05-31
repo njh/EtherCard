@@ -59,6 +59,14 @@ public:
     static uint8_t initialize (const uint16_t size, const uint8_t* macaddr,
                                uint8_t csPin = 8);
 
+    /**   @brief  Clear magic packet WOL interrupt flag
+    */
+    static void clearWOLInterrupt ();
+
+    /**   @brief  Read the WOL interrupt flag
+    */
+    static bool pollWOLInterrupt ();
+
     /**   @brief  Check if network link is connected
     *     @return <i>bool</i> True if link is up
     */
